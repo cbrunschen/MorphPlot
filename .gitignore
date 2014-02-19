@@ -1,0 +1,8 @@
+.DS_Store
+*~
+*.o
+*.a
+mill
+plot
+test_meijer
+Tests/tests
