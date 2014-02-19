@@ -133,6 +133,7 @@ inline Ref<Bitmap> GreyImage<C>::where(Op &op, C value) const {
   return result;
 }
 
+
 template<typename C>
 inline Ref<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value, Workers &workers) const {
   Ref<Bitmap> result(new Bitmap(width_, height_));
@@ -146,377 +147,122 @@ inline Ref<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value, Worke
   }
 
   workers.perform(func, &ranges[0]);
-  
+
   delete [] ranges;
   return result;
 }
 
-template<typename C>
-inline void GreyImage<C>::ge(void *params) {
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  Bitmap::iterator dst = p->dst;
-  C value = p->value;
-  
-  while (src != end) {
-    *dst++ = *src++ >= value;
-  }
+#define IMPLEMENT_OP(name, operator)                                                                  \
+template<typename C>    									      \
+inline void GreyImage<C>::name(void *params) {							      \
+  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);	      \
+  typename GreyImage<C>::const_iterator src = p->begin;						      \
+  typename GreyImage<C>::const_iterator end = p->end;						      \
+  Bitmap::iterator dst = p->dst;								      \
+  C value = p->value;										      \
+  												      \
+  while (src != end) {										      \
+    *dst++ = *src++ operator value;								      \
+  }												      \
+}												      \
+												      \
+template<typename C>										      \
+inline Ref<Bitmap> GreyImage<C>::name(C value) const {						      \
+  Ref<Bitmap> result(new Bitmap(width_, height_));						      \
+  Bitmap::iterator dst = result->begin();							      \
+  GreyImage<C>::const_iterator src = this->begin();						      \
+  GreyImage<C>::const_iterator end = this->end();						      \
+  while (src != end) {										      \
+    *dst++ = (*src++ operator value); 						                      \
+  }												      \
+  return result;										      \
+}												      \
+												      \
+template<typename C>										      \
+inline Ref<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {			      \
+  if (workers.n() > 1) {									      \
+    return distribute(GreyImage<C>::name, value, workers);					      \
+  } else {											      \
+    return name(value);										      \
+  }												      \
+}												      \
+												      \
+template<typename C>										      \
+inline Ref<Bitmap> GreyImage<C>::name(C value, int threads) const {				      \
+  if (threads > 1) {										      \
+    Workers workers(threads);									      \
+    return distribute(GreyImage<C>::name, value, workers);					      \
+  } else {											      \
+    return name(value);										      \
+  }												      \
+}												      \
+
+IMPLEMENT_OP(ge, >=)
+IMPLEMENT_OP(gt, >)
+IMPLEMENT_OP(le, <=)
+IMPLEMENT_OP(lt, <)
+IMPLEMENT_OP(eq, ==)
+IMPLEMENT_OP(ne, !=)
+
+#undef IMPLEMENT_OP
+
+#define IMPLEMENT_MINMAX(name, operator)       	       	       	       	       	       	       	       	    \
+template<typename C>											    \
+inline void GreyImage<C>::name(void *params) {								    \
+  typename GreyImage<C>::ReductionRange *p = static_cast<typename GreyImage<C>::ReductionRange *>(params);  \
+  typename GreyImage<C>::const_iterator src = p->begin;							    \
+  typename GreyImage<C>::const_iterator end = p->end;							    \
+													    \
+  C value = *src++;											    \
+  while (src != end) {											    \
+    C tmp = *src++;											    \
+    if (tmp operator value) value = tmp;								    \
+  }													    \
+  p->value = value;											    \
+}													    \
+													    \
+template<typename C>											    \
+inline C GreyImage<C>::name() const {									    \
+  GreyImage<C>::const_iterator src = this->begin();							    \
+  GreyImage<C>::const_iterator end = this->end();							    \
+  C value = *src++;											    \
+  while (src != end) {											    \
+    C tmp = *src++;											    \
+    if (tmp operator value) value = tmp;								    \
+  }													    \
+  return value;												    \
+}													    \
+													    \
+template<typename C>											    \
+inline C GreyImage<C>::name(Workers &workers) const {							    \
+  int n = workers.n();											    \
+  if (n > 1) {												    \
+    GreyImage<C>::ReductionRange *ranges = new GreyImage<C>::ReductionRange[n];				    \
+    for (int i = 0; i < n; i++) {									    \
+      ranges[i].begin = this->iter_at(i * height_ / n);							    \
+      ranges[i].end = this->iter_at((i + 1) * height_ / n);						    \
+    }													    \
+													    \
+    workers.perform(GreyImage<C>::name, &ranges[0]);							    \
+													    \
+    C value = ranges[0].value;										    \
+    for (int i = 1; i < n; i++) {									    \
+      C tmp = ranges[i].value;										    \
+      if (tmp operator value) value = tmp;   							            \
+    }													    \
+													    \
+    delete [] ranges;											    \
+    return value;											    \
+  } else {												    \
+    return name();											    \
+  }													    \
 }
 
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::ge(C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
-  Bitmap::iterator dst = result->begin();
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  while (src != end) {
-    *dst++ = (*src++ >= value);
-  }
-  return result;
-}
+IMPLEMENT_MINMAX(min, <)
+IMPLEMENT_MINMAX(max, >)
 
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::ge(C value, Workers &workers) const {
-  if (workers.n() > 1) {
-    return distribute(GreyImage<C>::ge, value, workers);
-  } else {
-    return ge(value);
-  }
-}
+#undef IMPLEMENT_MINMAX
 
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::ge(C value, int threads) const {
-  if (threads > 1) {
-    Workers workers(threads);
-    return distribute(GreyImage<C>::ge, value, workers);
-  } else {
-    return ge(value);
-
-  }
-}
-
-template<typename C>
-inline void GreyImage<C>::gt(void *params) {
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  Bitmap::iterator dst = p->dst;
-  C value = p->value;
-  
-  while (src != end) {
-    *dst++ = (*src++ > value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::gt(C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
-  Bitmap::iterator dst = result->begin();
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  while (src != end) {
-    *dst++ = (*src++ > value);
-  }
-  return result;
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::gt(C value, Workers &workers) const {
-  if (workers.n() > 1) {
-    return distribute(GreyImage<C>::gt, value, workers);
-  } else {
-    return gt(value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::gt(C value, int threads) const {
-  if (threads > 1) {
-    Workers workers(threads);
-    return distribute(GreyImage<C>::gt, value, workers);
-  } else {
-    return gt(value);
-  }
-}
-
-template<typename C>
-inline void GreyImage<C>::lt(void *params) {
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  Bitmap::iterator dst = p->dst;
-  C value = p->value;
-  
-  while (src != end) {
-    *dst++ = (*src++ < value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::lt(C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
-  Bitmap::iterator dst = result->begin();
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  while (src != end) {
-    *dst++ = (*src++ < value);
-  }
-  return result;
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::lt(C value, Workers &workers) const {
-  if (workers.n() > 1) {
-    return distribute(GreyImage<C>::lt, value, workers);
-  } else {
-    return lt(value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::lt(C value, int threads) const {
-  if (threads > 1) {
-    Workers workers(threads);
-    return distribute(GreyImage<C>::lt, value, workers);
-  } else {
-    return lt(value);
-  }
-}
-
-template<typename C>
-inline void GreyImage<C>::le(void *params) {
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  Bitmap::iterator dst = p->dst;
-  C value = p->value;
-  
-  while (src != end) {
-    *dst++ = (*src++ <= value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::le(C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
-  Bitmap::iterator dst = result->begin();
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  while (src != end) {
-    *dst++ = (*src++ <= value);
-  }
-  return result;
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::le(C value, Workers &workers) const {
-  if (workers.n() > 1) {
-    return distribute(GreyImage<C>::le, value, workers);
-  } else {
-    return le(value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::le(C value, int threads) const {
-  if (threads > 1) {
-    Workers workers(threads);
-    return distribute(GreyImage<C>::le, value, workers);
-  } else {
-    return le(value);
-  }
-}
-
-template<typename C>
-inline void GreyImage<C>::eq(void *params) {
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  Bitmap::iterator dst = p->dst;
-  C value = p->value;
-  
-  while (src != end) {
-    *dst++ = (*src++ == value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::eq(C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
-  Bitmap::iterator dst = result->begin();
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  while (src != end) {
-    *dst++ = (*src++ == value);
-  }
-  return result;
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::eq(C value, Workers &workers) const {
-  if (workers.n() > 1) {
-    return distribute(GreyImage<C>::eq, value, workers);
-  } else {
-    return eq(value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::eq(C value, int threads) const {
-  if (threads > 1) {
-    Workers workers(threads);
-    return distribute(GreyImage<C>::eq, value, workers);
-  } else {
-    return eq(value);
-  }
-}
-
-template<typename C>
-inline void GreyImage<C>::ne(void *params) {
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  Bitmap::iterator dst = p->dst;
-  C value = p->value;
-  
-  while (src != end) {
-    *dst++ = (*src++ != value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::ne(C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
-  Bitmap::iterator dst = result->begin();
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  while (src != end) {
-    *dst++ = (*src++ != value);
-  }
-  return result;
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::ne(C value, Workers &workers) const {
-  if (workers.n() > 1) {
-    return distribute(GreyImage<C>::ne, value, workers);
-  } else {
-    return ne(value);
-  }
-}
-
-template<typename C>
-inline Ref<Bitmap> GreyImage<C>::ne(C value, int threads) const {
-  if (threads > 1) {
-    Workers workers(threads);
-    return distribute(GreyImage<C>::ne, value, workers);
-  } else {
-    return ne(value);
-  }
-}
-
-template<typename C>
-inline void GreyImage<C>::min(void *params) {
-  typename GreyImage<C>::ReductionRange *p = static_cast<typename GreyImage<C>::ReductionRange *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  
-  C value = *src++;
-  while (src != end) {
-    C tmp = *src++;
-    if (tmp < value) value = tmp;
-  }
-  p->value = value;
-}
-
-template<typename C>
-inline void GreyImage<C>::max(void *params) {
-  typename GreyImage<C>::ReductionRange *p = static_cast<typename GreyImage<C>::ReductionRange *>(params);
-  typename GreyImage<C>::const_iterator src = p->begin;
-  typename GreyImage<C>::const_iterator end = p->end;
-  
-  C value = *src++;
-  while (src != end) {
-    C tmp = *src++;
-    if (tmp > value) value = tmp;
-  }
-  p->value = value;
-}
-
-template<typename C>
-inline C GreyImage<C>::min() const {
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  C value = *src++;
-  while (src != end) {
-    C tmp = *src++;
-    if (tmp < value) value = tmp;
-  }
-  return value;
-}
-
-template<typename C>
-inline C GreyImage<C>::min(Workers &workers) const {
-  int n = workers.n();
-  if (n > 1) {
-    GreyImage<C>::ReductionRange *ranges = new GreyImage<C>::ReductionRange[n];
-    for (int i = 0; i < n; i++) {
-      ranges[i].begin = this->iter_at(i * height_ / n);
-      ranges[i].end = this->iter_at((i + 1) * height_ / n);
-    }
-    
-    workers.perform(GreyImage<C>::min, &ranges[0]);
-    
-    C value = ranges[0].value;
-    for (int i = 1; i < n; i++) {
-      C tmp = ranges[i].value;
-      if (tmp < value) value = tmp;
-    }
-    
-    delete [] ranges;
-    return value;
-  } else {
-    return min();
-  }
-}
-
-template<typename C>
-inline C GreyImage<C>::max() const {
-  GreyImage<C>::const_iterator src = this->begin();
-  GreyImage<C>::const_iterator end = this->end();
-  C value = *src++;
-  while (src != end) {
-    C tmp = *src++;
-    if (tmp > value) value = tmp;
-  }
-  return value;
-}
-
-template<typename C>
-inline C GreyImage<C>::max(Workers &workers) const {
-  int n = workers.n();
-  if (n > 1) {
-    GreyImage<C>::ReductionRange *ranges = new GreyImage<C>::ReductionRange[n];
-    for (int i = 0; i < n; i++) {
-      ranges[i].begin = this->iter_at(i * height_ / n);
-      ranges[i].end = this->iter_at((i + 1) * height_ / n);
-    }
-    
-    workers.perform(GreyImage<C>::max, &ranges[0]);
-    
-    C value = ranges[0].value;
-    for (int i = 1; i < n; i++) {
-      C tmp = ranges[i].value;
-      if (tmp > value) value = tmp;
-    }
-    
-    delete [] ranges;
-    return value;
-  } else {
-    return max();
-  }
-}
 
 template<typename C>
 inline double GreyImage<C>::frand() {
@@ -537,15 +283,15 @@ template <typename T>
 inline double GreyImage<C>::dither(Chains &results, const Chain &chain, const Circle &circle, const T &reference, double error) {
   Chain *result = NULL;
   int skip = 0;
-  
+
   long nPoints = circle.points().size();
   double halfPoints = nPoints / 2.0;
   D(cerr << "n=" << nPoints << ", half=" << halfPoints << endl);
-  
+
   Chain::const_iterator i = chain.begin();
-  
+
   double value = sumOfValues(*i, circle.points());
-  
+
   error += value;
   if (error > halfPoints) {
     double effect = nPoints - reference.sumOfValues(*i, circle.points());
@@ -557,16 +303,16 @@ inline double GreyImage<C>::dither(Chains &results, const Chain &chain, const Ci
   } else {
     D(cerr << ", ___, new error=" << error << endl);
   }
-  
+
   for (Chain::const_iterator j = i++; i != chain.end(); j = i++) {
     int dir = i->directionTo(*j);
     const list<Point> &delta = circle.getDeltaForDirection(dir);
     double value = sumOfValues(*i, delta);
     error += value;
-    
+
     int dSize = static_cast<int>(delta.size());
     double threshold = dSize / 2.0;
-    
+
     D(cerr << *i << ": value=" << value << ", error=" << error << ", threshold=" << threshold);
     if (skip > 0) {
       // we're forced-skipping after lifting the pen
@@ -673,32 +419,32 @@ inline void readPng_setDepth<uint16_t>(png_structp png_ptr) {
 template<typename T, bool heightMap>
 Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
   png_byte buf[PNG_BYTES_TO_CHECK];
-  
+
   Ref< GreyImage<T> > result(NULL);
-  
+
   /* Read in some of the signature bytes */
   if (fread(buf, 1, PNG_BYTES_TO_CHECK, fp) != PNG_BYTES_TO_CHECK) {
     return result;
   }
-  
+
   /* Compare the first PNG_BYTES_TO_CHECK bytes of the signature.
    Return nonzero (true) if they match */
-  
+
   if (png_sig_cmp(buf, (png_size_t)0, PNG_BYTES_TO_CHECK)) {
     return result;
   }
-  
+
   png_structp png_ptr;
   png_infop info_ptr;
   png_uint_32 width, height, xRes, yRes;
   int bit_depth, color_type, interlace_type, resUnit;
-  
+
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (png_ptr == NULL) {
     fclose(fp);
     return result;
   }
-  
+
   /* Allocate/initialize the memory for image information.  REQUIRED. */
   info_ptr = png_create_info_struct(png_ptr);
   if (info_ptr == NULL) {
@@ -706,7 +452,7 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     return result;
   }
-  
+
   if (setjmp(png_jmpbuf(png_ptr))) {
     fclose(fp);
     /* Free all of the memory associated with the png_ptr and info_ptr */
@@ -715,31 +461,31 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
     result = NULL;
     return result;
   }
-  
+
   /* Set up the input control if you are using standard C streams */
   png_init_io(png_ptr, fp);
-  
+
   /* If we have already read some of the signature */
   png_set_sig_bytes(png_ptr, PNG_BYTES_TO_CHECK);
-  
+
   png_read_info(png_ptr, info_ptr);
-  
+
   png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
                &interlace_type, NULL, NULL);
-  
+
   png_get_pHYs(png_ptr, info_ptr, &xRes, &yRes, &resUnit);
-  
+
   // mask out the alpha
   color_type &= ~PNG_COLOR_MASK_ALPHA;
-  
+
   // ensure that the data generated are expanded to the correct number of bits
   readPng_setDepth<T>(png_ptr);
-  
+
   /* Extract multiple pixels with bit depths of 1, 2, and 4 from a single
    * byte into separate bytes (useful for paletted and grayscale images).
    */
   png_set_packing(png_ptr);
-  
+
   if (color_type != PNG_COLOR_TYPE_GRAY) {
     // convert colors to gray
     png_set_rgb_to_gray(png_ptr, PNG_ERROR_ACTION_ERROR, PNG_RGB_TO_GRAY_DEFAULT, PNG_RGB_TO_GRAY_DEFAULT);
@@ -747,16 +493,16 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
     // convert grays to 8 bits
     png_set_expand_gray_1_2_4_to_8(png_ptr);
   }
-  
+
   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
     png_set_tRNS_to_alpha(png_ptr);
   }
-  
+
   // composite against a default background
   png_color_16 my_background = { 0, defaultBackground, defaultBackground, defaultBackground, defaultBackground };
   png_set_background(png_ptr, &my_background,
                      PNG_BACKGROUND_GAMMA_SCREEN, 0, 1.0);
-  
+
   if (heightMap) {
     png_set_gamma(png_ptr, PNG_GAMMA_LINEAR, PNG_GAMMA_LINEAR);
   } else {
@@ -772,35 +518,35 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
       }
     }
   }
-  
+
   png_read_update_info(png_ptr, info_ptr);
-  
+
   result = heightMap ? GreyImage<T>::make(width+2, height+2) : GreyImage<T>::make(width, height);
   result->setXRes(xRes);
   result->setYRes(yRes);
   result->setResUnit(resUnit);
-  
+
   /* The easiest way to read the image: */
   png_bytep row_pointers[height];
-  
+
   /* Clear the pointer array */
   for (int row = 0; row < height; row++) {
     row_pointers[row] = (png_bytep) &((*result)[row].data()[heightMap ? 1 : 0]);
   }
-  
+
   png_read_image(png_ptr, row_pointers);
-  
+
   /* Read rest of file, and get additional chunks in info_ptr - REQUIRED */
   png_read_end(png_ptr, info_ptr);
   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   fclose(fp);
-  
+
   if (heightMap) {
     png_color_8p sig_bit;
 
     cerr << "bit_depth=" << bit_depth << endl << flush;
     int shift = 16 - bit_depth;
-    
+
     if (png_get_sBIT(png_ptr, info_ptr, &sig_bit)) {
       cerr << "sbit: red=" << sig_bit->red << ", green=" << sig_bit->red << ", blue=" << sig_bit->gray << endl << flush;
       int bits = 0;
@@ -811,7 +557,7 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
       shift = 16 - bits;
     }
     cerr << "will shift all samples down by " << shift << " bits" << endl << flush;
-    
+
     int zom = 0, znm = 0;
     for (int y = 1; y < height+2; y++) {
       for (int x = 1; x < width+2; x++) {
@@ -832,7 +578,7 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
       result->at(y, width+1) = znm;
     }
   }
-  
+
   return result;
 }
 
@@ -840,13 +586,13 @@ template<typename T>
 bool writePng(const GreyImage<T> &image, FILE *fp) {
   png_structp png_ptr;
   png_infop info_ptr;
-  
+
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (png_ptr == NULL) {
     fclose(fp);
     return false;
   }
-  
+
   /* Allocate/initialize the image information data.  REQUIRED */
   info_ptr = png_create_info_struct(png_ptr);
   if (info_ptr == NULL) {
@@ -854,7 +600,7 @@ bool writePng(const GreyImage<T> &image, FILE *fp) {
     png_destroy_write_struct(&png_ptr,  NULL);
     return false;
   }
-  
+
   /* Set error handling.  REQUIRED if you aren't supplying your own
    * error handling functions in the png_create_write_struct() call.
    */
@@ -865,40 +611,40 @@ bool writePng(const GreyImage<T> &image, FILE *fp) {
     png_destroy_write_struct(&png_ptr, &info_ptr);
     return false;
   }
-  
+
   /* Set up the output control if you are using standard C streams */
   png_init_io(png_ptr, fp);
-  
+
   png_set_IHDR(png_ptr, info_ptr, image.width(), image.height(),
                8 * sizeof(T), PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
                PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-  
+
   /* Optional gamma chunk is strongly suggested if you have any guess
    * as to the correct gamma of the image.
    */
   png_set_gAMA(png_ptr, info_ptr, 1.0);
-  
+
   png_set_pHYs(png_ptr, info_ptr, image.xRes(), image.yRes(), image.resUnit());
-  
+
   /* Write the file header information.  REQUIRED */
   png_write_info(png_ptr, info_ptr);
-  
+
   png_bytep row_pointers[image.height()];
   for (int row = 0; row < image.height(); row++) {
     row_pointers[row] = (png_bytep) image[row].data();
   }
-  
+
   png_write_image(png_ptr, row_pointers);
-  
+
   /* It is REQUIRED to call this to finish writing the rest of the file */
   png_write_end(png_ptr, info_ptr);
-  
+
   /* Clean up after the write, and free any memory allocated */
   png_destroy_write_struct(&png_ptr, &info_ptr);
-  
+
   /* Close the file */
   fclose(fp);
-  
+
   return true;
 }
 

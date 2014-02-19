@@ -48,7 +48,7 @@ template<typename T, bool shiftDown> extern Ref< GreyImage<T> > readPng(FILE *fp
 template<typename C> class GreyImage : public Image<C> {
 private:
   template <typename D> friend ostream &operator<<(ostream &out, const GreyImage<D> &i);
-  
+
 public:
   typedef GreyImage<C> Self;
   typedef Ref<Self> GreyImageRef;
@@ -60,61 +60,51 @@ public:
   using Super::height_;
   using Super::data_;
   using Super::at;
-  
+
   GreyImage(int width = 0, int height = 0, bool doClear = true);
   GreyImage(const GreyImage &other);
   GreyImage(const GreyImage *other);
-  
+
   static GreyImageRef make(int width = 0, int height = 0, bool doClear = true);
 
   istream &readData(istream &in);
 
   ostream &writeData(ostream &out);
-  
+
   bool writePng(FILE *f);
   bool writePng(const char * const filename);
   bool writePng(const string &filename);
-  
+
   static C defaultBackground();
-  
+
   static GreyImageRef readPng(FILE *fp);
   static GreyImageRef readPng(const char * const filename);
   static GreyImageRef readPng(const string &filename);
-  
+
   static GreyImageRef readPngHeightmap(FILE *fp);
   static GreyImageRef readPngHeightmap(const char * const filename);
   static GreyImageRef readPngHeightmap(const string &filename);
 
   template<typename Op> Ref<Bitmap> where(Op &op, C value) const;
-  
+
   Ref<Bitmap> coverage() const;
   Ref<Bitmap> coverage(int threads) const;
   Ref<Bitmap> coverage(Workers &workers) const;
-  
-  Ref<Bitmap> ge(C value) const;
-  Ref<Bitmap> ge(C value, int threads) const;
-  Ref<Bitmap> ge(C value, Workers &workers) const;
 
-  Ref<Bitmap> gt(C value) const;
-  Ref<Bitmap> gt(C value, int threads) const;
-  Ref<Bitmap> gt(C value, Workers &workers) const;
+#define DECLARE_OP(name)                                 \
+  Ref<Bitmap> name(C value) const;			 \
+  Ref<Bitmap> name(C value, int threads) const;		 \
+  Ref<Bitmap> name(C value, Workers &workers) const
 
-  Ref<Bitmap> lt(C value) const;
-  Ref<Bitmap> lt(C value, int threads) const;
-  Ref<Bitmap> lt(C value, Workers &workers) const;
+  DECLARE_OP(ge);
+  DECLARE_OP(gt);
+  DECLARE_OP(le);
+  DECLARE_OP(lt);
+  DECLARE_OP(eq);
+  DECLARE_OP(ne);
 
-  Ref<Bitmap> le(C value) const;
-  Ref<Bitmap> le(C value, int threads) const;
-  Ref<Bitmap> le(C value, Workers &workers) const;
+#undef DECLARE_OP
 
-  Ref<Bitmap> eq(C value) const;
-  Ref<Bitmap> eq(C value, int threads) const;
-  Ref<Bitmap> eq(C value, Workers &workers) const;
-
-  Ref<Bitmap> ne(C value) const;
-  Ref<Bitmap> ne(C value, int threads) const;
-  Ref<Bitmap> ne(C value, Workers &workers) const;
-  
   Ref<Bitmap> distribute(void (*func)(void *), C value, Workers &workers) const;
 
   C min() const;
@@ -122,7 +112,7 @@ public:
 
   C max() const;
   C max(Workers &workers) const;
-  
+
   struct Range {
     typename GreyImage<C>::const_iterator begin;
     typename GreyImage<C>::const_iterator end;
@@ -148,7 +138,7 @@ public:
   static double frand();
 
   double sumOfValues(const Point &p0, const list<Point> &points) const;
-  
+
   template <typename T>
   double dither(Chains &results, const Chain &chain, const Circle &circle, const T &reference, double error);
 
