@@ -19,7 +19,7 @@ using namespace Chaining;
 using namespace Images;
 using namespace std;
 
-template<typename Pen> class Output : public Counted {
+template<typename Pen> class Output {
 protected:
   int width_;
   int height_;

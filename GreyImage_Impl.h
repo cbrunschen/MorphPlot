@@ -27,8 +27,8 @@ template<typename C>
 inline GreyImage<C>::GreyImage(const GreyImage *other) : Image<C>(other) { }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::make(int width, int height, bool doClear) {
-  return Ref< GreyImage<C> >(new Self(width, height, doClear));
+inline shared_ptr< GreyImage<C> > GreyImage<C>::make(int width, int height, bool doClear) {
+  return make_shared< GreyImage<C> >(width, height, doClear);
 }
 
 template<typename C>
@@ -68,62 +68,62 @@ inline C GreyImage<C>::defaultBackground() {
 }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::readPng(FILE *fp) {
+inline shared_ptr< GreyImage<C> > GreyImage<C>::readPng(FILE *fp) {
   return GreyImages::readPng<C, false>(fp, GreyImage<C>::defaultBackground());
 }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::readPngHeightmap(FILE *fp) {
+inline shared_ptr< GreyImage<C> > GreyImage<C>::readPngHeightmap(FILE *fp) {
   return GreyImages::readPng<C, true>(fp, GreyImage<C>::defaultBackground());
 }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::readPng(const char * const filename) {
+inline shared_ptr< GreyImage<C> > GreyImage<C>::readPng(const char * const filename) {
   FILE *f = fopen(filename, "rb");
   if (f != NULL) {
     return readPng(f);
   }
-  return Ref< GreyImage<C> >(NULL);
+  return make_shared< GreyImage<C> >(NULL);
 }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::readPngHeightmap(const char * const filename) {
+inline shared_ptr< GreyImage<C> > GreyImage<C>::readPngHeightmap(const char * const filename) {
   FILE *f = fopen(filename, "rb");
   if (f != NULL) {
     return readPngHeightmap(f);
   }
-  return Ref< GreyImage<C> >(NULL);
+  return make_shared< GreyImage<C> >(NULL);
 }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::readPng(const string &filename) {
+inline shared_ptr< GreyImage<C> > GreyImage<C>::readPng(const string &filename) {
   return readPng(filename.c_str());
 }
 
 template<typename C>
-inline Ref< GreyImage<C> > GreyImage<C>::readPngHeightmap(const string &filename) {
+inline shared_ptr< GreyImage<C> > GreyImage<C>::readPngHeightmap(const string &filename) {
   return readPngHeightmap(filename.c_str());
 }
 
 template<typename C>
-inline Ref<Bitmap> GreyImage<C>::coverage() const {
+inline shared_ptr<Bitmap> GreyImage<C>::coverage() const {
   return ne(Component<C>::min());
 }
 
 template<typename C>
-inline Ref<Bitmap> GreyImage<C>::coverage(int threads) const {
+inline shared_ptr<Bitmap> GreyImage<C>::coverage(int threads) const {
   return ne(Component<C>::min(), threads);
 }
 
 template<typename C>
-inline Ref<Bitmap> GreyImage<C>::coverage(Workers &workers) const {
+inline shared_ptr<Bitmap> GreyImage<C>::coverage(Workers &workers) const {
   return ne(Component<C>::min(), workers);
 }
 
 template<typename C>
 template<typename Op>
-inline Ref<Bitmap> GreyImage<C>::where(Op &op, C value) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
+inline shared_ptr<Bitmap> GreyImage<C>::where(Op &op, C value) const {
+  shared_ptr<Bitmap> result(new Bitmap(width_, height_));
   Bitmap::iterator dst = result->begin();
   GreyImage<C>::const_iterator src = this->begin();
   GreyImage<C>::const_iterator end = this->end();
@@ -135,8 +135,8 @@ inline Ref<Bitmap> GreyImage<C>::where(Op &op, C value) const {
 
 
 template<typename C>
-inline Ref<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value, Workers &workers) const {
-  Ref<Bitmap> result(new Bitmap(width_, height_));
+inline shared_ptr<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value, Workers &workers) const {
+  shared_ptr<Bitmap> result(new Bitmap(width_, height_));
   int n = workers.n();
   GreyImage<C>::Range *ranges = new GreyImage<C>::Range[n];
   for (int i = 0; i < n; i++) {
@@ -167,8 +167,8 @@ inline void GreyImage<C>::name(void *params) {							      \
 }												      \
 												      \
 template<typename C>										      \
-inline Ref<Bitmap> GreyImage<C>::name(C value) const {						      \
-  Ref<Bitmap> result(new Bitmap(width_, height_));						      \
+inline shared_ptr<Bitmap> GreyImage<C>::name(C value) const {						      \
+  shared_ptr<Bitmap> result(new Bitmap(width_, height_));						      \
   Bitmap::iterator dst = result->begin();							      \
   GreyImage<C>::const_iterator src = this->begin();						      \
   GreyImage<C>::const_iterator end = this->end();						      \
@@ -179,7 +179,7 @@ inline Ref<Bitmap> GreyImage<C>::name(C value) const {						      \
 }												      \
 												      \
 template<typename C>										      \
-inline Ref<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {			      \
+inline shared_ptr<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {			      \
   if (workers.n() > 1) {									      \
     return distribute(GreyImage<C>::name, value, workers);					      \
   } else {											      \
@@ -188,7 +188,7 @@ inline Ref<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {			     
 }												      \
 												      \
 template<typename C>										      \
-inline Ref<Bitmap> GreyImage<C>::name(C value, int threads) const {				      \
+inline shared_ptr<Bitmap> GreyImage<C>::name(C value, int threads) const {				      \
   if (threads > 1) {										      \
     Workers workers(threads);									      \
     return distribute(GreyImage<C>::name, value, workers);					      \
@@ -417,10 +417,10 @@ inline void readPng_setDepth<uint16_t>(png_structp png_ptr) {
 
 #define PNG_BYTES_TO_CHECK 8
 template<typename T, bool heightMap>
-Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
+shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
   png_byte buf[PNG_BYTES_TO_CHECK];
 
-  Ref< GreyImage<T> > result(NULL);
+  shared_ptr< GreyImage<T> > result(NULL);
 
   /* Read in some of the signature bytes */
   if (fread(buf, 1, PNG_BYTES_TO_CHECK, fp) != PNG_BYTES_TO_CHECK) {
@@ -458,7 +458,7 @@ Ref< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
     /* Free all of the memory associated with the png_ptr and info_ptr */
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     /* If we get here, we had a problem reading the file */
-    result = NULL;
+    result = nullptr;
     return result;
   }
 

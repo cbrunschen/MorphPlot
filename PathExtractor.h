@@ -14,7 +14,6 @@
 #include "Bitmap.h"
 #include "GreyImage.h"
 #include "Chain.h"
-#include "Counted.h"
 #include "Progress.h"
 #include <iostream>
 #include <list>

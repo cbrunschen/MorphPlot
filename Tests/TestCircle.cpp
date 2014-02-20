@@ -134,7 +134,7 @@ TEST_CASE("offsets/filter", "filter the offsets")
 TEST_CASE("offsets/fromHorizontalTInset", "testing a theory")
 {
   int r = 7;
-  Ref<Bitmap> bitmap(new Bitmap(51, 51, true));
+  shared_ptr<Bitmap> bitmap(new Bitmap(51, 51, true));
   
   Circle circle(r);
   
@@ -146,24 +146,24 @@ TEST_CASE("offsets/fromHorizontalTInset", "testing a theory")
     
   cerr << *bitmap << endl;
 
-  Ref<Bitmap> inset(bitmap->inset(r));
+  shared_ptr<Bitmap> inset(bitmap->inset(r));
 
   cerr << *inset << endl;
   
-  Ref<Bitmap> outset(inset->outset(r));
+  shared_ptr<Bitmap> outset(inset->outset(r));
   
   cerr << *outset << endl;
 
-  Ref<Bitmap> remainder(*bitmap - *outset);
+  shared_ptr<Bitmap> remainder(*bitmap - *outset);
 
   cerr << *remainder << endl;
   
-  Ref<Bitmap> adjacent(outset->adjacent(remainder));
+  shared_ptr<Bitmap> adjacent(outset->adjacent(remainder));
 
   cerr << *adjacent << endl;
   
   vector<Boundary> adjacents;
-  Ref< Image<int> > marks(new Image<int>(adjacent->width(), adjacent->height(), true));
+  shared_ptr< GreyImage<int> > marks = make_shared< GreyImage<int> >(adjacent->width(), adjacent->height());
   adjacent->scanBoundaries(adjacents, *marks, false);
   
   cerr << "  - adjacent pixel chains:" << endl;
@@ -196,7 +196,7 @@ TEST_CASE("offsets/fromAlmostHorizontalTInset", "testing a theory")
   return;
   
   int r = 7;
-  Ref<Bitmap> bitmap(new Bitmap(51, 51, true));
+  shared_ptr<Bitmap> bitmap(new Bitmap(51, 51, true));
   
   Circle circle(r);
   
@@ -210,24 +210,24 @@ TEST_CASE("offsets/fromAlmostHorizontalTInset", "testing a theory")
   
   cerr << *bitmap << endl;
   
-  Ref<Bitmap> inset(bitmap->inset(r));
+  shared_ptr<Bitmap> inset(bitmap->inset(r));
   
   cerr << *inset << endl;
   
-  Ref<Bitmap> outset(inset->outset(r));
+  shared_ptr<Bitmap> outset(inset->outset(r));
   
   cerr << *outset << endl;
   
-  Ref<Bitmap> remainder(*bitmap - *outset);
+  shared_ptr<Bitmap> remainder(*bitmap - *outset);
   
   cerr << *remainder << endl;
   
-  Ref<Bitmap> adjacent(outset->adjacent(remainder));
+  shared_ptr<Bitmap> adjacent(outset->adjacent(remainder));
   
   cerr << *adjacent << endl;
   
   vector<Boundary> adjacents;
-  Ref< Image<int> > marks(new Image<int>(adjacent->width(), adjacent->height()));
+  shared_ptr< Image<int> > marks = make_shared< Image<int> >(adjacent->width(), adjacent->height());
   marks->clear();
   adjacent->scanBoundaries(adjacents, *marks, false);
   
@@ -260,7 +260,7 @@ TEST_CASE("offsets/from45DegreeTInset", "testing a theory")
   int r = 17;
   int width = 4*r + 2 + 10;
   int w2 = width / 2;
-  Ref<Bitmap> bitmap(new Bitmap(width, width, true));
+  shared_ptr<Bitmap> bitmap(new Bitmap(width, width, true));
   
   Circle circle(r);
   
@@ -275,24 +275,24 @@ TEST_CASE("offsets/from45DegreeTInset", "testing a theory")
   
   cerr << *bitmap << endl;
   
-  Ref<Bitmap> inset(bitmap->inset(r));
+  shared_ptr<Bitmap> inset(bitmap->inset(r));
   
   cerr << *inset << endl;
   
-  Ref<Bitmap> outset(inset->outset(r));
+  shared_ptr<Bitmap> outset(inset->outset(r));
   
   cerr << *outset << endl;
   
-  Ref<Bitmap> remainder(*bitmap - *outset);
+  shared_ptr<Bitmap> remainder(*bitmap - *outset);
   
   cerr << *remainder << endl;
   
-  Ref<Bitmap> adjacent(outset->adjacent(remainder));
+  shared_ptr<Bitmap> adjacent(outset->adjacent(remainder));
   
   cerr << adjacent << endl;
   
   vector<Boundary> adjacents;
-  Ref< Image<int> > marks(new Image<int>(adjacent->width(), adjacent->height()));
+  shared_ptr< Image<int> > marks = make_shared< Image<int> >(adjacent->width(), adjacent->height());
   marks->clear();
   adjacent->scanBoundaries(adjacents, *marks, false);
   

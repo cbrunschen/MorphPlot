@@ -17,6 +17,7 @@
 #include <map>
 #include <iomanip>
 #include <cstdio>
+#include <memory>
 
 using namespace std;
 
@@ -149,11 +150,11 @@ int main(int argc, char * const argv[]) {
   
   typedef uint8_t C;
   typedef ColorImage<C> ColorImage;
-  typedef Ref<ColorImage> ColorImageRef;
+  typedef shared_ptr<ColorImage> ColorImageRef;
   typedef RGBPixel<C> RGBPixel;
   typedef GreyImage<C> GreyImage;
-  typedef Ref<GreyImage> GreyImageRef;
-  typedef Ref<Bitmap> BitmapRef;
+  typedef shared_ptr<GreyImage> GreyImageRef;
+  typedef shared_ptr<Bitmap> BitmapRef;
   typedef PenColor<C> PenColor;
   typedef Pen<C> Pen;
   typedef Carousel<C> Carousel;

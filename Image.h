@@ -12,7 +12,6 @@
 
 #include "Primitives.h"
 #include "Chain.h"
-#include "Counted.h"
 #include "Line.h"
 #include "Circle_Impl.h"
 
@@ -23,7 +22,7 @@ namespace Images {
 
 using namespace Chaining;
 
-template <typename Pixel> class Image : public Counted {
+template <typename Pixel> class Image {
 protected:
   int width_;
   int height_;
@@ -37,7 +36,7 @@ protected:
   
 public:  
   typedef Image<Pixel> Self;
-  typedef Ref< Image<Pixel> > ImageRef;
+  typedef shared_ptr< Image<Pixel> > ImageRef;
 
   class Row {
   protected:
@@ -54,7 +53,7 @@ public:
     const Pixel * const data() const { return data_; }
   };
   
-  Image(int width = 0, int height = 0, bool doClear = true) 
+  Image(const int width = 0, const int height = 0, const bool doClear = true)
   : width_(width), height_(height), xRes_(0), yRes_(0), resUnit_(0), data_(new Pixel[width * height]) {
     if (doClear) {
       clear();
@@ -124,7 +123,7 @@ public:
     copyRes(*other);
   }
   
-  template<typename T> void copyRes(Ref< T > other) {
+  template<typename T> void copyRes(shared_ptr< T > other) {
     copyRes(*other);
   }
     
@@ -447,8 +446,8 @@ public:
     return !(*this == other);
   }
   
-  template<typename F, typename R> Ref< Image<R> > apply(F &f) {
-    Ref< Image<R> > result = Image<R>::make(width(), height(), false);
+  template<typename F, typename R> shared_ptr< Image<R> > apply(F &f) {
+    shared_ptr< Image<R> > result = Image<R>::make(width(), height(), false);
     for (int y = 0; y < height(); ++y) {
       for (int x = 0; x < width(); ++x) {
         result.at(y, x) = f(get(y, x));
@@ -472,10 +471,10 @@ template <typename P> ostream &operator<<(ostream &out, const Image<P> &i) {
   return out;
 }
 
-template<typename I> Ref<I> scaleImage(const I &src, double xScale, double yScale) {
+template<typename I> shared_ptr<I> scaleImage(const I &src, double xScale, double yScale) {
   int w = src.width() * xScale;
   int h = src.height() * yScale;
-  Ref<I> result(new I(w, h));
+  shared_ptr<I> result(new I(w, h));
   for (int y = 0; y < h; y++) {
     typename I::Row sourceRow = (src)[y / yScale];
     typename I::Row resultRow = (*result)[y];
@@ -489,11 +488,11 @@ template<typename I> Ref<I> scaleImage(const I &src, double xScale, double yScal
   return result;
 }
 
-template<typename I> Ref<I> scaleImage(Ref<I> src, double xScale, double yScale) {
+template<typename I> shared_ptr<I> scaleImage(shared_ptr<I> src, double xScale, double yScale) {
   return scaleImage(*src, xScale, yScale);
 }
 
-template<typename I> Ref<I> scaleImage(Ref<I> src, double scale) {
+template<typename I> shared_ptr<I> scaleImage(shared_ptr<I> src, double scale) {
   return scaleImage(src, scale, scale);
 }
 

@@ -17,6 +17,7 @@
 #include <map>
 #include <iomanip>
 #include <cstdio>
+#include <memory>
 
 using namespace std;
 
@@ -121,7 +122,7 @@ static bool checkArg(int argc, const char * const * const argv, int &argn, const
   }
 }
 
-class Tool : public Counted {
+class Tool {
   int r_;
   int zUp_;
   int zDown_;
@@ -144,8 +145,8 @@ public:
 int main(int argc, char * const argv[]) {
   typedef uint16_t H;
   typedef GreyImage<H> HeightMap;
-  typedef Ref<HeightMap> HeightMapRef;
-  typedef Ref<Bitmap> BitmapRef;
+  typedef shared_ptr<HeightMap> HeightMapRef;
+  typedef shared_ptr<Bitmap> BitmapRef;
 
   bool steps = false;
   string stepPrefix = "/tmp/steps";

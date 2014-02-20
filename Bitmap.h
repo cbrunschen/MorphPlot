@@ -49,13 +49,13 @@ class Bitmap;
 
 namespace Bitmaps {
   extern bool writePng(const Bitmap &image, FILE *fp);
-  extern Ref<Bitmap> readPng(FILE *fp);
+  extern shared_ptr<Bitmap> readPng(FILE *fp);
 }
 
 class Bitmap : public Image<bool> {
 public:
   typedef Bitmap Self;
-  typedef Ref<Self> BitmapRef;
+  typedef shared_ptr<Self> BitmapRef;
   typedef Image<bool> Super;
   typedef Super::Row Row;
 
@@ -93,9 +93,9 @@ public:
   
   void distanceTransform(bool background, int x0, int x1, int y0, int y1, GreyImage<int> *g, GreyImage<int> *result) const;
 
-  Ref< GreyImage<int> > distanceTransform(bool background = true, int threads = 1) const;
+  shared_ptr< GreyImage<int> > distanceTransform(bool background = true, int threads = 1) const;
 
-  Ref< GreyImage<int> > distanceTransform(bool background, Workers &workers) const;
+  shared_ptr< GreyImage<int> > distanceTransform(bool background, Workers &workers) const;
 
   BitmapRef inset(int r, int threads = 1) const;
   

@@ -12,7 +12,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include "Counted.h"
 #include "Primitives.h"
 #include "Bitmap.h"
 #include "ColorImage.h"
@@ -63,7 +62,7 @@ public:
     mFraction = color.mFraction();
     yFraction = color.yFraction();
   }
-  void addToApproximation(Ref<Bitmap> covered) {
+  void addToApproximation(shared_ptr<Bitmap> covered) {
     for (int y = 0; y < covered->height(); y++) {
       for (int x = 0; x < covered->width(); x++)  {
         if (covered->at(y, x)) {

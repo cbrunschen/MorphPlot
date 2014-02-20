@@ -64,9 +64,9 @@ static inline void verifySame(const Bitmap &a, const Bitmap &b) {
 
 #define T(op) do {                                                                                       \
   double t0 = now();                                                                                     \
-  Ref<Bitmap> seq = image.op(cutoff);                                                                    \
+  shared_ptr<Bitmap> seq = image.op(cutoff);                                                                    \
   double t1 = now();                                                                                     \
-  Ref<Bitmap> par = image.op(cutoff, workers);                                                           \
+  shared_ptr<Bitmap> par = image.op(cutoff, workers);                                                           \
   double t2 = now();                                                                                     \
   double t01 = t1 - t0;                                                                                  \
   double t12 = t2 - t1;                                                                                  \

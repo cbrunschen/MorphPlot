@@ -31,7 +31,7 @@ static void setAll(Bitmap &bitmap, const Circle &circle, const Point &p0) {
 
 TEST_CASE("reconstruct", "reconstruct: some should stay and some should go")
 {
-  Ref<Bitmap> bitmap(new Bitmap(70, 70));
+  shared_ptr<Bitmap> bitmap(new Bitmap(70, 70));
   
   Circle c9(9);
   Circle c7(7);
@@ -44,8 +44,8 @@ TEST_CASE("reconstruct", "reconstruct: some should stay and some should go")
   setAll(*bitmap, c7, Point(9, 19));
   
   cerr << endl << "Original:" << endl << *bitmap << endl;
-  Ref<Bitmap> inset(bitmap->inset(7));
+  shared_ptr<Bitmap> inset(bitmap->inset(7));
   cerr << endl << "Inset:" << endl << *inset << endl;
-  Ref<Bitmap> reconstructed(inset->reconstruct(bitmap));
+  shared_ptr<Bitmap> reconstructed(inset->reconstruct(bitmap));
   cerr << endl << "Reconstructed:" << endl << *reconstructed << endl;
 }

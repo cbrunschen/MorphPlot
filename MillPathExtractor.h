@@ -19,7 +19,7 @@ namespace Extraction {
 
 class MillPathExtractor : public PathExtractor {
   
-  typedef Ref<Bitmap> BitmapRef;
+  typedef shared_ptr<Bitmap> BitmapRef;
   
 public:
   BitmapRef outlineAndFill(BitmapRef remaining, int toolRadius, int extraInset, Chains &outlineChains, Chains &fillChains, Workers &workers) {

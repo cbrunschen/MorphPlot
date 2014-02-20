@@ -26,6 +26,7 @@
 #include <list>
 #include <set>
 #include <vector>
+#include <memory>
 
 #if DEBUG
 #define D(x) do { x; } while(0)

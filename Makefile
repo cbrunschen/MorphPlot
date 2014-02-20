@@ -3,7 +3,7 @@
 LIB_OBJECTS=Bitmap.o Primitives.o Circle.o K3M.o PathExtractor.o \
     ColorImage.o Workers.o
 
-LIB_HEADERS=Counted.h FnvHash.h Hatcher.h Line.h HashMapSet.h \
+LIB_HEADERS=FnvHash.h Hatcher.h Line.h HashMapSet.h \
     Chain.h Bitmap.h ColorImage.h GreyImage.h Primitives.h \
     Image.h Output.h FloodFill.h Circle.h K3M.h Progress.h \
     PathExtractor.h PlotterPathExtractor.h MillPathExtractor.h \
@@ -39,7 +39,7 @@ ifeq ($(COMPILER),gcc)
 else ifeq ($(COMPILER),clang)
   CXXFLAGS=-O3
   LDFLAGS=-lc
-  CXX=clang++
+  CXX=clang++ -std=gnu++11
 else ifeq ($(COMPILER),clang-3.1)
   CXXFLAGS=-O3
   LDFLAGS=-lc

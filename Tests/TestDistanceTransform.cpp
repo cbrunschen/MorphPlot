@@ -49,9 +49,9 @@ static inline double frand() {
 }
 
 class PGI {
-	Ref< GreyImage<int> > g_;
+	shared_ptr< GreyImage<int> > g_;
 public:
-	PGI(Ref< GreyImage<int> > g) : g_(g) { }
+	PGI(shared_ptr< GreyImage<int> > g) : g_(g) { }
 	void print(ostream &out) const {
     for (int y = 0; y < g_->height(); y++) {
       for (int x = 0; x < g_->width(); x++) {
@@ -69,7 +69,7 @@ inline ostream &operator<<(ostream &out, const PGI &pgi) {
 
 TEST_CASE("distanceTransform/square", "calculate the distance transform of a square")
 {
-  Ref<Bitmap> bitmap = Bitmap::make(40, 40, true);
+  shared_ptr<Bitmap> bitmap = Bitmap::make(40, 40, true);
   
   for (int y = 9; y < 31; y++) {
     for (int x = 13; x < 27; x++) {
@@ -79,19 +79,19 @@ TEST_CASE("distanceTransform/square", "calculate the distance transform of a squ
   
   cout << "bitmap: " << endl << bitmap << endl << flush;
   
-  Ref< GreyImage<int> > bg = bitmap->distanceTransform(true);
+  shared_ptr< GreyImage<int> > bg = bitmap->distanceTransform(true);
   cout << "Background:" << endl << PGI(bg) << endl << flush;
   
-  Ref< GreyImage<int> > fg = bitmap->distanceTransform(false);
+  shared_ptr< GreyImage<int> > fg = bitmap->distanceTransform(false);
   cout << "Foreground:" << endl << PGI(fg) << endl << flush;
   
-  Ref<Bitmap> inset = bitmap->inset(5);
+  shared_ptr<Bitmap> inset = bitmap->inset(5);
   cout << "inset by 5:" << endl << inset << endl << flush;
   
   for (int r = 0; r < 10; r++) {
-    Ref<Bitmap> outset = bitmap->outset(r);
-    cout << "outset by " << r << ":" << endl << outset << endl << flush;
-    cout << "difference should be " << r << ":" << endl << (*outset - *bitmap) << endl << flush;
+    shared_ptr<Bitmap> outset = bitmap->outset(r);
+    cout << "outset by " << r << ":" << endl << *outset << endl << flush;
+    cout << "difference should be " << r << ":" << endl << *(*outset - *bitmap) << endl << flush;
   }
   
   for (int y = 5; y < 35; y++) {
@@ -101,9 +101,9 @@ TEST_CASE("distanceTransform/square", "calculate the distance transform of a squ
   }
   
   for (int r = 0; r < 10; r++) {
-    Ref<Bitmap> inset = bitmap->inset(r);
-    cout << "inset by " << r << ":" << endl << inset << endl << flush;
-    cout << "difference should be " << r << ":" << endl << (*bitmap - *inset) << endl << flush;
+    shared_ptr<Bitmap> inset = bitmap->inset(r);
+    cout << "inset by " << r << ":" << endl << *inset << endl << flush;
+    cout << "difference should be " << r << ":" << endl << *(*bitmap - *inset) << endl << flush;
   }
 }
 
@@ -111,7 +111,7 @@ TEST_CASE("distanceTransform/threads", "verify that single- and multi-threaded g
 {
   int W = 200;
   int H = 200;
-  Ref<Bitmap> bitmap = Bitmap::make(W, H, true);
+  shared_ptr<Bitmap> bitmap = Bitmap::make(W, H, true);
   Bitmap::Set set = bitmap->set(true);
   
   for (int a = 0; a < (W+H)/10; a++) {
@@ -132,14 +132,14 @@ TEST_CASE("distanceTransform/threads", "verify that single- and multi-threaded g
     line(x0, y0, x1, y1, set, initial, deltaX, deltaXY);
   }
   
-  Ref< GreyImage<int> > bg = bitmap->distanceTransform(true, 1);
-  Ref< GreyImage<int> > fg = bitmap->distanceTransform(false, 1);
+  shared_ptr< GreyImage<int> > bg = bitmap->distanceTransform(true, 1);
+  shared_ptr< GreyImage<int> > fg = bitmap->distanceTransform(false, 1);
   
   for (int threads = 2; threads <= 8; threads *= 2) {
-    Ref< GreyImage<int> > testBg = bitmap->distanceTransform(true, threads);
+    shared_ptr< GreyImage<int> > testBg = bitmap->distanceTransform(true, threads);
     REQUIRE(*testBg == *bg);
     
-    Ref< GreyImage<int> > testFg = bitmap->distanceTransform(false, threads);
+    shared_ptr< GreyImage<int> > testFg = bitmap->distanceTransform(false, threads);
     REQUIRE(*testFg == *fg);
   }
 }
@@ -148,7 +148,7 @@ TEST_CASE("distanceTransform/workers", "verify that single- and multi-threaded g
 {
   int W = 200;
   int H = 200;
-  Ref<Bitmap> bitmap = Bitmap::make(W, H, true);
+  shared_ptr<Bitmap> bitmap = Bitmap::make(W, H, true);
   Bitmap::Set set = bitmap->set(true);
   
   for (int a = 0; a < (W+H)/10; a++) {
@@ -169,16 +169,16 @@ TEST_CASE("distanceTransform/workers", "verify that single- and multi-threaded g
     line(x0, y0, x1, y1, set, initial, deltaX, deltaXY);
   }
   
-  Ref< GreyImage<int> > bg = bitmap->distanceTransform(true, 1);
-  Ref< GreyImage<int> > fg = bitmap->distanceTransform(false, 1);
+  shared_ptr< GreyImage<int> > bg = bitmap->distanceTransform(true, 1);
+  shared_ptr< GreyImage<int> > fg = bitmap->distanceTransform(false, 1);
   
   for (int threads = 2; threads <= 8; threads *= 2) {
     Workers workers(threads);
     
-    Ref< GreyImage<int> > testBg = bitmap->distanceTransform(true, workers);
+    shared_ptr< GreyImage<int> > testBg = bitmap->distanceTransform(true, workers);
     REQUIRE(*testBg == *bg);
     
-    Ref< GreyImage<int> > testFg = bitmap->distanceTransform(false, workers);
+    shared_ptr< GreyImage<int> > testFg = bitmap->distanceTransform(false, workers);
     REQUIRE(*testFg == *fg);
   }
 }

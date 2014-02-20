@@ -75,7 +75,7 @@ template <typename C> class ColorImage;
 
 namespace ColorImages {
   extern bool writePng(const ColorImage<uint8_t> &image, FILE *fp);
-  extern Ref< ColorImage<uint8_t> > readPng(FILE *fp);
+  extern shared_ptr< ColorImage<uint8_t> > readPng(FILE *fp);
 }
 
 template <typename C> class ColorImage : public Image<RGBPixel<C> > {
@@ -89,7 +89,7 @@ public:
   typedef Image<RGBPixel> Super;
   typedef ColorImage<C> Self;
   typedef typename Super::Row Row;
-  typedef Ref<Self> ColorImageRef;
+  typedef shared_ptr<Self> ColorImageRef;
   using Super::width_;
   using Super::height_;
   using Super::data_;
@@ -193,8 +193,8 @@ public:
     }
   }
   
-  template <typename Pen> Ref< GreyImage<C> > separateRemainder(const Pen &pen) {
-    Ref< GreyImage<C> > result(new GreyImage<C>(width_, height_));
+  template <typename Pen> shared_ptr< GreyImage<C> > separateRemainder(const Pen &pen) {
+    shared_ptr< GreyImage<C> > result = make_shared< GreyImage<C> >(width_, height_);
     result->copyRes(this);
 
     D(cerr << "pen has c=" << (int)pen.c() << ",m=" << (int)pen.m() << "y=" << (int)pen.y() << ": ");
@@ -217,8 +217,8 @@ public:
     return result;
   }
   
-  template <typename Pen> Ref< GreyImage<C> > separateAndSubtract(const Pen &pen) {
-    Ref< GreyImage<C> > result(new GreyImage<C>(width_, height_));
+  template <typename Pen> shared_ptr< GreyImage<C> > separateAndSubtract(const Pen &pen) {
+    shared_ptr< GreyImage<C> > result = make_shared< GreyImage<C> >(width_, height_);
     result->copyRes(*this);
     
     D(cerr << "pen has c=" << (int)pen.c() << ",m=" << (int)pen.m() << "y=" << (int)pen.y() << ": ");

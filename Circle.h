@@ -413,7 +413,6 @@ public:
     
     if (added == 0 && directions.size() > 0) {
       vector<int>::const_iterator dirEnd = directions.end();
-      Source s = source;      
       for (Source s = source; s != sourceEnd; ++s) {
         added += _findFilteredOffsets(*s, dirEnd, dirEnd, check, result);
       }

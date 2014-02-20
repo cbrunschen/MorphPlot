@@ -38,7 +38,7 @@ namespace GreyImages {
 #endif
 
 template<typename T> extern bool writePng(const GreyImage<T> &image, FILE *fp);
-template<typename T, bool shiftDown> extern Ref< GreyImage<T> > readPng(FILE *fp, T background);
+template<typename T, bool shiftDown> extern shared_ptr< GreyImage<T> > readPng(FILE *fp, T background);
 
 #if 0
 {
@@ -51,7 +51,7 @@ private:
 
 public:
   typedef GreyImage<C> Self;
-  typedef Ref<Self> GreyImageRef;
+  typedef shared_ptr<Self> GreyImageRef;
   typedef Image<C> Super;
   typedef typename Super::Row Row;
   typedef typename Super::iterator iterator;
@@ -85,16 +85,16 @@ public:
   static GreyImageRef readPngHeightmap(const char * const filename);
   static GreyImageRef readPngHeightmap(const string &filename);
 
-  template<typename Op> Ref<Bitmap> where(Op &op, C value) const;
+  template<typename Op> shared_ptr<Bitmap> where(Op &op, C value) const;
 
-  Ref<Bitmap> coverage() const;
-  Ref<Bitmap> coverage(int threads) const;
-  Ref<Bitmap> coverage(Workers &workers) const;
+  shared_ptr<Bitmap> coverage() const;
+  shared_ptr<Bitmap> coverage(int threads) const;
+  shared_ptr<Bitmap> coverage(Workers &workers) const;
 
 #define DECLARE_OP(name)                                 \
-  Ref<Bitmap> name(C value) const;			 \
-  Ref<Bitmap> name(C value, int threads) const;		 \
-  Ref<Bitmap> name(C value, Workers &workers) const
+  shared_ptr<Bitmap> name(C value) const;			 \
+  shared_ptr<Bitmap> name(C value, int threads) const;		 \
+  shared_ptr<Bitmap> name(C value, Workers &workers) const
 
   DECLARE_OP(ge);
   DECLARE_OP(gt);
@@ -105,7 +105,7 @@ public:
 
 #undef DECLARE_OP
 
-  Ref<Bitmap> distribute(void (*func)(void *), C value, Workers &workers) const;
+  shared_ptr<Bitmap> distribute(void (*func)(void *), C value, Workers &workers) const;
 
   C min() const;
   C min(Workers &workers) const;

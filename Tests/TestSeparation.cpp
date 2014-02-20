@@ -36,7 +36,7 @@ TEST_CASE("reconstruct", "reconstruct: some should stay and some should go")
   Pen redPen(0.0, 1.0, 1.0);
   Pen bluePen(1.0, 1.0, 0.0);
   
-  Ref<ColorImage> colorImage(new ColorImage(4, 4));
+  shared_ptr<ColorImage> colorImage(new ColorImage(4, 4));
   for (int y = 0; y < 4; y++) {
     int vy = y | (y << 2) | (y << 4) | (y << 6);
     for (int x = 0; x < 4; x++) {
@@ -45,8 +45,8 @@ TEST_CASE("reconstruct", "reconstruct: some should stay and some should go")
     }
   }
   
-  Ref<GreyImage> redSeparation = colorImage->separateAndSubtract(redPen);
-  Ref<GreyImage> blueSeparation = colorImage->separateAndSubtract(bluePen);
+  shared_ptr<GreyImage> redSeparation = colorImage->separateAndSubtract(redPen);
+  shared_ptr<GreyImage> blueSeparation = colorImage->separateAndSubtract(bluePen);
 
   for (int y = 0; y < 4; y++) {
     int vy = y | (y << 2) | (y << 4) | (y << 6);

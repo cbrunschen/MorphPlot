@@ -15,31 +15,31 @@
 
 #include "Workers.h"
 
+#include <memory>
 
 namespace Images {
 #if 0
 }
 #endif
 
-inline Bitmap::Bitmap(int width, int height, bool doClear)
+inline Bitmap::Bitmap(const int width, const int height, const bool doClear)
 : Super(width, height, doClear) { }
 
 inline Bitmap::Bitmap(const Bitmap &other) : Super(other) { }
 
-inline Ref<Bitmap> Bitmap::make(int width, int height, bool doClear) {
-  Bitmap *bitmap = new Bitmap(width, height, doClear);
-  return Ref<Bitmap>(bitmap);
+inline shared_ptr<Bitmap> Bitmap::make(int width, int height, bool doClear) {
+  return make_shared<Bitmap>(width, height, doClear);
 }
 
-inline Ref<Bitmap> Bitmap::make(const Bitmap * const bitmap) {
-  return Ref<Bitmap>(new Bitmap(*bitmap));
+inline shared_ptr<Bitmap> Bitmap::make(const Bitmap * const bitmap) {
+  return make_shared<Bitmap>(*bitmap);
 }
 
-inline Ref<Bitmap> Bitmap::make(const Bitmap &bitmap) {
-  return Ref<Bitmap>(new Bitmap(bitmap));
+inline shared_ptr<Bitmap> Bitmap::make(const Bitmap &bitmap) {
+  return make_shared<Bitmap>(bitmap);
 }
 
-inline Ref<Bitmap> Bitmap::clone() {
+inline shared_ptr<Bitmap> Bitmap::clone() {
   return make(this);
 }
 
@@ -93,19 +93,19 @@ inline bool Bitmap::writePng(const string &filename) {
   return writePng(filename.c_str());
 }
 
-inline Ref<Bitmap> Bitmap::readPng(FILE *fp) {
+inline shared_ptr<Bitmap> Bitmap::readPng(FILE *fp) {
   return Bitmaps::readPng(fp);
 }
 
-inline Ref<Bitmap> Bitmap::readPng(const char * const filename) {
+inline shared_ptr<Bitmap> Bitmap::readPng(const char * const filename) {
   FILE *f = fopen(filename, "r");
   if (f != NULL) {
     return readPng(f);
   }
-  return Ref<Bitmap>(NULL);
+  return shared_ptr<Bitmap>(nullptr);
 }
 
-inline Ref<Bitmap> Bitmap::readPng(const string &filename) {
+inline shared_ptr<Bitmap> Bitmap::readPng(const string &filename) {
   return readPng(filename.c_str());
 }
 
@@ -229,17 +229,17 @@ struct distance_transform_params {
   const Bitmap *bitmap;
   bool background;
   int x0, x1, y0, y1;
-  Ref< GreyImage<int> > g;
-  Ref< GreyImage<int> > result;
+  GreyImage<int> *g;
+  GreyImage<int> *result;
   Workers::Barrier *barrier;
 };
 
 extern void distance_transform_thread(void *params);
 
-inline Ref< GreyImage<int> > Bitmap::distanceTransform(bool background, Workers &workers) const {
+inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, Workers &workers) const {
   int threads = workers.n();
-  Ref< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
-  Ref< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
+  shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
+  shared_ptr< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
   distance_transform_params *dt_params = new distance_transform_params[threads];
   Workers::Barrier barrier;
   
@@ -252,8 +252,8 @@ inline Ref< GreyImage<int> > Bitmap::distanceTransform(bool background, Workers 
     dt_params[i].x1 = ((width_ * (i + 1)) / threads);
     dt_params[i].y0 = ((height_ * i) / threads);
     dt_params[i].y1 = ((height_ * (i + 1)) / threads);
-    dt_params[i].g = g;
-    dt_params[i].result = result;
+    dt_params[i].g = g.get();
+    dt_params[i].result = result.get();
     dt_params[i].barrier = &barrier;
   }
   
@@ -264,27 +264,27 @@ inline Ref< GreyImage<int> > Bitmap::distanceTransform(bool background, Workers 
   return result;
 }
 
-inline Ref< GreyImage<int> > Bitmap::distanceTransform(bool background, int threads) const {
+inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, int threads) const {
   if (threads > 1) {
     Workers workers(threads);
     return distanceTransform(background, workers);
   } else {
-    Ref< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
-    Ref< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
-    distanceTransformPass1(background, 0, width_, g);
-    distanceTransformPass2(g, 0, height_, result);
+    shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
+    shared_ptr< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
+    distanceTransformPass1(background, 0, width_, g.get());
+    distanceTransformPass2(g.get(), 0, height_, result.get());
     return result;
   }
 }
 
-inline Ref<Bitmap> Bitmap::inset_old(int r) const {
+inline shared_ptr<Bitmap> Bitmap::inset_old(int r) const {
   if (r <= 0) {
-    return Ref<Bitmap>(new Bitmap(*this));
+    return make_shared<Bitmap>(*this);
   }
   return inset_old(Circle(r));
 }
 
-inline Ref<Bitmap> Bitmap::inset_old(const Circle &c) const {
+inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
   int r = c.r();
   int twoR = r << 1;
   int s = twoR + 1;
@@ -306,7 +306,7 @@ inline Ref<Bitmap> Bitmap::inset_old(const Circle &c) const {
     }
   }
   
-  Ref<Bitmap> result = make(width_, height_, true);
+  shared_ptr<Bitmap> result = make(width_, height_, true);
   int cy = r;
   for (int y = twoR; y < height_; y++) {
     int areaCount = 0;
@@ -419,14 +419,14 @@ inline Ref<Bitmap> Bitmap::inset_old(const Circle &c) const {
   return result;
 }
 
-inline Ref<Bitmap> Bitmap::outset_old(int r) const {
+inline shared_ptr<Bitmap> Bitmap::outset_old(int r) const {
   if (r <= 0) {
-    return Ref<Bitmap>(new Bitmap(*this));
+    return make_shared<Bitmap>(*this);
   }
   return outset_old(Circle(r));
 }
 
-inline Ref<Bitmap> Bitmap::outset_old(const Circle &c) const {
+inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
   int r = c.r();
   int twoR = r << 1;
   int s = twoR + 1;
@@ -448,7 +448,7 @@ inline Ref<Bitmap> Bitmap::outset_old(const Circle &c) const {
     }
   }
   
-  Ref<Bitmap> result = make(width_, height_);
+  shared_ptr<Bitmap> result = make(width_, height_);
   for (int y = r; y < height_+r; y++) {
     D(cerr << "*** Row " << y << endl);
     int cy = y - r;
@@ -574,57 +574,57 @@ inline Ref<Bitmap> Bitmap::outset_old(const Circle &c) const {
   return result;
 }
 
-inline Ref<Bitmap> Bitmap::inset(int r, int threads) const {
+inline shared_ptr<Bitmap> Bitmap::inset(int r, int threads) const {
   return distanceTransform(false, threads)->gt(r*r, threads);
 }
 
-inline Ref<Bitmap> Bitmap::outset(int r, int threads) const {
+inline shared_ptr<Bitmap> Bitmap::outset(int r, int threads) const {
   return distanceTransform(true, threads)->le(r*r, threads);
 }
 
-inline Ref<Bitmap> Bitmap::close(int r, int threads) const {
+inline shared_ptr<Bitmap> Bitmap::close(int r, int threads) const {
   return outset(r, threads)->inset(r, threads);
 }
 
-inline Ref<Bitmap> Bitmap::open(int r, int threads) const {
+inline shared_ptr<Bitmap> Bitmap::open(int r, int threads) const {
   return inset(r, threads)->outset(r, threads);
 }
 
-inline Ref<Bitmap> Bitmap::inset(int r, Workers &workers) const {
+inline shared_ptr<Bitmap> Bitmap::inset(int r, Workers &workers) const {
   return distanceTransform(false, workers)->gt(r*r, workers);
 }
 
-inline Ref<Bitmap> Bitmap::outset(int r, Workers &workers) const {
+inline shared_ptr<Bitmap> Bitmap::outset(int r, Workers &workers) const {
   return distanceTransform(true, workers)->le(r*r, workers);
 }
 
-inline Ref<Bitmap> Bitmap::close(int r, Workers &workers) const {
+inline shared_ptr<Bitmap> Bitmap::close(int r, Workers &workers) const {
   return outset(r, workers)->inset(r, workers);
 }
 
-inline Ref<Bitmap> Bitmap::open(int r, Workers &workers) const {
+inline shared_ptr<Bitmap> Bitmap::open(int r, Workers &workers) const {
   return inset(r, workers)->outset(r, workers);
 }
 
-inline Ref<Bitmap> Bitmap::close_old(const Circle &c) const {
+inline shared_ptr<Bitmap> Bitmap::close_old(const Circle &c) const {
   return outset_old(c)->inset_old(c);
 }
 
-inline Ref<Bitmap> Bitmap::close_old(int r) const {
+inline shared_ptr<Bitmap> Bitmap::close_old(int r) const {
   if (r <= 0) {
-    return Ref<Bitmap>(new Bitmap(*this));
+    return make_shared<Bitmap>(*this);
   }
   Circle c(r);
   return outset_old(c)->inset_old(c);
 }
 
-inline Ref<Bitmap> Bitmap::open_old(const Circle &c) const {
+inline shared_ptr<Bitmap> Bitmap::open_old(const Circle &c) const {
   return inset_old(c)->outset_old(c);
 }
 
-inline Ref<Bitmap> Bitmap::open_old(int r) const {
+inline shared_ptr<Bitmap> Bitmap::open_old(int r) const {
   if (r <= 0) {
-    return Ref<Bitmap>(new Bitmap(*this));
+    return make_shared<Bitmap>(*this);
   }
   Circle c(r);
   return inset_old(c)->outset_old(c);
@@ -903,8 +903,8 @@ struct Bitmap::IsMarkedForReconstruction {
   }
 };
 
-inline Ref<Bitmap> Bitmap::reconstruct(const Bitmap &reference) {
-  Ref<Bitmap> result = make(width_, height_, true);
+inline shared_ptr<Bitmap> Bitmap::reconstruct(const Bitmap &reference) {
+  shared_ptr<Bitmap> result = make(width_, height_, true);
   
   Set setResult = result->set(true);
   IsMarkedForReconstruction isMarked(*result, reference);
@@ -920,14 +920,14 @@ inline Ref<Bitmap> Bitmap::reconstruct(const Bitmap &reference) {
   return result;
 }
 
-inline Ref<Bitmap> Bitmap::reconstruct(const Ref<Bitmap> &reference) {
+inline shared_ptr<Bitmap> Bitmap::reconstruct(const shared_ptr<Bitmap> &reference) {
   return reconstruct(*reference);
 }
 
-inline Ref<Bitmap> Bitmap::operator+(const Bitmap &other) const {
+inline shared_ptr<Bitmap> Bitmap::operator+(const Bitmap &other) const {
   int w = max(width_, other.width_);
   int h = max(height_, other.height_);
-  Ref<Bitmap> result = make(w, h, false);
+  shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
       result->at(y, x) = get(y, x) || other.get(y, x);
@@ -945,10 +945,10 @@ inline Bitmap &Bitmap::operator+=(const Bitmap &other) {
   return *this;
 }
 
-inline Ref<Bitmap> Bitmap::operator-(const Bitmap &other) const {
+inline shared_ptr<Bitmap> Bitmap::operator-(const Bitmap &other) const {
   int w = max(width_, other.width_);
   int h = max(height_, other.height_);
-  Ref<Bitmap> result = make(w, h, false);
+  shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
       result->at(y, x) = get(y, x) && !other.get(y, x);
@@ -1182,12 +1182,12 @@ inline void Bitmap::retract(const Bitmap &reference, const Circle &circle) {
   D(cerr << "Bitmap::retract: done after " << iterations << " iterations" << endl);
 }
 
-inline void Bitmap::retract(const Ref<Bitmap> &reference, const Circle &circle) {
+inline void Bitmap::retract(const shared_ptr<Bitmap> &reference, const Circle &circle) {
   retract(*reference, circle);
 }
 
-inline Ref<Bitmap> Bitmap::adjacent(const Bitmap &other) {
-  Ref<Bitmap> result = make(width_, height_);
+inline shared_ptr<Bitmap> Bitmap::adjacent(const Bitmap &other) {
+  shared_ptr<Bitmap> result = make(width_, height_);
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
       result->at(y, x) = at(y, x) &&
@@ -1204,7 +1204,7 @@ inline Ref<Bitmap> Bitmap::adjacent(const Bitmap &other) {
   return result;
 }
 
-inline Ref<Bitmap> Bitmap::adjacent(const Ref<Bitmap> &other) {
+inline shared_ptr<Bitmap> Bitmap::adjacent(const shared_ptr<Bitmap> &other) {
   return adjacent(*other);
 }
 

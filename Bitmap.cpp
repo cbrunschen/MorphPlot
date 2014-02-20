@@ -844,10 +844,10 @@ namespace Bitmaps {
 #endif
 
 #define PNG_BYTES_TO_CHECK 8
-Ref<Bitmap> readPng(FILE *fp) {
-  Ref< GreyImage<uint8_t> > greyImage = GreyImage<uint8_t>::readPng(fp);
-  Ref<Bitmap> result(NULL);
-  if (greyImage == 0) {
+shared_ptr<Bitmap> readPng(FILE *fp) {
+  shared_ptr< GreyImage<uint8_t> > greyImage = GreyImage<uint8_t>::readPng(fp);
+  shared_ptr<Bitmap> result(NULL);
+  if (!greyImage) {
     return result;
   }
   

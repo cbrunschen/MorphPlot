@@ -20,10 +20,10 @@ namespace ColorImages {
 #endif
 
 #define PNG_BYTES_TO_CHECK 8
-Ref< ColorImage<uint8_t> > readPng(FILE *fp) {
+shared_ptr< ColorImage<uint8_t> > readPng(FILE *fp) {
   png_byte buf[PNG_BYTES_TO_CHECK];
   
-  Ref< ColorImage<uint8_t> > result(NULL);
+  shared_ptr< ColorImage<uint8_t> > result(NULL);
   
   /* Read in some of the signature bytes */
   if (fread(buf, 1, PNG_BYTES_TO_CHECK, fp) != PNG_BYTES_TO_CHECK) {
@@ -61,7 +61,7 @@ Ref< ColorImage<uint8_t> > readPng(FILE *fp) {
     /* Free all of the memory associated with the png_ptr and info_ptr */
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     /* If we get here, we had a problem reading the file */
-    result = NULL;
+    result = nullptr;
     return result;
   }    
   

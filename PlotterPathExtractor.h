@@ -18,7 +18,7 @@ namespace Extraction {
 
 class PlotterPathExtractor : public PathExtractor {
   
-  typedef Ref<Bitmap> BitmapRef;
+  typedef shared_ptr<Bitmap> BitmapRef;
     
 public:
   BitmapRef outlineAndHatch(Chains &outlineChains, Chains &hatchedChains, BitmapRef remaining, int penRadius, double hatchAngle, double hatchPhase, Circle &penCircle, Image<int> marks) {
@@ -289,7 +289,7 @@ public:
   }
   
   template<typename C, typename Pens, typename DitheredByPen>
-  void outlineHatchThinDither(const Ref<GreyImage<C> > separated, const Pens &pens, DitheredByPen &ditheredByPen, double tolerance = 0.9) {
+  void outlineHatchThinDither(const shared_ptr<GreyImage<C> > separated, const Pens &pens, DitheredByPen &ditheredByPen, double tolerance = 0.9) {
     (*out_) << "- Generating coverage" << endl;
     BitmapRef remaining(separated->coverage());
     BitmapRef covered(Bitmap::make(remaining->width(), remaining->height(), true));

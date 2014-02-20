@@ -19,7 +19,6 @@
 		2222099C18A9315800ED90B0 /* Chain.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0DD15FCD7FD00F74DAA /* Chain.h */; };
 		2222099D18A9315800ED90B0 /* Circle.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0DF15FCD7FD00F74DAA /* Circle.h */; };
 		2222099E18A9315800ED90B0 /* ColorImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E015FCD7FD00F74DAA /* ColorImage.h */; };
-		2222099F18A9315800ED90B0 /* Counted.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E115FCD7FD00F74DAA /* Counted.h */; };
 		222209A018A9315800ED90B0 /* FloodFill.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E215FCD7FD00F74DAA /* FloodFill.h */; };
 		222209A118A9315800ED90B0 /* FnvHash.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E315FCD7FD00F74DAA /* FnvHash.h */; };
 		222209A218A9315800ED90B0 /* GreyImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E415FCD7FD00F74DAA /* GreyImage.h */; };
@@ -188,7 +187,6 @@
 		2280A0DE15FCD7FD00F74DAA /* Circle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Circle.cpp; sourceTree = "<group>"; };
 		2280A0DF15FCD7FD00F74DAA /* Circle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Circle.h; sourceTree = "<group>"; };
 		2280A0E015FCD7FD00F74DAA /* ColorImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorImage.h; sourceTree = "<group>"; };
-		2280A0E115FCD7FD00F74DAA /* Counted.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Counted.h; sourceTree = "<group>"; };
 		2280A0E215FCD7FD00F74DAA /* FloodFill.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FloodFill.h; sourceTree = "<group>"; };
 		2280A0E315FCD7FD00F74DAA /* FnvHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnvHash.h; sourceTree = "<group>"; };
 		2280A0E415FCD7FD00F74DAA /* GreyImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GreyImage.h; sourceTree = "<group>"; };
@@ -371,7 +369,6 @@
 				2280A0DF15FCD7FD00F74DAA /* Circle.h */,
 				2280A0E015FCD7FD00F74DAA /* ColorImage.h */,
 				2280A14015FCDFC800F74DAA /* ColorImage.cpp */,
-				2280A0E115FCD7FD00F74DAA /* Counted.h */,
 				2280A0E215FCD7FD00F74DAA /* FloodFill.h */,
 				2280A0E315FCD7FD00F74DAA /* FnvHash.h */,
 				2280A0E415FCD7FD00F74DAA /* GreyImage.h */,
@@ -420,7 +417,6 @@
 				2222099C18A9315800ED90B0 /* Chain.h in Headers */,
 				2222099D18A9315800ED90B0 /* Circle.h in Headers */,
 				2222099E18A9315800ED90B0 /* ColorImage.h in Headers */,
-				2222099F18A9315800ED90B0 /* Counted.h in Headers */,
 				222209A018A9315800ED90B0 /* FloodFill.h in Headers */,
 				222209A118A9315800ED90B0 /* FnvHash.h in Headers */,
 				222209A218A9315800ED90B0 /* GreyImage.h in Headers */,
@@ -980,6 +976,7 @@
 				2222099218A9311900ED90B0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		222209B918A9317B00ED90B0 /* Build configuration list for PBXNativeTarget "plot" */ = {
 			isa = XCConfigurationList;
@@ -988,6 +985,7 @@
 				222209BB18A9317B00ED90B0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		222209C618A9319F00ED90B0 /* Build configuration list for PBXNativeTarget "mill" */ = {
 			isa = XCConfigurationList;
@@ -996,6 +994,7 @@
 				222209C818A9319F00ED90B0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		222209DB18A9569000ED90B0 /* Build configuration list for PBXNativeTarget "Tests" */ = {
 			isa = XCConfigurationList;
@@ -1004,6 +1003,7 @@
 				222209DD18A9569000ED90B0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
