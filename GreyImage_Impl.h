@@ -123,7 +123,7 @@ inline shared_ptr<Bitmap> GreyImage<C>::coverage(Workers &workers) const {
 template<typename C>
 template<typename Op>
 inline shared_ptr<Bitmap> GreyImage<C>::where(Op &op, C value) const {
-  shared_ptr<Bitmap> result(new Bitmap(width_, height_));
+  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);
   Bitmap::iterator dst = result->begin();
   GreyImage<C>::const_iterator src = this->begin();
   GreyImage<C>::const_iterator end = this->end();
@@ -136,7 +136,7 @@ inline shared_ptr<Bitmap> GreyImage<C>::where(Op &op, C value) const {
 
 template<typename C>
 inline shared_ptr<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value, Workers &workers) const {
-  shared_ptr<Bitmap> result(new Bitmap(width_, height_));
+  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);
   int n = workers.n();
   GreyImage<C>::Range *ranges = new GreyImage<C>::Range[n];
   for (int i = 0; i < n; i++) {
@@ -168,7 +168,7 @@ inline void GreyImage<C>::name(void *params) {							      \
 												      \
 template<typename C>										      \
 inline shared_ptr<Bitmap> GreyImage<C>::name(C value) const {						      \
-  shared_ptr<Bitmap> result(new Bitmap(width_, height_));						      \
+  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);						      \
   Bitmap::iterator dst = result->begin();							      \
   GreyImage<C>::const_iterator src = this->begin();						      \
   GreyImage<C>::const_iterator end = this->end();						      \

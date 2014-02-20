@@ -76,8 +76,7 @@ public:
   }
   
   static ImageRef make(int width = 0, int height = 0, bool doClear = true) {
-    Image *image = new Image(width, height, doClear);
-    return ImageRef(image);
+    return make_shared<Image>(width, height, doClear);
   }
   
   void clear() {
@@ -474,7 +473,7 @@ template <typename P> ostream &operator<<(ostream &out, const Image<P> &i) {
 template<typename I> shared_ptr<I> scaleImage(const I &src, double xScale, double yScale) {
   int w = src.width() * xScale;
   int h = src.height() * yScale;
-  shared_ptr<I> result(new I(w, h));
+  shared_ptr<I> result = make_shared<I>(w, h);
   for (int y = 0; y < h; y++) {
     typename I::Row sourceRow = (src)[y / yScale];
     typename I::Row resultRow = (*result)[y];

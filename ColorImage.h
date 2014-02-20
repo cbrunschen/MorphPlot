@@ -108,16 +108,15 @@ public:
   }
   
   static ColorImageRef make(int width = 0, int height = 0, bool doClear = true) {
-    ColorImage *image = new ColorImage(width, height, doClear);
-    return ColorImageRef(image);
+    return make_shared<ColorImage>(width, height, doClear);
   }
   
   static ColorImageRef make(const ColorImage * const image) {
-    return ColorImageRef(new ColorImage(*image));
+    return make_shared<ColorImage>(*image);
   }
 
   static ColorImageRef make(const ColorImage &image) {
-    return ColorImageRef(new ColorImage(image));
+    return make_shared<ColorImage>(image);
   }
   
   ColorImageRef clone() {
