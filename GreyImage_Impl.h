@@ -152,50 +152,50 @@ inline shared_ptr<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value
   return result;
 }
 
-#define IMPLEMENT_OP(name, operator)                                                                  \
-template<typename C>    									      \
-inline void GreyImage<C>::name(void *params) {							      \
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);	      \
-  typename GreyImage<C>::const_iterator src = p->begin;						      \
-  typename GreyImage<C>::const_iterator end = p->end;						      \
-  Bitmap::iterator dst = p->dst;								      \
-  C value = p->value;										      \
-  												      \
-  while (src != end) {										      \
-    *dst++ = *src++ operator value;								      \
-  }												      \
-}												      \
-												      \
-template<typename C>										      \
-inline shared_ptr<Bitmap> GreyImage<C>::name(C value) const {						      \
-  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);						      \
-  Bitmap::iterator dst = result->begin();							      \
-  GreyImage<C>::const_iterator src = this->begin();						      \
-  GreyImage<C>::const_iterator end = this->end();						      \
-  while (src != end) {										      \
-    *dst++ = (*src++ operator value); 						                      \
-  }												      \
-  return result;										      \
-}												      \
-												      \
-template<typename C>										      \
-inline shared_ptr<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {			      \
-  if (workers.n() > 1) {									      \
-    return distribute(GreyImage<C>::name, value, workers);					      \
-  } else {											      \
-    return name(value);										      \
-  }												      \
-}												      \
-												      \
-template<typename C>										      \
-inline shared_ptr<Bitmap> GreyImage<C>::name(C value, int threads) const {				      \
-  if (threads > 1) {										      \
-    Workers workers(threads);									      \
-    return distribute(GreyImage<C>::name, value, workers);					      \
-  } else {											      \
-    return name(value);										      \
-  }												      \
-}												      \
+#define IMPLEMENT_OP(name, operator)                                                           \
+template<typename C>                                                                           \
+inline void GreyImage<C>::name(void *params) {                                                 \
+  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);       \
+  typename GreyImage<C>::const_iterator src = p->begin;                                        \
+  typename GreyImage<C>::const_iterator end = p->end;                                          \
+  Bitmap::iterator dst = p->dst;                                                               \
+  C value = p->value;                                                                          \
+                                                                                               \
+  while (src != end) {                                                                         \
+    *dst++ = *src++ operator value;                                                            \
+  }                                                                                            \
+}                                                                                              \
+                                                                                               \
+template<typename C>                                                                           \
+inline shared_ptr<Bitmap> GreyImage<C>::name(C value) const {                                  \
+  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);                            \
+  Bitmap::iterator dst = result->begin();                                                      \
+  GreyImage<C>::const_iterator src = this->begin();                                            \
+  GreyImage<C>::const_iterator end = this->end();                                              \
+  while (src != end) {                                                                         \
+    *dst++ = (*src++ operator value);                                                          \
+  }                                                                                            \
+  return result;                                                                               \
+}                                                                                              \
+                                                                                               \
+template<typename C>                                                                           \
+inline shared_ptr<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {                \
+  if (workers.n() > 1) {                                                                       \
+    return distribute(GreyImage<C>::name, value, workers);                                     \
+  } else {                                                                                     \
+    return name(value);                                                                        \
+  }                                                                                            \
+}                                                                                              \
+                                                                                               \
+template<typename C>                                                                           \
+inline shared_ptr<Bitmap> GreyImage<C>::name(C value, int threads) const {                     \
+  if (threads > 1) {                                                                           \
+    Workers workers(threads);                                                                  \
+    return distribute(GreyImage<C>::name, value, workers);                                     \
+  } else {                                                                                     \
+    return name(value);                                                                        \
+  }                                                                                            \
+}                                                                                               
 
 IMPLEMENT_OP(ge, >=)
 IMPLEMENT_OP(gt, >)
@@ -206,59 +206,59 @@ IMPLEMENT_OP(ne, !=)
 
 #undef IMPLEMENT_OP
 
-#define IMPLEMENT_MINMAX(name, operator)       	       	       	       	       	       	       	       	    \
-template<typename C>											    \
-inline void GreyImage<C>::name(void *params) {								    \
-  typename GreyImage<C>::ReductionRange *p = static_cast<typename GreyImage<C>::ReductionRange *>(params);  \
-  typename GreyImage<C>::const_iterator src = p->begin;							    \
-  typename GreyImage<C>::const_iterator end = p->end;							    \
-													    \
-  C value = *src++;											    \
-  while (src != end) {											    \
-    C tmp = *src++;											    \
-    if (tmp operator value) value = tmp;								    \
-  }													    \
-  p->value = value;											    \
-}													    \
-													    \
-template<typename C>											    \
-inline C GreyImage<C>::name() const {									    \
-  GreyImage<C>::const_iterator src = this->begin();							    \
-  GreyImage<C>::const_iterator end = this->end();							    \
-  C value = *src++;											    \
-  while (src != end) {											    \
-    C tmp = *src++;											    \
-    if (tmp operator value) value = tmp;								    \
-  }													    \
-  return value;												    \
-}													    \
-													    \
-template<typename C>											    \
-inline C GreyImage<C>::name(Workers &workers) const {							    \
-  int n = workers.n();											    \
-  if (n > 1) {												    \
-    GreyImage<C>::ReductionRange *ranges = new GreyImage<C>::ReductionRange[n];				    \
-    for (int i = 0; i < n; i++) {									    \
-      ranges[i].begin = this->iter_at(i * height_ / n);							    \
-      ranges[i].end = this->iter_at((i + 1) * height_ / n);						    \
-    }													    \
-													    \
-    workers.perform(GreyImage<C>::name, &ranges[0]);							    \
-													    \
-    C value = ranges[0].value;										    \
-    for (int i = 1; i < n; i++) {									    \
-      C tmp = ranges[i].value;										    \
-      if (tmp operator value) value = tmp;   							            \
-    }													    \
-													    \
-    delete [] ranges;											    \
-    return value;											    \
-  } else {												    \
-    return name();											    \
-  }													    \
-}
-
-IMPLEMENT_MINMAX(min, <)
+#define IMPLEMENT_MINMAX(name, operator)                                                                      \
+template<typename C>                                                                                          \
+inline void GreyImage<C>::name(void *params) {                                                                \
+  typename GreyImage<C>::ReductionRange *p = static_cast<typename GreyImage<C>::ReductionRange *>(params);    \
+  typename GreyImage<C>::const_iterator src = p->begin;                                                       \
+  typename GreyImage<C>::const_iterator end = p->end;                                                         \
+                                                                                                              \
+  C value = *src++;                                                                                           \
+  while (src != end) {                                                                                        \
+    C tmp = *src++;                                                                                           \
+    if (tmp operator value) value = tmp;                                                                      \
+  }                                                                                                           \
+  p->value = value;                                                                                           \
+}                                                                                                             \
+                                                                                                              \
+template<typename C>                                                                                          \
+inline C GreyImage<C>::name() const {                                                                         \
+  GreyImage<C>::const_iterator src = this->begin();                                                           \
+  GreyImage<C>::const_iterator end = this->end();                                                             \
+  C value = *src++;                                                                                           \
+  while (src != end) {                                                                                        \
+    C tmp = *src++;                                                                                           \
+    if (tmp operator value) value = tmp;                                                                      \
+  }                                                                                                           \
+  return value;                                                                                               \
+}                                                                                                             \
+                                                                                                              \
+template<typename C>                                                                                          \
+inline C GreyImage<C>::name(Workers &workers) const {                                                         \
+  int n = workers.n();                                                                                        \
+  if (n > 1) {                                                                                                \
+    GreyImage<C>::ReductionRange *ranges = new GreyImage<C>::ReductionRange[n];                               \
+    for (int i = 0; i < n; i++) {                                                                             \
+      ranges[i].begin = this->iter_at(i * height_ / n);                                                       \
+      ranges[i].end = this->iter_at((i + 1) * height_ / n);                                                   \
+    }                                                                                                         \
+                                                                                                              \
+    workers.perform(GreyImage<C>::name, &ranges[0]);                                                          \
+                                                                                                              \
+    C value = ranges[0].value;                                                                                \
+    for (int i = 1; i < n; i++) {                                                                             \
+      C tmp = ranges[i].value;                                                                                \
+      if (tmp operator value) value = tmp;                                                                    \
+    }                                                                                                         \
+                                                                                                              \
+    delete [] ranges;                                                                                         \
+    return value;                                                                                             \
+  } else {                                                                                                    \
+    return name();                                                                                            \
+  }                                                                                                           \
+}                                                                                                              
+																											  
+IMPLEMENT_MINMAX(min, <)																					  
 IMPLEMENT_MINMAX(max, >)
 
 #undef IMPLEMENT_MINMAX

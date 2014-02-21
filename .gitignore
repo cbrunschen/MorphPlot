@@ -8,4 +8,5 @@ test_meijer
 Tests/tests
 xcshareddata
 xcuserdata
+*.xcuserstate
 
