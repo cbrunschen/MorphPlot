@@ -6,7 +6,10 @@ mill
 plot
 test_meijer
 Tests/tests
-xcshareddata
-xcuserdata
+**/xcshareddata/
+**/xcuserdata/
 *.xcuserstate
-
+**/*.xcuserdatad/
+**/*.xcworkspace
+*.mode1v3
+*.pbxuser
