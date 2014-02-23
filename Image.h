@@ -14,11 +14,14 @@
 #include "Chain.h"
 #include "Line.h"
 #include "Circle_Impl.h"
+#include "Workers.h"
 
 namespace Images {
 #if 0
 }
 #endif
+
+class Bitmap;
 
 using namespace Chaining;
 
@@ -445,6 +448,39 @@ public:
     return !(*this == other);
   }
   
+#define DECLARE_OP(op, name)                                             \
+shared_ptr<Bitmap> name(const Pixel &value) const;			                 \
+shared_ptr<Bitmap> name(const Pixel &value, int threads) const;		       \
+shared_ptr<Bitmap> name(const Pixel &value, Workers &workers) const;     \
+shared_ptr<Bitmap> operator op(const Pixel &value) const;			           \
+shared_ptr<Bitmap> operator op(Workers::Job<Pixel> &job) const;
+
+  DECLARE_OP(>, gt);
+  DECLARE_OP(>=, ge);
+  DECLARE_OP(<, lt);
+  DECLARE_OP(<=, le);
+  DECLARE_OP(==, eq);
+  DECLARE_OP(!=, ne);
+  
+#undef DECLARE_OP
+
+  shared_ptr<Bitmap> distribute(void (*func)(void *), Pixel value, Workers &workers) const;
+  
+  Pixel min() const;
+  Pixel min(Workers &workers) const;
+  
+  Pixel max() const;
+  Pixel max(Workers &workers) const;
+    
+  static void ge(void *); // takes a Range<Bitmap::iterator>
+  static void gt(void *); // takes a Range<Bitmap::iterator>
+  static void le(void *); // takes a Range<Bitmap::iterator>
+  static void lt(void *); // takes a Range<Bitmap::iterator>
+  static void eq(void *); // takes a Range<Bitmap::iterator>
+  static void ne(void *); // takes a Range<Bitmap::iterator>
+  static void min(void *);  // takes a ReductionRange
+  static void max(void *);  // takes a ReductionRange
+  
   template<typename F, typename R> shared_ptr< Image<R> > apply(F &f) {
     shared_ptr< Image<R> > result = Image<R>::make(width(), height(), false);
     for (int y = 0; y < height(); ++y) {
@@ -493,6 +529,27 @@ template<typename I> shared_ptr<I> scaleImage(shared_ptr<I> src, double xScale, 
 
 template<typename I> shared_ptr<I> scaleImage(shared_ptr<I> src, double scale) {
   return scaleImage(src, scale, scale);
+}
+
+template<typename I> shared_ptr<I> scaleImageTo(const I &src, int w, int h) {
+  double xScale = src.width() / w;
+  double yScale = src.height() / h;
+  shared_ptr<I> result = make_shared<I>(w, h);
+  for (int y = 0; y < h; y++) {
+    typename I::Row sourceRow = (src)[y / yScale];
+    typename I::Row resultRow = (*result)[y];
+    for (int x = 0; x < w; x++) {
+      resultRow[x] = sourceRow[x / xScale];
+    }
+  }
+  result->setXRes(src.xRes() * xScale);
+  result->setYRes(src.yRes() * yScale);
+  result->setResUnit(src.resUnit());
+  return result;
+}
+
+template<typename I> shared_ptr<I> scaleImageTo(shared_ptr<I> src, int w, int h) {
+  return scaleImageTo(*src, w, h);
 }
 
 #if 0

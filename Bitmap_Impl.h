@@ -10,12 +10,14 @@
 #define __Bitmap_Impl_h__
 
 #include "Bitmap.h"
+#include "Image_Impl.h"
 #include "GreyImage.h"
 #include "GreyImage_Impl.h"
 
 #include "Workers.h"
 
 #include <memory>
+#include <algorithm>
 
 namespace Images {
 #if 0
@@ -122,53 +124,69 @@ inline ostream &Bitmap::writeText(ostream &out) {
 }
 
 inline const bool Bitmap::isEmpty() const {
-  for (int y = 0; y < height_; y++) {
-    for (int x = 0; x < width_; x++) {
-      if (at(y, x)) return false;
-    }
+  bool *dataEnd = data_ + (width_ * height_);
+  for (bool *b = data_; b != dataEnd; b++) {
+    if (*b) return false;
   }
   return true;
 }
 
-inline static int meijerF_euclidean(int x, int i, GreyImage<int> *g, int y) {
-  int gi = g->at(y, i);
+inline static int meijerF_euclidean(int x, int i, int *g) {
+  int gi = g[i];
   int dx = (x - i);
   
   return dx*dx + gi*gi;
 }
 
-inline static int meijerSeparation_euclidean(int i, int u, GreyImage<int> *g, int y) {
-  int gu = g->at(y, u);
-  int gi = g->at(y, i);
+inline static int meijerSeparation_euclidean(int i, int u, int *g) {
+  int gu = g[u];
+  int gi = g[i];
   
   return (u*u - i*i + gu*gu - gi*gi) / (2 * (u - i));
 }
 
-inline void Bitmap::distanceTransformPass1(bool background, int x0, int x1, GreyImage<int> *g) const {
+template<bool background>
+inline void Bitmap::distanceTransformPass1(int x0, int x1, GreyImage<int> *g) const {
   int infinity = width_ + height_ + 1;
   
   for (int x = x0; x < x1; x++) {
     // scan 1:
-    int prev;
+    int prev, y;
     // - start with the primitive value
-    if (at(0, x) == background) {
-      prev = g->at(0, x) = 0;
+    if (background) {
+      if (at(0, x)) {
+        prev = g->at(0, x) = 0;
+      } else {
+        prev = g->at(0, x) = infinity;
+      }
+      y = 1;
     } else {
-      prev = g->at(0, x) = infinity;
+      prev = 0;
+      y = 0;
     }
     
     // - calculate the next one from the previous one(s)
-    for (int y = 1; y < height_; y++) {
+    for (; y < height_; y++) {
       if (at(y, x) == background) {
         prev = g->at(y, x) = 0;
       } else {
-        prev = g->at(y, x) = min(infinity, 1 + prev);
+        if (prev == infinity) {
+          g->at(y, x) = infinity;
+        } else {
+          prev = g->at(y, x) = 1 + prev;
+        }
       }
     }
     
     // scan 2:
-    prev = g->at(height_ - 1, x);
-    for (int y = height_ - 2; y >= 0; y--) {
+    if (background) {
+      y = height_ - 2;
+      prev = g->at(height_ - 1, x);
+    } else {
+      y = height_ - 1;
+      prev = 0;
+    }
+    for (; y >= 0; y--) {
       int current = g->at(y, x);
       if (prev < current) {
         prev = g->at(y, x) = 1 + prev;
@@ -179,15 +197,35 @@ inline void Bitmap::distanceTransformPass1(bool background, int x0, int x1, Grey
   }
 }
 
+template<bool background>
 inline void Bitmap::distanceTransformPass2(GreyImage<int> *g, int y0, int y1, GreyImage<int> *result) const {
-  int *s = new int[width_ + height_];
-  int *t = new int[width_ + height_];
+  int s[width_ + 2];
+  int t[width_ + 2];
+  int *gs, *gr;
+  
+  if (!background) {
+    gs = new int[width_ + 2];
+    gr = &gs[1];
+    gr[-1] = gr[width_] = background ? width_ + height_ + 1 : 0;
+  }
+  
+  int u0 = background ? 1 : 0;
+  int u1 = background ? width_ : width_ + 1;
+  
   for (int y = y0; y < y1; y++) {
-    int q = s[0] = t[0] = 0;
+    if (background) {
+      gr = (*g)[y].data();
+    } else {
+      int *src = (*g)[y].data();
+      std::copy(src, src + width_, gr);
+    }
+    int q = 0;
+    t[0] = 0;
+    s[0] = background ? 0 : -1;
     
     // scan 3
-    for (int u = 1; u < width_; u++) {
-      while (q >= 0 && meijerF_euclidean(t[q], s[q], g, y) > meijerF_euclidean(t[q], u, g, y)) {
+    for (int u = u0; u < u1; u++) {
+      while (q >= 0 && meijerF_euclidean(t[q], s[q], gr) > meijerF_euclidean(t[q], u, gr)) {
         q--;
       }
       
@@ -195,11 +233,8 @@ inline void Bitmap::distanceTransformPass2(GreyImage<int> *g, int y0, int y1, Gr
         q = 0;
         s[0] = u;
       } else {
-        int w = 1 + meijerSeparation_euclidean(s[q], u, g, y);
+        int w = 1 + meijerSeparation_euclidean(s[q], u, gr);
         if (w < width_) {
-          if (q >= width_ + height_) {
-            cerr << "q (" << q << ") > height (" << height_ << ")" << endl << flush;
-          }
           q++;
           s[q] = u;
           t[q] = w;
@@ -209,32 +244,30 @@ inline void Bitmap::distanceTransformPass2(GreyImage<int> *g, int y0, int y1, Gr
     
     // scan 4
     for (int u = width_ - 1; u >= 0; u--) {
-      result->at(y, u) = meijerF_euclidean(u, s[q], g, y);
+      result->at(y, u) = meijerF_euclidean(u, s[q], gr);
       if (u == t[q]) {
         q--;
       }
     }
   }
-  
-  delete [] s;
-  delete [] t;
 }
 
-inline void Bitmap::distanceTransform(bool background, int x0, int x1, int y0, int y1, GreyImage<int> *g, GreyImage<int> *result) const {
-  distanceTransformPass1(background, x0, x1, g);
-  distanceTransformPass2(g, y0, y1, result);
+template<bool background>
+inline void Bitmap::distanceTransform(int x0, int x1, int y0, int y1, GreyImage<int> *g, GreyImage<int> *result) const {
+  distanceTransformPass1<background>(background, x0, x1, g);
+  distanceTransformPass2<background>(background, g, y0, y1, result);
 }
 
 struct distance_transform_params {
   const Bitmap *bitmap;
-  bool background;
   int x0, x1, y0, y1;
   GreyImage<int> *g;
   GreyImage<int> *result;
   Workers::Barrier *barrier;
 };
 
-extern void distance_transform_thread(void *params);
+extern void distance_transform_thread_background(void *params);
+extern void distance_transform_thread_foreground(void *params);
 
 inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, Workers &workers) const {
   int threads = workers.n();
@@ -247,7 +280,6 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, W
   
   for (int i = 0; i < threads; i++) {
     dt_params[i].bitmap = this;
-    dt_params[i].background = background;
     dt_params[i].x0 = ((width_ * i) / threads);
     dt_params[i].x1 = ((width_ * (i + 1)) / threads);
     dt_params[i].y0 = ((height_ * i) / threads);
@@ -256,8 +288,12 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, W
     dt_params[i].result = result.get();
     dt_params[i].barrier = &barrier;
   }
-  
-  workers.perform<distance_transform_params>(distance_transform_thread, &dt_params[0]);
+
+  if (background) {
+    workers.perform<distance_transform_params>(distance_transform_thread_background, &dt_params[0]);
+  } else {
+    workers.perform<distance_transform_params>(distance_transform_thread_foreground, &dt_params[0]);
+  }
   
   workers.destroyBarrier(&barrier);
   
@@ -271,11 +307,17 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, i
   } else {
     shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
     shared_ptr< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
-    distanceTransformPass1(background, 0, width_, g.get());
-    distanceTransformPass2(g.get(), 0, height_, result.get());
+    if (background) {
+      distanceTransformPass1<true>(0, width_, g.get());
+      distanceTransformPass2<true>(g.get(), 0, height_, result.get());
+    } else {
+      distanceTransformPass1<false>(0, width_, g.get());
+      distanceTransformPass2<false>(g.get(), 0, height_, result.get());
+    }
     return result;
   }
 }
+
 
 inline shared_ptr<Bitmap> Bitmap::inset_old(int r) const {
   if (r <= 0) {
@@ -925,8 +967,8 @@ inline shared_ptr<Bitmap> Bitmap::reconstruct(const shared_ptr<Bitmap> &referenc
 }
 
 inline shared_ptr<Bitmap> Bitmap::operator+(const Bitmap &other) const {
-  int w = max(width_, other.width_);
-  int h = max(height_, other.height_);
+  int w = std::max(width_, other.width_);
+  int h = std::max(height_, other.height_);
   shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
@@ -946,8 +988,8 @@ inline Bitmap &Bitmap::operator+=(const Bitmap &other) {
 }
 
 inline shared_ptr<Bitmap> Bitmap::operator-(const Bitmap &other) const {
-  int w = max(width_, other.width_);
-  int h = max(height_, other.height_);
+  int w = std::max(width_, other.width_);
+  int h = std::max(height_, other.height_);
   shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {

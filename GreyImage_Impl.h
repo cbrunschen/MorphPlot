@@ -107,17 +107,17 @@ inline shared_ptr< GreyImage<C> > GreyImage<C>::readPngHeightmap(const string &f
 
 template<typename C>
 inline shared_ptr<Bitmap> GreyImage<C>::coverage() const {
-  return ne(Component<C>::min());
+  return Image<C>::ne(Component<C>::min());
 }
 
 template<typename C>
 inline shared_ptr<Bitmap> GreyImage<C>::coverage(int threads) const {
-  return ne(Component<C>::min(), threads);
+  return Image<C>::ne(Component<C>::min(), threads);
 }
 
 template<typename C>
 inline shared_ptr<Bitmap> GreyImage<C>::coverage(Workers &workers) const {
-  return ne(Component<C>::min(), workers);
+  return Image<C>::ne(Component<C>::min(), workers);
 }
 
 template<typename C>
@@ -132,137 +132,6 @@ inline shared_ptr<Bitmap> GreyImage<C>::where(Op &op, C value) const {
   }
   return result;
 }
-
-
-template<typename C>
-inline shared_ptr<Bitmap> GreyImage<C>::distribute(void (*func)(void *), C value, Workers &workers) const {
-  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);
-  int n = workers.n();
-  GreyImage<C>::Range *ranges = new GreyImage<C>::Range[n];
-  for (int i = 0; i < n; i++) {
-    ranges[i].begin = this->iter_at(i * height_ / n);
-    ranges[i].end = this->iter_at((i + 1) * height_ / n);
-    ranges[i].dst = result->iter_at(i * height_ / n);
-    ranges[i].value = value;
-  }
-
-  workers.perform(func, &ranges[0]);
-
-  delete [] ranges;
-  return result;
-}
-
-#define IMPLEMENT_OP(name, operator)                                                           \
-template<typename C>                                                                           \
-inline void GreyImage<C>::name(void *params) {                                                 \
-  typename GreyImage<C>::Range *p = static_cast<typename GreyImage<C>::Range *>(params);       \
-  typename GreyImage<C>::const_iterator src = p->begin;                                        \
-  typename GreyImage<C>::const_iterator end = p->end;                                          \
-  Bitmap::iterator dst = p->dst;                                                               \
-  C value = p->value;                                                                          \
-                                                                                               \
-  while (src != end) {                                                                         \
-    *dst++ = *src++ operator value;                                                            \
-  }                                                                                            \
-}                                                                                              \
-                                                                                               \
-template<typename C>                                                                           \
-inline shared_ptr<Bitmap> GreyImage<C>::name(C value) const {                                  \
-  shared_ptr<Bitmap> result = make_shared<Bitmap>(width_, height_);                            \
-  Bitmap::iterator dst = result->begin();                                                      \
-  GreyImage<C>::const_iterator src = this->begin();                                            \
-  GreyImage<C>::const_iterator end = this->end();                                              \
-  while (src != end) {                                                                         \
-    *dst++ = (*src++ operator value);                                                          \
-  }                                                                                            \
-  return result;                                                                               \
-}                                                                                              \
-                                                                                               \
-template<typename C>                                                                           \
-inline shared_ptr<Bitmap> GreyImage<C>::name(C value, Workers &workers) const {                \
-  if (workers.n() > 1) {                                                                       \
-    return distribute(GreyImage<C>::name, value, workers);                                     \
-  } else {                                                                                     \
-    return name(value);                                                                        \
-  }                                                                                            \
-}                                                                                              \
-                                                                                               \
-template<typename C>                                                                           \
-inline shared_ptr<Bitmap> GreyImage<C>::name(C value, int threads) const {                     \
-  if (threads > 1) {                                                                           \
-    Workers workers(threads);                                                                  \
-    return distribute(GreyImage<C>::name, value, workers);                                     \
-  } else {                                                                                     \
-    return name(value);                                                                        \
-  }                                                                                            \
-}                                                                                               
-
-IMPLEMENT_OP(ge, >=)
-IMPLEMENT_OP(gt, >)
-IMPLEMENT_OP(le, <=)
-IMPLEMENT_OP(lt, <)
-IMPLEMENT_OP(eq, ==)
-IMPLEMENT_OP(ne, !=)
-
-#undef IMPLEMENT_OP
-
-#define IMPLEMENT_MINMAX(name, operator)                                                                      \
-template<typename C>                                                                                          \
-inline void GreyImage<C>::name(void *params) {                                                                \
-  typename GreyImage<C>::ReductionRange *p = static_cast<typename GreyImage<C>::ReductionRange *>(params);    \
-  typename GreyImage<C>::const_iterator src = p->begin;                                                       \
-  typename GreyImage<C>::const_iterator end = p->end;                                                         \
-                                                                                                              \
-  C value = *src++;                                                                                           \
-  while (src != end) {                                                                                        \
-    C tmp = *src++;                                                                                           \
-    if (tmp operator value) value = tmp;                                                                      \
-  }                                                                                                           \
-  p->value = value;                                                                                           \
-}                                                                                                             \
-                                                                                                              \
-template<typename C>                                                                                          \
-inline C GreyImage<C>::name() const {                                                                         \
-  GreyImage<C>::const_iterator src = this->begin();                                                           \
-  GreyImage<C>::const_iterator end = this->end();                                                             \
-  C value = *src++;                                                                                           \
-  while (src != end) {                                                                                        \
-    C tmp = *src++;                                                                                           \
-    if (tmp operator value) value = tmp;                                                                      \
-  }                                                                                                           \
-  return value;                                                                                               \
-}                                                                                                             \
-                                                                                                              \
-template<typename C>                                                                                          \
-inline C GreyImage<C>::name(Workers &workers) const {                                                         \
-  int n = workers.n();                                                                                        \
-  if (n > 1) {                                                                                                \
-    GreyImage<C>::ReductionRange *ranges = new GreyImage<C>::ReductionRange[n];                               \
-    for (int i = 0; i < n; i++) {                                                                             \
-      ranges[i].begin = this->iter_at(i * height_ / n);                                                       \
-      ranges[i].end = this->iter_at((i + 1) * height_ / n);                                                   \
-    }                                                                                                         \
-                                                                                                              \
-    workers.perform(GreyImage<C>::name, &ranges[0]);                                                          \
-                                                                                                              \
-    C value = ranges[0].value;                                                                                \
-    for (int i = 1; i < n; i++) {                                                                             \
-      C tmp = ranges[i].value;                                                                                \
-      if (tmp operator value) value = tmp;                                                                    \
-    }                                                                                                         \
-                                                                                                              \
-    delete [] ranges;                                                                                         \
-    return value;                                                                                             \
-  } else {                                                                                                    \
-    return name();                                                                                            \
-  }                                                                                                           \
-}                                                                                                              
-																											  
-IMPLEMENT_MINMAX(min, <)																					  
-IMPLEMENT_MINMAX(max, >)
-
-#undef IMPLEMENT_MINMAX
-
 
 template<typename C>
 inline double GreyImage<C>::frand() {
@@ -521,7 +390,7 @@ shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
 
   png_read_update_info(png_ptr, info_ptr);
 
-  result = heightMap ? GreyImage<T>::make(width+2, height+2) : GreyImage<T>::make(width, height);
+  result = GreyImage<T>::make(width, height);
   result->setXRes(xRes);
   result->setYRes(yRes);
   result->setResUnit(resUnit);
@@ -531,7 +400,7 @@ shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
 
   /* Clear the pointer array */
   for (int row = 0; row < height; row++) {
-    row_pointers[row] = (png_bytep) &((*result)[row].data()[heightMap ? 1 : 0]);
+    row_pointers[row] = (png_bytep) &((*result)[row].data()[0]);
   }
 
   png_read_image(png_ptr, row_pointers);
@@ -559,8 +428,8 @@ shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
     cerr << "will shift all samples down by " << shift << " bits" << endl << flush;
 
     int zom = 0, znm = 0;
-    for (int y = 1; y < height+2; y++) {
-      for (int x = 1; x < width+2; x++) {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
         uint16_t z = result->at(y, x);
         if (z > zom) zom = z;
         z = z >> shift;
@@ -569,14 +438,6 @@ shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
       }
     }
     cerr << "zMax should have shifted from " << zom << " to " << znm << endl << flush;
-    for (int x = 0; x < width+2; x++) {
-      result->at(0, x) = znm;
-      result->at(height+1, x) = znm;
-    }
-    for (int y = 0; y < height+1; y++) {
-      result->at(y, 0) = znm;
-      result->at(y, width+1) = znm;
-    }
   }
 
   return result;

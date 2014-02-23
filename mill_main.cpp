@@ -126,20 +126,24 @@ class Tool {
   int r_;
   int zUp_;
   int zDown_;
+  int zBottom_;
 public:
-  Tool(int r) : r_(r), zUp_(40), zDown_(0) {}
+  Tool(int r) : r_(r), zUp_(40), zDown_(0), zBottom_(-256) {}
   
   const int r() const { return r_; }
   void setR(int r) { r_ = r; }
   const int hpglIndex() const { return 1; }
-  const double cFraction() const { return 1.0; }
-  const double mFraction() const { return 1.0; }
-  const double yFraction() const { return 1.0; }
+  const double zLevel() const { return (double)(zDown_) / (double)(zBottom_); }
+  const double cFraction() const { return zLevel(); }
+  const double mFraction() const { return zLevel(); }
+  const double yFraction() const { return zLevel(); }
   
   const int zUp() const { return zUp_; }
   void setZUp(int z) { zUp_ = z; }
   const int zDown() const { return zDown_; }
   void setZDown(int z) { zDown_ = z; }
+  const int zBottom() const { return zBottom_; }
+  void setZBottom(int z) { zBottom_ = z; }
 };
 
 int main(int argc, char * const argv[]) {
@@ -164,6 +168,8 @@ int main(int argc, char * const argv[]) {
   
   int extraInset = 0;  // 0.2mm extra inset in the roughing pass
   int dz = 1;  // how far apart the layers are
+  
+  bool concentric = false;
     
   for (; argn < argc && argv[argn][0] == '-' && strlen(argv[argn]) > 1; argn++) {
     string arg(argv[argn]);
@@ -266,7 +272,7 @@ int main(int argc, char * const argv[]) {
       } else if ("he7" == outputType || "h7" == outputType) {
         outputs.push_back(new HPGLEncodedOutput<Tool, 32>(outputFile));
       } else if ("ps" == outputType) {
-        outputs.push_back(new PostScriptOutput<Tool>(outputFile));
+        outputs.push_back(new PostScript3DOutput<Tool>(outputFile));
       } else if (string::npos != outputType.find("hp")) {
         if (string::npos != outputType.find("abs")) {
           outputs.push_back(new HPGLAbsoluteOutput<Tool>(outputFile));
@@ -296,6 +302,13 @@ int main(int argc, char * const argv[]) {
       extraInset = getInt(spec);
     } else if (checkArg(argc, argv, argn, "-threads", spec)) {
       threads = getInt(spec);
+    } else if (checkArg(argc, argv, argn, "-concentric", spec, hasSpec)) {
+      if (hasSpec) {
+        std::transform(spec.begin(), spec.end(), spec.begin(), ::tolower);
+        concentric = (spec == "true") || (spec == "yes");
+      } else {
+        concentric = true;
+      }
     } else {
       cerr << "Unrecognized argument '" << arg << "'" << endl << flush;
       exit(1);
@@ -337,6 +350,7 @@ int main(int argc, char * const argv[]) {
   
   HeightMapRef heightMap = HeightMap::readPngHeightmap(f);
   
+  cerr << "running with " << threads << " threads" << endl << flush;
   Workers workers(threads);
   
   if (scale != 1.0) {
@@ -350,7 +364,7 @@ int main(int argc, char * const argv[]) {
   list<Chains> outlineChains, fillChains;
   MillPathExtractor extractor;
   extractor.setOut(&cerr);
-  Stepper *stepper;
+  Stepper *stepper = nullptr;
 
   if (steps) {
     extractor.setStepper(stepper = new Stepper(stepPrefix));
@@ -376,7 +390,11 @@ int main(int argc, char * const argv[]) {
     Chains &outline = outlineChains.back();
     fillChains.push_back(Chains());
     Chains &fill = fillChains.back();
-    extractor.outlineAndFill(bitmap, tool.r(), extraInset, outline, fill, workers);
+    if (concentric) {
+      extractor.outlineConcentric(bitmap, tool.r(), extraInset, outline, fill, workers);
+    } else {
+      extractor.outlineAndFill(bitmap, tool.r(), extraInset, outline, fill, workers);
+    }
     outline.simplify(1.5);
     fill.simplify(1.5);
   }
@@ -434,6 +452,7 @@ int main(int argc, char * const argv[]) {
   list<Chains>::iterator outlineIter = outlineChains.begin();
   list<Chains>::iterator fillIter = fillChains.begin();
   
+  tool.setZBottom(minZ - maxZ);
   for (int z = maxZ; z >= minZ; z -= dz) {
     Chains &outline = *outlineIter++;
     Chains &fill = *fillIter++;

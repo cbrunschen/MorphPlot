@@ -87,14 +87,11 @@ public:
   
   const bool isEmpty() const;
   
-  void distanceTransformPass1(bool background, int x0, int x1, GreyImage<int> *g) const;
-
-  void distanceTransformPass2(GreyImage<int> *g, int y0, int y1, GreyImage<int> *result) const;
-  
-  void distanceTransform(bool background, int x0, int x1, int y0, int y1, GreyImage<int> *g, GreyImage<int> *result) const;
+  template<bool background> void distanceTransformPass1(int x0, int x1, GreyImage<int> *g) const;
+  template<bool background> void distanceTransformPass2(GreyImage<int> *g, int y0, int y1, GreyImage<int> *result) const;
+  template<bool background> void distanceTransform(int x0, int x1, int y0, int y1, GreyImage<int> *g, GreyImage<int> *result) const;
 
   shared_ptr< GreyImage<int> > distanceTransform(bool background = true, int threads = 1) const;
-
   shared_ptr< GreyImage<int> > distanceTransform(bool background, Workers &workers) const;
 
   BitmapRef inset(int r, int threads = 1) const;

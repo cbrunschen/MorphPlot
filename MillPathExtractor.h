@@ -46,7 +46,7 @@ public:
     inset->scanBoundaries(boundaries, marks, false);
     
     (*out_) << "  - Outsetting again to generate coverage" << endl;
-    BitmapRef covered(inset->outset(toolRadius, workers));
+    BitmapRef covered = inset->outset(toolRadius, workers);
     if (steps()) {
       (*out_) << "    . drawing outset" << endl;
       covered->writePng(stepper_->makeName("covered.png"));
@@ -111,6 +111,61 @@ public:
       finishPS(out);
       out.close();
     }
+    
+    (*out_) << "  - Merging outline chains" << endl;
+    // merge the outline chains
+    for (vector<Boundary>::iterator b = boundaries.begin();
+         b != boundaries.end();
+         ++b) {
+      outlineChains.addChains(*b);
+    }
+    
+    return covered;
+  }
+  
+  BitmapRef outlineConcentric(BitmapRef remaining, int toolRadius, int extraInset, Chains &outlineChains, Chains &fillChains, Workers &workers) {
+    Image<int> marks(remaining->width(), remaining->height());
+    Circle toolCircle(toolRadius);
+    
+    if (steps()) {
+      (*out_) << "    . drawing initial remainder" << endl;
+      remaining->writePng(stepper_->makeName("remaining_before.png"));
+    }
+    
+    (*out_) << "  - Calculating distance transform" << endl;
+    shared_ptr< GreyImage<int> > dt = remaining->distanceTransform(false, workers);
+    
+    vector<Boundary> boundaries;
+
+    for(int rInset = toolRadius + extraInset; ; rInset += toolRadius) {
+      (*out_) << "  - Extracting inset at " << rInset << endl;
+      shared_ptr<Bitmap> inset = dt->ge(rInset*rInset, workers);
+
+      if (inset->isEmpty()) {
+        (*out_) << "inset is empty, done!" << endl << flush;
+        break;
+      }
+      
+      (*out_) << "  - Scanning inset boundaries" << endl;
+      marks.clear();
+      inset->scanBoundaries(boundaries, marks, false);
+    }
+    
+    // create the outset boundaries
+    (*out_) << "  - Creating outset boundary pixel bitmap" << endl;
+    BitmapRef boundariesBitmap = Bitmap::make(remaining->width(), remaining->height(), true);
+    for (vector<Boundary>::iterator b = boundaries.begin(); b != boundaries.end(); ++b) {
+      boundariesBitmap->set(*b, true);
+    }
+
+    if (steps()) {
+      (*out_) << "    . drawing boundaries" << endl;
+      boundariesBitmap->copyRes(*remaining);
+      boundariesBitmap->writePng(stepper_->makeName("boundaries.png"));
+    }
+
+    (*out_) << "  - Creating coverage bitmap" << endl << flush;
+    shared_ptr<Bitmap> covered = boundariesBitmap->outset(toolRadius, workers);
     
     (*out_) << "  - Merging outline chains" << endl;
     // merge the outline chains

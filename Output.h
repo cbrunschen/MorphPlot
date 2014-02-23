@@ -96,8 +96,8 @@ public:
 
 template<typename Pen> class PostScriptOutput : public FileStreamOutput<Pen> {
   typedef FileStreamOutput<Pen> Base;
-  using Base::out_;
 protected:
+  using Base::out_;
   using Base::filename_;
 public:
   PostScriptOutput(ostream &out) : Base(out) { }
@@ -473,6 +473,24 @@ public:
   
   virtual ostream &describe(ostream &out) const {
     return out << "<RML1 to '" << filename_ << "'>";
+  }
+};
+
+template<typename Tool> class PostScript3DOutput : public PostScriptOutput<Tool> {
+  typedef PostScriptOutput<Tool> Base;
+  using Base::out_;
+protected:
+  using Base::filename_;
+public:
+  PostScript3DOutput(ostream &out) : Base(out) { }
+  PostScript3DOutput(const char *filename) : Base(filename) { }
+  PostScript3DOutput(const string &filename) : Base(filename) { }
+  virtual ~PostScript3DOutput() { }
+  
+  virtual void setPen(const Tool &tool) {
+    double w = tool.r() * 2.0;
+    *out_ << 1 - (0.1 + 0.9 * tool.zLevel()) << " setgray ";
+    *out_ << w << " setlinewidth" << endl;
   }
 };
 

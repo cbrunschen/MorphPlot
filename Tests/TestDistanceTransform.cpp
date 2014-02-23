@@ -109,8 +109,8 @@ TEST_CASE("distanceTransform/square", "calculate the distance transform of a squ
 
 TEST_CASE("distanceTransform/threads", "verify that single- and multi-threaded give the same result")
 {
-  int W = 200;
-  int H = 200;
+  int W = 2000;
+  int H = 2000;
   shared_ptr<Bitmap> bitmap = Bitmap::make(W, H, true);
   Bitmap::Set set = bitmap->set(true);
   

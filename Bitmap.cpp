@@ -947,11 +947,18 @@ bool writePng(const Bitmap &image, FILE *fp) {
 #endif
 }  // namespace Bitmaps
 
-void distance_transform_thread(void *params) {
+void distance_transform_thread_background(void *params) {
   distance_transform_params *dt_params = static_cast<distance_transform_params *>(params);
-  dt_params->bitmap->distanceTransformPass1(dt_params->background, dt_params->x0, dt_params->x1, dt_params->g);
+  dt_params->bitmap->distanceTransformPass1<true>(dt_params->x0, dt_params->x1, dt_params->g);
   Workers::waitBarrier(dt_params->barrier);
-  dt_params->bitmap->distanceTransformPass2(dt_params->g, dt_params->y0, dt_params->y1, dt_params->result);
+  dt_params->bitmap->distanceTransformPass2<true>(dt_params->g, dt_params->y0, dt_params->y1, dt_params->result);
+}
+
+void distance_transform_thread_foreground(void *params) {
+  distance_transform_params *dt_params = static_cast<distance_transform_params *>(params);
+  dt_params->bitmap->distanceTransformPass1<false>(dt_params->x0, dt_params->x1, dt_params->g);
+  Workers::waitBarrier(dt_params->barrier);
+  dt_params->bitmap->distanceTransformPass2<false>(dt_params->g, dt_params->y0, dt_params->y1, dt_params->result);
 }
 
 #if 0

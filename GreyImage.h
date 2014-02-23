@@ -91,50 +91,6 @@ public:
   shared_ptr<Bitmap> coverage(int threads) const;
   shared_ptr<Bitmap> coverage(Workers &workers) const;
 
-#define DECLARE_OP(name)                                 \
-  shared_ptr<Bitmap> name(C value) const;			 \
-  shared_ptr<Bitmap> name(C value, int threads) const;		 \
-  shared_ptr<Bitmap> name(C value, Workers &workers) const
-
-  DECLARE_OP(ge);
-  DECLARE_OP(gt);
-  DECLARE_OP(le);
-  DECLARE_OP(lt);
-  DECLARE_OP(eq);
-  DECLARE_OP(ne);
-
-#undef DECLARE_OP
-
-  shared_ptr<Bitmap> distribute(void (*func)(void *), C value, Workers &workers) const;
-
-  C min() const;
-  C min(Workers &workers) const;
-
-  C max() const;
-  C max(Workers &workers) const;
-
-  struct Range {
-    typename GreyImage<C>::const_iterator begin;
-    typename GreyImage<C>::const_iterator end;
-    Bitmap::iterator dst;
-    C value;
-  };
-
-  struct ReductionRange {
-    typename GreyImage<C>::const_iterator begin;
-    typename GreyImage<C>::const_iterator end;
-    C value;
-  };
-
-  static void ge(void *); // takes a Range
-  static void gt(void *); // takes a Range
-  static void le(void *); // takes a Range
-  static void lt(void *); // takes a Range
-  static void eq(void *); // takes a Range
-  static void ne(void *); // takes a Range
-  static void min(void *);  // takes a ReductionRange
-  static void max(void *);  // takes a ReductionRange
-
   static double frand();
 
   double sumOfValues(const Point &p0, const list<Point> &points) const;

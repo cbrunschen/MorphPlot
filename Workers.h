@@ -48,6 +48,13 @@ public:
     pthread_t thread_id;
   };
   
+  template<typename V>
+  struct Job {
+    Workers &workers;
+    const V &value;
+    Job(Workers &workers_, const V &value_) : workers(workers_), value(value_) { }
+  };
+  
   typedef pthread_barrier_t Barrier;
 
 private:

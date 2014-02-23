@@ -43,9 +43,9 @@ double frand() {
 }
 
 class PGI {
-	Ref< GreyImage<int> > g_;
+	shared_ptr< GreyImage<int> > g_;
 public:
-	PGI(Ref< GreyImage<int> > g) : g_(g) { }	
+	PGI(shared_ptr< GreyImage<int> > g) : g_(g) { }	
 	void print(ostream &out) const {
     for (int y = 0; y < g_->height(); y++) {
       for (int x = 0; x < g_->width(); x++) {
@@ -63,7 +63,7 @@ inline ostream &operator<<(ostream &out, const PGI &pgi) {
 
 
 int main(int argc, char **argv) {
-  Ref<Bitmap> bitmap = Bitmap::make(40, 40, true);
+  shared_ptr<Bitmap> bitmap = Bitmap::make(40, 40, true);
   
   for (int y = 20; y < 21; y++) {
     for (int x = 20; x < 21; x++) {
@@ -73,19 +73,19 @@ int main(int argc, char **argv) {
 
   cout << "bitmap: " << endl << bitmap << endl << flush;
 
-  Ref< GreyImage<int> > bg = bitmap->distanceTransform(true);
+  shared_ptr< GreyImage<int> > bg = bitmap->distanceTransform(true);
   cout << "Background:" << endl << PGI(bg) << endl << flush;  
 
-  Ref< GreyImage<int> > fg = bitmap->distanceTransform(false);
+  shared_ptr< GreyImage<int> > fg = bitmap->distanceTransform(false);
   cout << "Foreground:" << endl << PGI(fg) << endl << flush;  
 
-  Ref<Bitmap> inset = bitmap->inset(5);
+  shared_ptr<Bitmap> inset = bitmap->inset(5);
   cout << "inset by 5:" << endl << inset << endl << flush;
 
   for (int r = 0; r < 10; r++) {
-    Ref<Bitmap> outset = bitmap->outset(r);
-    cout << "outset by " << r << ":" << endl << outset << endl << flush;
-    cout << "difference should be " << r << ":" << endl << (*outset - *bitmap) << endl << flush;
+    shared_ptr<Bitmap> outset = bitmap->outset(r);
+    cout << "outset by " << r << ":" << endl << *outset << endl << flush;
+    cout << "difference should be " << r << ":" << endl << *(*outset - *bitmap) << endl << flush;
   }
   
   for (int y = 2; y < 38; y++) {
@@ -95,14 +95,14 @@ int main(int argc, char **argv) {
   }
   
   for (int r = 0; r < 10; r++) {
-    Ref<Bitmap> inset = bitmap->inset(r);
-    cout << "inset by " << r << ":" << endl << inset << endl << flush;
-    cout << "difference should be " << r << ":" << endl << (*bitmap - *inset) << endl << flush;
+    shared_ptr<Bitmap> inset = bitmap->inset(r);
+    cout << "inset by " << r << ":" << endl << *inset << endl << flush;
+    cout << "difference should be " << r << ":" << endl << *(*bitmap - *inset) << endl << flush;
   }
   
   int W = 5000;
   int H = 5000;
-  Ref<Bitmap> large = Bitmap::make(W, H, true);
+  shared_ptr<Bitmap> large = Bitmap::make(W, H, true);
   Bitmap::Set set = large->set(true);
   
   for (int a = 0; a < 200; a++) {
@@ -128,28 +128,36 @@ int main(int argc, char **argv) {
 #if 0
   cerr << "insetting old style ... " << flush;
   double t0 = now();
-  Ref<Bitmap> insetOld = large->inset_old(40);
+  shared_ptr<Bitmap> insetOld = large->inset_old(40);
   double t1 = now();
   cerr << (t1 - t0) << endl << flush;
   insetOld = NULL;
   
   cerr << "insetting new style ... " << flush;
   double t2 = now();
-  Ref<Bitmap> insetNew = large->inset(40);
+  shared_ptr<Bitmap> insetNew = large->inset(40);
   double t3 = now();
   cerr << (t3 - t2) << endl << flush;
   cerr << W << "x" << H << ": " << static_cast<int>((double)(W * H) / (t3 - t2)) << " pixels per second" << endl << flush;
 #endif
   
   for (int w = W/5; w <= W; w += 2*W/5) {
-    for (int h = H/6; h <= H; h += 2*H/5) {
-      Ref<Bitmap> bm = scaleImage(large, (double)w / (double)W, (double)h / (double)H);
+    for (int h = H/5; h <= H; h += 2*H/5) {
+      shared_ptr<Bitmap> bm = scaleImageTo(large, w, h);
     
-      for (int threads = 1; threads <= 8; threads *= 2) {
+      for (int threads = 1; threads <= 16; threads *= 2) {
         double t2 = now();
-        Ref<Bitmap> insetNew = large->inset(40, threads);
+        shared_ptr<Bitmap> inset = bm->inset(40, threads);
         double t3 = now();
-        cerr << w << "x" << h << ", " << threads << " threads: " << static_cast<int>((double)(W * H) / (t3 - t2)) << " pixels per second" << endl << flush;
+        cerr << "inset  " << w << "x" << h << ", " << threads << " threads: " << static_cast<int>((double)(w * h) / (t3 - t2)) << " pixels per second" << endl << flush;
+        
+        inset.reset();
+        
+        double t4 = now();
+        shared_ptr<Bitmap> outset = bm->inset(40, threads);
+        double t5 = now();
+        cerr << "outset " << w << "x" << h << ", " << threads << " threads: " << static_cast<int>((double)(w * h) / (t5 - t4)) << " pixels per second" << endl << flush;
+
       }
     }
   }
