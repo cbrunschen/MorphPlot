@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <algorithm>
+#include <iomanip>
 
 namespace Images {
 #if 0
@@ -131,76 +132,83 @@ inline const bool Bitmap::isEmpty() const {
   return true;
 }
 
-inline static int meijerF_euclidean(int x, int i, int *g) {
-  int gi = g[i];
-  int dx = (x - i);
-  
-  return dx*dx + gi*gi;
-}
-
-inline static int meijerSeparation_euclidean(int i, int u, int *g) {
-  int gu = g[u];
-  int gi = g[i];
-  
-  return (u*u - i*i + gu*gu - gi*gi) / (2 * (u - i));
-}
-
 template<bool background>
-inline void Bitmap::distanceTransformPass1(int x0, int x1, GreyImage<int> *g) const {
+inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
   int infinity = width_ + height_ + 1;
+  infinity *= infinity;
+  int stride = width_;
   
   for (int x = x0; x < x1; x++) {
     // scan 1:
-    int prev, y;
+    bool *src = &data_[x];
+    bool *srcEnd = src + height_ * stride;
+    int *p = &g[x];
+    int distance, difference;
+    
     // - start with the primitive value
-    if (background) {
-      if (at(0, x)) {
-        prev = g->at(0, x) = 0;
-      } else {
-        prev = g->at(0, x) = infinity;
-      }
-      y = 1;
+    if (*src == background) {
+      distance = *p = 0;
+      difference = 1;
+    } else if (background) {
+      distance = *p = infinity;
+      difference = 1;
     } else {
-      prev = 0;
-      y = 0;
+      distance = *p = 1;
+      difference = 3;
     }
     
     // - calculate the next one from the previous one(s)
-    for (; y < height_; y++) {
-      if (at(y, x) == background) {
-        prev = g->at(y, x) = 0;
+    for (p += stride, src += stride; src < srcEnd; p += stride, src += stride) {
+      if (*src == background) {
+        distance = *p = 0;
+        difference = 1;
+        // scan backwards
+        int rDistance = 1;
+        int rDifference = 3;
+        for (int *q = p - stride; q >= g && *q > rDistance; q -= stride) {
+          *q = rDistance;
+          rDistance += rDifference;
+          rDifference += 2;
+        }
       } else {
-        if (prev == infinity) {
-          g->at(y, x) = infinity;
+        if (distance == infinity) {
+          *p = infinity;
         } else {
-          prev = g->at(y, x) = 1 + prev;
+          distance = *p = distance + difference;
+          difference += 2;
         }
       }
     }
     
-    // scan 2:
-    if (background) {
-      y = height_ - 2;
-      prev = g->at(height_ - 1, x);
-    } else {
-      y = height_ - 1;
-      prev = 0;
-    }
-    for (; y >= 0; y--) {
-      int current = g->at(y, x);
-      if (prev < current) {
-        prev = g->at(y, x) = 1 + prev;
-      } else {
-        prev = current;
+    if (!background) {
+      // scan backwards from the far edge
+      int rDistance = 1;
+      int rDifference = 3;
+      for (int *q = p - stride; q >= g && *q > rDistance; q -= stride) {
+        *q = rDistance;
+        rDistance += rDifference;
+        rDifference += 2;
       }
     }
   }
 }
 
+inline static int distanceFromColumn(int column, int x, int *g) {
+  int gi2 = g[column];
+  int dx = (x - column);
+  return dx*dx + gi2;
+}
+
+inline static int meijsterSeparation_euclidean(int i, int u, int *g) {
+  int gu2 = g[u];
+  int gi2 = g[i];
+  return (u*u - i*i + gu2 - gi2) / (2 * (u - i));
+}
+
 template<bool background>
-inline void Bitmap::distanceTransformPass2(GreyImage<int> *g, int y0, int y1, GreyImage<int> *result) const {
-  int s[width_ + 2];
-  int t[width_ + 2];
+inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) const {
+  int dominantColumn[width_ + 2];
+  int dominanceExtent[width_ + 2];
   int *gs, *gr;
   
   if (!background) {
@@ -213,39 +221,40 @@ inline void Bitmap::distanceTransformPass2(GreyImage<int> *g, int y0, int y1, Gr
   int u1 = background ? width_ : width_ + 1;
   
   for (int y = y0; y < y1; y++) {
+    int *dst = &result[y * width_];
     if (background) {
-      gr = (*g)[y].data();
+      gr = &g[y * width_];
     } else {
-      int *src = (*g)[y].data();
+      int *src = &g[y * width_];
       std::copy(src, src + width_, gr);
     }
     int q = 0;
-    t[0] = 0;
-    s[0] = background ? 0 : -1;
+    dominanceExtent[0] = 0;
+    dominantColumn[0] = background ? 0 : -1;
     
     // scan 3
     for (int u = u0; u < u1; u++) {
-      while (q >= 0 && meijerF_euclidean(t[q], s[q], gr) > meijerF_euclidean(t[q], u, gr)) {
+      while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceExtent[q], gr) > distanceFromColumn(u, dominanceExtent[q], gr)) {
         q--;
       }
       
       if (q < 0) {
         q = 0;
-        s[0] = u;
+        dominantColumn[0] = u;
       } else {
-        int w = 1 + meijerSeparation_euclidean(s[q], u, gr);
+        int w = 1 + meijsterSeparation_euclidean(dominantColumn[q], u, gr);
         if (w < width_) {
           q++;
-          s[q] = u;
-          t[q] = w;
+          dominantColumn[q] = u;
+          dominanceExtent[q] = w;
         }
       }
     }
     
     // scan 4
     for (int u = width_ - 1; u >= 0; u--) {
-      result->at(y, u) = meijerF_euclidean(u, s[q], gr);
-      if (u == t[q]) {
+      dst[u] = distanceFromColumn(dominantColumn[q], u, gr);
+      if (u == dominanceExtent[q]) {
         q--;
       }
     }
@@ -253,7 +262,7 @@ inline void Bitmap::distanceTransformPass2(GreyImage<int> *g, int y0, int y1, Gr
 }
 
 template<bool background>
-inline void Bitmap::distanceTransform(int x0, int x1, int y0, int y1, GreyImage<int> *g, GreyImage<int> *result) const {
+inline void Bitmap::distanceTransform(int x0, int x1, int y0, int y1, int *g, int *result) const {
   distanceTransformPass1<background>(background, x0, x1, g);
   distanceTransformPass2<background>(background, g, y0, y1, result);
 }
@@ -261,8 +270,8 @@ inline void Bitmap::distanceTransform(int x0, int x1, int y0, int y1, GreyImage<
 struct distance_transform_params {
   const Bitmap *bitmap;
   int x0, x1, y0, y1;
-  GreyImage<int> *g;
-  GreyImage<int> *result;
+  int *g;
+  int *result;
   Workers::Barrier *barrier;
 };
 
@@ -284,8 +293,8 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, W
     dt_params[i].x1 = ((width_ * (i + 1)) / threads);
     dt_params[i].y0 = ((height_ * i) / threads);
     dt_params[i].y1 = ((height_ * (i + 1)) / threads);
-    dt_params[i].g = g.get();
-    dt_params[i].result = result.get();
+    dt_params[i].g = g->data();
+    dt_params[i].result = result->data();
     dt_params[i].barrier = &barrier;
   }
 
@@ -308,16 +317,15 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, i
     shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
     shared_ptr< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
     if (background) {
-      distanceTransformPass1<true>(0, width_, g.get());
-      distanceTransformPass2<true>(g.get(), 0, height_, result.get());
+      distanceTransformPass1<true>(0, width_, g->data());
+      distanceTransformPass2<true>(g->data(), 0, height_, result->data());
     } else {
-      distanceTransformPass1<false>(0, width_, g.get());
-      distanceTransformPass2<false>(g.get(), 0, height_, result.get());
+      distanceTransformPass1<false>(0, width_, g->data());
+      distanceTransformPass2<false>(g->data(), 0, height_, result->data());
     }
     return result;
   }
 }
-
 
 inline shared_ptr<Bitmap> Bitmap::inset_old(int r) const {
   if (r <= 0) {
@@ -335,7 +343,7 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
   int needed = c.area();
   
   int columnCounts[width_];
-  bzero(columnCounts, sizeof(columnCounts));
+  memset(columnCounts, 0, sizeof(columnCounts));
   
   // sum the column counts of pixels in the rows early rows
   for (int y = 0; y < twoR; y++) {
@@ -477,7 +485,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
   int outside = s*s - circle;
   
   int columnCounts[width_];
-  bzero(columnCounts, sizeof(columnCounts));
+  memset(columnCounts, 0, sizeof(columnCounts));
   
   // sum the column counts of pixels in the early rows
   for (int y = 0; y < r; y++) {

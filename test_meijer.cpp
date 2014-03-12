@@ -61,24 +61,29 @@ inline ostream &operator<<(ostream &out, const PGI &pgi) {
 	return out;
 }
 
-
 int main(int argc, char **argv) {
   shared_ptr<Bitmap> bitmap = Bitmap::make(40, 40, true);
   
-  for (int y = 20; y < 21; y++) {
-    for (int x = 20; x < 21; x++) {
+  for (int y = 15; y < 26; y++) {
+    for (int x = 0; x < 40; x++) {
       bitmap->at(y, x) = true;
     }
   }
 
-  cout << "bitmap: " << endl << bitmap << endl << flush;
+  for (int y = 0; y < 40; y++) {
+    for (int x = 15; x < 23; x++) {
+      bitmap->at(y, x) = true;
+    }
+  }
+  
+  cout << "bitmap: " << endl << *bitmap << endl << flush;
 
   shared_ptr< GreyImage<int> > bg = bitmap->distanceTransform(true);
   cout << "Background:" << endl << PGI(bg) << endl << flush;  
 
   shared_ptr< GreyImage<int> > fg = bitmap->distanceTransform(false);
   cout << "Foreground:" << endl << PGI(fg) << endl << flush;  
-
+  
   shared_ptr<Bitmap> inset = bitmap->inset(5);
   cout << "inset by 5:" << endl << inset << endl << flush;
 
@@ -100,13 +105,13 @@ int main(int argc, char **argv) {
     cout << "difference should be " << r << ":" << endl << *(*bitmap - *inset) << endl << flush;
   }
   
-  int W = 5000;
-  int H = 5000;
+  int W = 8000;
+  int H = 6000;
   shared_ptr<Bitmap> large = Bitmap::make(W, H, true);
   Bitmap::Set set = large->set(true);
   
-  for (int a = 0; a < 200; a++) {
-    int r = 50 * frand();
+  for (int a = 0; a < 10; a++) {
+    int r = 3 * frand();
     Circle circle(r);
   
     int extents[r];
@@ -144,7 +149,7 @@ int main(int argc, char **argv) {
   for (int w = W/5; w <= W; w += 2*W/5) {
     for (int h = H/5; h <= H; h += 2*H/5) {
       shared_ptr<Bitmap> bm = scaleImageTo(large, w, h);
-    
+      
       for (int threads = 1; threads <= 16; threads *= 2) {
         double t2 = now();
         shared_ptr<Bitmap> inset = bm->inset(40, threads);
@@ -154,10 +159,10 @@ int main(int argc, char **argv) {
         inset.reset();
         
         double t4 = now();
-        shared_ptr<Bitmap> outset = bm->inset(40, threads);
+        shared_ptr<Bitmap> outset = bm->outset(40, threads);
         double t5 = now();
         cerr << "outset " << w << "x" << h << ", " << threads << " threads: " << static_cast<int>((double)(w * h) / (t5 - t4)) << " pixels per second" << endl << flush;
-
+        
       }
     }
   }

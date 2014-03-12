@@ -83,7 +83,7 @@ public:
   }
   
   void clear() {
-    bzero(data_, width_ * height_ * sizeof(Pixel));
+    memset(data_, 0, width_ * height_ * sizeof(Pixel));
   }
   
   Image &operator=(const Image &other) {
@@ -98,6 +98,9 @@ public:
   Image &operator=(const Image *other) {
     *this = *other;
   }
+  
+  Pixel *data() { return data_; }
+  const Pixel *data() const { return data_; }
   
   int &width() { return width_; }
   const int width() const { return width_; }
@@ -532,8 +535,8 @@ template<typename I> shared_ptr<I> scaleImage(shared_ptr<I> src, double scale) {
 }
 
 template<typename I> shared_ptr<I> scaleImageTo(const I &src, int w, int h) {
-  double xScale = src.width() / w;
-  double yScale = src.height() / h;
+  double xScale = (double)w / (double)src.width();
+  double yScale = (double)h / (double)src.height();
   shared_ptr<I> result = make_shared<I>(w, h);
   for (int y = 0; y < h; y++) {
     typename I::Row sourceRow = (src)[y / yScale];
