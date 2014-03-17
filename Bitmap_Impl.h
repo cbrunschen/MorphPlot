@@ -132,6 +132,20 @@ inline const bool Bitmap::isEmpty() const {
   return true;
 }
 
+inline static int distanceFromColumn(int column, int x, int *g) {
+  int gi2 = g[column];
+  int dx = (x - column);
+  return dx*dx + gi2;
+}
+
+inline static int intersection(int i, int gi2, int u, int gu2) {
+  return (u*u - i*i + gu2 - gi2) / (2 * (u - i));
+}
+
+inline static int meijsterSeparation_euclidean(int i, int u, int *g) {
+  return intersection(i, g[i], u, g[u]);
+}
+
 template<bool background>
 inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
   int infinity = width_ + height_ + 1;
@@ -193,18 +207,6 @@ inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
   }
 }
 
-inline static int distanceFromColumn(int column, int x, int *g) {
-  int gi2 = g[column];
-  int dx = (x - column);
-  return dx*dx + gi2;
-}
-
-inline static int meijsterSeparation_euclidean(int i, int u, int *g) {
-  int gu2 = g[u];
-  int gi2 = g[i];
-  return (u*u - i*i + gu2 - gi2) / (2 * (u - i));
-}
-
 template<bool background>
 inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) const {
   int dominantColumn[width_ + 2];
@@ -263,8 +265,8 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
 
 template<bool background>
 inline void Bitmap::distanceTransform(int x0, int x1, int y0, int y1, int *g, int *result) const {
-  distanceTransformPass1<background>(background, x0, x1, g);
-  distanceTransformPass2<background>(background, g, y0, y1, result);
+  distanceTransformPass1<background>(x0, x1, g);
+  distanceTransformPass2<background>(g, y0, y1, result);
 }
 
 struct distance_transform_params {
@@ -322,6 +324,208 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, i
     } else {
       distanceTransformPass1<false>(0, width_, g->data());
       distanceTransformPass2<false>(g->data(), 0, height_, result->data());
+    }
+    return result;
+  }
+}
+
+template<bool background>
+inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const {
+  int infinity = width_ + height_ + 1;
+  infinity *= infinity;
+  int stride = width_;
+  
+  for (int x = x0; x < x1; x++) {
+    // scan 1:
+    bool *src = &data_[x];
+    bool *srcEnd = src + height_ * stride;
+    int *p = &g[x];
+    int *yp = &ys[x];
+    int y, ny;
+    int distance, difference;
+    
+    // - start with the primitive value
+    if (*src == background) {
+      distance = *p = 0;
+      difference = 1;
+      *yp = ny = 0;
+    } else if (background) {
+      distance = *p = infinity;
+      difference = 1;
+      *yp = ny = 0-height_;
+    } else {
+      distance = *p = 1;
+      difference = 3;
+      *yp = ny = -1;
+    }
+    
+    // - calculate the next one from the previous one(s)
+    for (y = 0, p += stride, src += stride, yp += stride; src < srcEnd; ++y, p += stride, src += stride, yp += stride) {
+      if (*src == background) {
+        distance = *p = 0;
+        difference = 1;
+        *yp = ny = y;
+        // scan backwards
+        int rDistance = 1;
+        int rDifference = 3;
+        for (int *q = p - stride, *yq = yp - stride; q >= g && *q > rDistance; q -= stride, yq -= stride) {
+          *q = rDistance;
+          *yq = ny;
+          rDistance += rDifference;
+          rDifference += 2;
+        }
+      } else {
+        if (distance == infinity) {
+          *p = infinity;
+        } else {
+          distance = *p = distance + difference;
+          difference += 2;
+        }
+        *yp = ny;
+      }
+    }
+    
+    if (!background) {
+      // scan backwards from the far edge
+      int rDistance = 1;
+      int rDifference = 3;
+      for (int *q = p - stride, *yq = yp - stride; q >= g && *q > rDistance; q -= stride, yq -= stride) {
+        *q = rDistance;
+        *yq = height_;
+        rDistance += rDifference;
+        rDifference += 2;
+      }
+    }
+  }
+}
+
+template<bool background>
+inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point *result) const {
+  int dominantColumn[width_ + 2];
+  int dominanceExtent[width_ + 2];
+  int dominantY[width_ + 2];
+  int *gs, *gr;
+  
+  if (!background) {
+    gs = new int[width_ + 2];
+    gr = &gs[1];
+    gr[-1] = gr[width_] = background ? width_ + height_ + 1 : 0;
+  }
+  
+  int u0 = background ? 1 : 0;
+  int u1 = background ? width_ : width_ + 1;
+  
+  for (int y = y0; y < y1; y++) {
+    int *yr = &ys[y * width_];
+    Point *dst = &result[y * width_];
+    if (background) {
+      gr = &g[y * width_];
+    } else {
+      int *src = &g[y * width_];
+      std::copy(src, src + width_, gr);
+    }
+    int q = 0;
+    dominanceExtent[0] = 0;
+    dominantColumn[0] = background ? 0 : -1;
+    dominantY[0] = background ? *yr : 0;
+    
+    // scan 3
+    for (int u = u0; u < u1; u++) {
+      while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceExtent[q], gr) > distanceFromColumn(u, dominanceExtent[q], gr)) {
+        q--;
+      }
+      
+      if (q < 0) {
+        q = 0;
+        dominantColumn[0] = u;
+        dominantY[0] = yr[u];
+      } else {
+        int w = 1 + meijsterSeparation_euclidean(dominantColumn[q], u, gr);
+        if (w < width_) {
+          q++;
+          dominantColumn[q] = u;
+          dominanceExtent[q] = w;
+          dominantY[q] = yr[u];
+        }
+      }
+    }
+    
+    // scan 4
+    for (int u = width_ - 1; u >= 0; u--) {
+      dst[u] = Point(dominantColumn[q], dominantY[q]);
+      
+      if (u == dominanceExtent[q]) {
+        q--;
+      }
+    }
+  }
+}
+
+template<bool background>
+inline void Bitmap::featureTransform(int x0, int x1, int y0, int y1, int *g, int *ys, Point *result) const {
+  featureTransformPass1<background>(x0, x1, g, ys);
+  featureTransformPass2<background>(g, ys, y0, y1, result);
+}
+
+struct feature_transform_params {
+  const Bitmap *bitmap;
+  int x0, x1, y0, y1;
+  int *g;
+  int *ys;
+  Point *result;
+  Workers::Barrier *barrier;
+};
+
+extern void feature_transform_thread_background(void *params);
+extern void feature_transform_thread_foreground(void *params);
+
+inline shared_ptr< Image<Point> > Bitmap::featureTransform(bool background, Workers &workers) const {
+  int threads = workers.n();
+  shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
+  shared_ptr< GreyImage<int> > ys = GreyImage<int>::make(width_, height_, false);
+  shared_ptr< Image<Point> > result = Image<Point>::make(width_, height_, false);
+  feature_transform_params *ft_params = new feature_transform_params[threads];
+  Workers::Barrier barrier;
+  
+  workers.initBarrier(&barrier);
+  
+  for (int i = 0; i < threads; i++) {
+    ft_params[i].bitmap = this;
+    ft_params[i].x0 = ((width_ * i) / threads);
+    ft_params[i].x1 = ((width_ * (i + 1)) / threads);
+    ft_params[i].y0 = ((height_ * i) / threads);
+    ft_params[i].y1 = ((height_ * (i + 1)) / threads);
+    ft_params[i].g = g->data();
+    ft_params[i].ys = ys->data();
+    ft_params[i].result = result->data();
+    ft_params[i].barrier = &barrier;
+  }
+  
+  if (background) {
+    workers.perform<feature_transform_params>(feature_transform_thread_background, &ft_params[0]);
+  } else {
+    workers.perform<feature_transform_params>(feature_transform_thread_foreground, &ft_params[0]);
+  }
+  
+  workers.destroyBarrier(&barrier);
+  
+  return result;
+}
+
+inline shared_ptr< Image<Point> > Bitmap::featureTransform(bool background, int threads) const {
+  if (threads > 1) {
+    Workers workers(threads);
+    return featureTransform(background, workers);
+  } else {
+    shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
+    shared_ptr< GreyImage<int> > ys = GreyImage<int>::make(width_, height_, false);
+    shared_ptr< Image<Point> > result = Image<Point>::make(width_, height_, false);
+    if (background) {
+      featureTransformPass1<true>(0, width_, g->data(), ys->data());
+      featureTransformPass2<true>(g->data(), ys->data(), 0, height_, result->data());
+    } else {
+      featureTransformPass1<false>(0, width_, g->data(), ys->data());
+      featureTransformPass2<false>(g->data(), ys->data(), 0, height_, result->data());
     }
     return result;
   }

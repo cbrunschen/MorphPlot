@@ -94,6 +94,13 @@ public:
   shared_ptr< GreyImage<int> > distanceTransform(bool background = true, int threads = 1) const;
   shared_ptr< GreyImage<int> > distanceTransform(bool background, Workers &workers) const;
 
+  template<bool background> void featureTransformPass1(int x0, int x1, int *g, int *ys) const;
+  template<bool background> void featureTransformPass2(int *g, int *ys, int y0, int y1, Point *result) const;
+  template<bool background> void featureTransform(int x0, int x1, int y0, int y1, int *g, int *ys, Point *result) const;
+  
+  shared_ptr< Image<Point> > featureTransform(bool background = true, int threads = 1) const;
+  shared_ptr< Image<Point> > featureTransform(bool background, Workers &workers) const;
+
   BitmapRef inset(int r, int threads = 1) const;
   
   BitmapRef outset(int r, int threads = 1) const;

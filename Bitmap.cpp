@@ -961,6 +961,20 @@ void distance_transform_thread_foreground(void *params) {
   dt_params->bitmap->distanceTransformPass2<false>(dt_params->g, dt_params->y0, dt_params->y1, dt_params->result);
 }
 
+void feature_transform_thread_background(void *params) {
+  feature_transform_params *ft_params = static_cast<feature_transform_params *>(params);
+  ft_params->bitmap->featureTransformPass1<true>(ft_params->x0, ft_params->x1, ft_params->g, ft_params->ys);
+  Workers::waitBarrier(ft_params->barrier);
+  ft_params->bitmap->featureTransformPass2<true>(ft_params->g, ft_params->ys, ft_params->y0, ft_params->y1, ft_params->result);
+}
+
+void feature_transform_thread_foreground(void *params) {
+  feature_transform_params *ft_params = static_cast<feature_transform_params *>(params);
+  ft_params->bitmap->featureTransformPass1<false>(ft_params->x0, ft_params->x1, ft_params->g, ft_params->ys);
+  Workers::waitBarrier(ft_params->barrier);
+  ft_params->bitmap->featureTransformPass2<false>(ft_params->g, ft_params->ys, ft_params->y0, ft_params->y1, ft_params->result);
+}
+
 #if 0
 {
 #endif

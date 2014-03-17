@@ -62,6 +62,7 @@ inline ostream &operator<<(ostream &out, const PGI &pgi) {
 }
 
 int main(int argc, char **argv) {
+#if 0
   shared_ptr<Bitmap> bitmap = Bitmap::make(40, 40, true);
   
   for (int y = 15; y < 26; y++) {
@@ -104,12 +105,19 @@ int main(int argc, char **argv) {
     cout << "inset by " << r << ":" << endl << *inset << endl << flush;
     cout << "difference should be " << r << ":" << endl << *(*bitmap - *inset) << endl << flush;
   }
-  
+#endif
+
+#if 1
   int W = 8000;
   int H = 6000;
+#else
+  int W = 20;
+  int H = 20;
+#endif
   shared_ptr<Bitmap> large = Bitmap::make(W, H, true);
   Bitmap::Set set = large->set(true);
   
+#if 0
   for (int a = 0; a < 10; a++) {
     int r = 3 * frand();
     Circle circle(r);
@@ -127,6 +135,13 @@ int main(int argc, char **argv) {
     
     line(x0, y0, x1, y1, set, initial, deltaX, deltaXY);
   }
+#else 
+  for (int a = 0; a < 10; a++) {
+    int x = (W-1) * frand();
+    int y = (H-1) * frand();
+    set(y, x);
+  }
+#endif
   
   large->writePng("/tmp/large.png");
 
@@ -144,7 +159,6 @@ int main(int argc, char **argv) {
   double t3 = now();
   cerr << (t3 - t2) << endl << flush;
   cerr << W << "x" << H << ": " << static_cast<int>((double)(W * H) / (t3 - t2)) << " pixels per second" << endl << flush;
-#endif
   
   for (int w = W/5; w <= W; w += 2*W/5) {
     for (int h = H/5; h <= H; h += 2*H/5) {
@@ -165,5 +179,15 @@ int main(int argc, char **argv) {
         
       }
     }
+  }
+#endif
+  
+  shared_ptr< Image<Point> > ft = large->featureTransform(true, 8);
+  
+  for (int y = 0; y < H; y++) {
+    for (int x = 0; x < W; x++) {
+      cout << setw(2) << right << ft->at(y, x).x() << "," << setw(2) << left << ft->at(y, x).y() << " ";
+    }
+    cout << endl << flush;
   }
 }

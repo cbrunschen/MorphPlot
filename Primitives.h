@@ -180,7 +180,8 @@ class Point {
   int y_;
   friend ostream &operator<<(ostream &out, const Point &p);
 public:
-  Point(int x = 0, int y = 0) : x_(x), y_(y) { }
+  Point() { }  // leave contents uninitialized.
+  Point(int x, int y) : x_(x), y_(y) { }
   Point(const Point &p) : x_(p.x_), y_(p.y_) { }
   int &x() { return x_; }
   int &y() { return y_; }
