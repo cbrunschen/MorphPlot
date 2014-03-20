@@ -17,7 +17,7 @@ namespace Primitives {
 }
 #endif
 
-using namespace HASH_NAMESPACE;
+using namespace std;
 
 class Circle {
   static list<Point> noPoints_;
@@ -31,7 +31,7 @@ class Circle {
   mutable vector<Point> *offsetsCw_;
   mutable vector<Point> *offsetsCcw_;
   
-  typedef HASH_MAP<int, list<Point> > Deltas;
+  typedef unordered_map<int, list<Point> > Deltas;
   mutable Deltas deltas_;
 
 public:
@@ -69,11 +69,11 @@ public:
   template<typename I>
   static void makeNeighbourhoodDelta(int r, int extents[], I i, const list<Point>& circlePoints, int neighbours) {
     // cerr << "making delta for neighbourhood " << PH<int>(neighbours) << ": ";
-    HASH_SET<Point, PointHasher> result;
+    unordered_set<Point, PointHasher> result;
     copy(circlePoints.begin(), circlePoints.end(), inserter(result, result.begin()));
     
     // cerr << "points without neighbours: ";
-    // for (HASH_SET<Point, PointHasher>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
+    // for (unordered_set<Point, PointHasher>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
     //   cerr << *ii << ", ";
     // cerr << ";" << endl;
     
@@ -89,7 +89,7 @@ public:
         }
         
         // cerr << "remaining: ";
-        // for (HASH_SET<Point, PointHasher>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
+        // for (unordered_set<Point, PointHasher>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
         //   cerr << *ii << ", ";
         // cerr << ";" << endl;
       }

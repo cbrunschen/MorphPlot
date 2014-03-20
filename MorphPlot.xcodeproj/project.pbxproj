@@ -23,7 +23,6 @@
 		222209A118A9315800ED90B0 /* FnvHash.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E315FCD7FD00F74DAA /* FnvHash.h */; };
 		222209A218A9315800ED90B0 /* GreyImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E415FCD7FD00F74DAA /* GreyImage.h */; };
 		222209A318A9315800ED90B0 /* GreyImage_Impl.h in Headers */ = {isa = PBXBuildFile; fileRef = 2222097B18A7AFC000ED90B0 /* GreyImage_Impl.h */; };
-		222209A418A9315800ED90B0 /* HashMapSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E515FCD7FD00F74DAA /* HashMapSet.h */; };
 		222209A518A9315800ED90B0 /* Hatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E615FCD7FD00F74DAA /* Hatcher.h */; };
 		222209A618A9315800ED90B0 /* Image.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E715FCD7FD00F74DAA /* Image.h */; };
 		222209A718A9315800ED90B0 /* K3M.h in Headers */ = {isa = PBXBuildFile; fileRef = 2280A0E915FCD7FD00F74DAA /* K3M.h */; };
@@ -210,7 +209,6 @@
 		2280A0E215FCD7FD00F74DAA /* FloodFill.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FloodFill.h; sourceTree = "<group>"; };
 		2280A0E315FCD7FD00F74DAA /* FnvHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FnvHash.h; sourceTree = "<group>"; };
 		2280A0E415FCD7FD00F74DAA /* GreyImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GreyImage.h; sourceTree = "<group>"; };
-		2280A0E515FCD7FD00F74DAA /* HashMapSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashMapSet.h; sourceTree = "<group>"; };
 		2280A0E615FCD7FD00F74DAA /* Hatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hatcher.h; sourceTree = "<group>"; };
 		2280A0E715FCD7FD00F74DAA /* Image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Image.h; sourceTree = "<group>"; };
 		2280A0E815FCD7FD00F74DAA /* K3M.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = K3M.cpp; sourceTree = "<group>"; };
@@ -413,7 +411,6 @@
 				2280A0E415FCD7FD00F74DAA /* GreyImage.h */,
 				2222097B18A7AFC000ED90B0 /* GreyImage_Impl.h */,
 				224AA5C615FE7337008E84FD /* GreyImage.cpp */,
-				2280A0E515FCD7FD00F74DAA /* HashMapSet.h */,
 				2280A0E615FCD7FD00F74DAA /* Hatcher.h */,
 				2280A0E715FCD7FD00F74DAA /* Image.h */,
 				22C27B7618B89074009E5B8F /* Image_Impl.h */,
@@ -461,7 +458,6 @@
 				222209A118A9315800ED90B0 /* FnvHash.h in Headers */,
 				222209A218A9315800ED90B0 /* GreyImage.h in Headers */,
 				222209A318A9315800ED90B0 /* GreyImage_Impl.h in Headers */,
-				222209A418A9315800ED90B0 /* HashMapSet.h in Headers */,
 				222209A518A9315800ED90B0 /* Hatcher.h in Headers */,
 				222209A618A9315800ED90B0 /* Image.h in Headers */,
 				222209A718A9315800ED90B0 /* K3M.h in Headers */,
@@ -1151,6 +1147,7 @@
 				222C1BE218BA25C600A5C5D9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -143,7 +143,7 @@ public:
     adjacent->scanBoundaries(adjacents, marks, false);
     
     set<Point> adjacentCircleCenters;
-    HASH_MAP<Chain*, set<Point> > circleCentersByChain;
+    unordered_map<Chain*, set<Point> > circleCentersByChain;
     
     D((*out_) << "    . adjacent pixel chains:" << endl);
     for (vector<Boundary>::iterator b = adjacents.begin();
@@ -191,7 +191,7 @@ public:
     map<Point, Point> linesToDraw;
     set<Point> pointsToDraw;
     (*out_) << "  - finding lines to draw from adjacent thinned points to circle centers" << endl;
-    for (HASH_MAP<Chain*, set<Point> >::iterator pairIter = circleCentersByChain.begin();
+    for (unordered_map<Chain*, set<Point> >::iterator pairIter = circleCentersByChain.begin();
          pairIter != circleCentersByChain.end();
          ++pairIter) {
       Point a(-1, -1), b(-1, -1);

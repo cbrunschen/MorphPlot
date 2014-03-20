@@ -63,7 +63,7 @@ struct fnv_hash<8>
 template<typename T>
 struct continue_hash {
   static size_t hash (const T &t, size_t hash = fnv_hash<sizeof(T)>::init) {
-    return fnv_hash<>::hash(reinterpret_cast<const char *> (&t), sizeof(T), hash);
+    return fnv_hash<sizeof(T)>::hash(reinterpret_cast<const char *> (&t), sizeof(T), hash);
   }
 };
 

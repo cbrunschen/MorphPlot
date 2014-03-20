@@ -203,6 +203,11 @@ public:
     if (p.x_ < x_) return false;
     return y_ < p.y_;
   }
+  const bool operator>(const Point &p) const {
+    if (x_ > p.x_) return true;
+    if (p.x_ > x_) return false;
+    return y_ > p.y_;
+  }
   Point operator+(const Point &p) const {
     return Point(x_ + p.x_, y_ + p.y_);
   }
@@ -269,8 +274,8 @@ public:
   const double distance(const double x, const double y) const {
     return sqrt(squareDistance(x, y));
   }
-  // calculates the distance from |this| to the segment (|p| to |q|)
-  const double distance(const Point &p, const Point &q) const {
+  // calculates the squared distance from |this| to the segment (|p| to |q|)
+  const double squareDistance(const Point &p, const Point &q) const {
     double pqx = q.x_ - p.x_;
     double pqy = q.y_ - p.y_;
     double pqlen = sqrt(pqx*pqx + pqy+pqy);
@@ -280,16 +285,20 @@ public:
     double dy = y_ - p.y_;
     double t = pqnx * dx + pqny * dy;
     if (t < 0.0) {
-      return distance(p);
+      return squareDistance(p);
     } else if (t <= pqlen) {
       double rx = p.x_ + t * pqnx;
       double ry = p.y_ + t * pqny;
       double drx = x_ - rx;
       double dry = y_ - ry;
-      return sqrt(drx*drx + dry*dry);
+      return drx*drx + dry*dry;
     } else {
-      return distance(q);
+      return squareDistance(q);
     }
+  }
+  // calculates the distance from |this| to the segment (|p| to |q|)
+  const double distance(const Point &p, const Point &q) const {
+    return sqrt(squareDistance(p, q));
   }
   
   Point &transform(const Matrix &m) {

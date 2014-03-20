@@ -119,37 +119,37 @@ IMPLEMENT_OP(!=, ne)
 
 
 #define IMPLEMENT_MINMAX(name, operator)                                                                      \
-template<typename Pixel>                                                                                          \
+template<typename Pixel>                                                                                      \
 inline void Image<Pixel>::name(void *params) {                                                                \
-  ReductionRange<Pixel> *p = static_cast<ReductionRange<Pixel> *>(params);    \
+  ReductionRange<Pixel> *p = static_cast<ReductionRange<Pixel> *>(params);                                    \
   typename Image<Pixel>::const_iterator src = p->begin;                                                       \
   typename Image<Pixel>::const_iterator end = p->end;                                                         \
                                                                                                               \
-  Pixel value = *src++;                                                                                           \
+  Pixel value = *src++;                                                                                       \
   while (src != end) {                                                                                        \
-    Pixel tmp = *src++;                                                                                           \
+    Pixel tmp = *src++;                                                                                       \
     if (tmp operator value) value = tmp;                                                                      \
   }                                                                                                           \
   p->value = value;                                                                                           \
 }                                                                                                             \
                                                                                                               \
-template<typename Pixel>                                                                                          \
-inline Pixel Image<Pixel>::name() const {                                                                         \
+template<typename Pixel>                                                                                      \
+inline Pixel Image<Pixel>::name() const {                                                                     \
   Image<Pixel>::const_iterator src = this->begin();                                                           \
   Image<Pixel>::const_iterator end = this->end();                                                             \
-  Pixel value = *src++;                                                                                           \
+  Pixel value = *src++;                                                                                       \
   while (src != end) {                                                                                        \
-    Pixel tmp = *src++;                                                                                           \
+    Pixel tmp = *src++;                                                                                       \
     if (tmp operator value) value = tmp;                                                                      \
   }                                                                                                           \
   return value;                                                                                               \
 }                                                                                                             \
                                                                                                               \
-template<typename Pixel>                                                                                          \
-inline Pixel Image<Pixel>::name(Workers &workers) const {                                                         \
+template<typename Pixel>                                                                                      \
+inline Pixel Image<Pixel>::name(Workers &workers) const {                                                     \
   int n = workers.n();                                                                                        \
   if (n > 1) {                                                                                                \
-    ReductionRange<Pixel> *ranges = new ReductionRange<Pixel>[n];                               \
+    ReductionRange<Pixel> *ranges = new ReductionRange<Pixel>[n];                                             \
     for (int i = 0; i < n; i++) {                                                                             \
       ranges[i].begin = this->iter_at(i * height_ / n);                                                       \
       ranges[i].end = this->iter_at((i + 1) * height_ / n);                                                   \
@@ -157,9 +157,9 @@ inline Pixel Image<Pixel>::name(Workers &workers) const {                       
                                                                                                               \
     workers.perform(Image<Pixel>::name, &ranges[0]);                                                          \
                                                                                                               \
-    Pixel value = ranges[0].value;                                                                                \
+    Pixel value = ranges[0].value;                                                                            \
     for (int i = 1; i < n; i++) {                                                                             \
-      Pixel tmp = ranges[i].value;                                                                                \
+      Pixel tmp = ranges[i].value;                                                                            \
       if (tmp operator value) value = tmp;                                                                    \
     }                                                                                                         \
                                                                                                               \

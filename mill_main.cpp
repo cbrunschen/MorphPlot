@@ -40,7 +40,7 @@ using namespace std;
 #define D(x) do { (x); } while(0)
 
 using namespace Images;
-using namespace HASH_NAMESPACE;
+using namespace std;
 using namespace Extraction;
 
 class Printer {
