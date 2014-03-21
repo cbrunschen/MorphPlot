@@ -360,7 +360,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
     }
     
     // - calculate the next one from the previous one(s)
-    for (y = 0, p += stride, src += stride, yp += stride; src < srcEnd; ++y, p += stride, src += stride, yp += stride) {
+    for (y = 1, p += stride, src += stride, yp += stride; src < srcEnd; ++y, p += stride, src += stride, yp += stride) {
       if (*src == background) {
         distance = *p = 0;
         difference = 1;

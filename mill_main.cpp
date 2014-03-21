@@ -31,7 +31,6 @@ using namespace std;
 #include "Chain.h"
 #include "Line.h"
 #include "Output.h"
-#include "HashMapSet.h"
 #include "K3M.h"
 #include "Progress.h"
 #include "MillPathExtractor.h"

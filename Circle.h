@@ -69,11 +69,11 @@ public:
   template<typename I>
   static void makeNeighbourhoodDelta(int r, int extents[], I i, const list<Point>& circlePoints, int neighbours) {
     // cerr << "making delta for neighbourhood " << PH<int>(neighbours) << ": ";
-    unordered_set<Point, PointHasher> result;
+    unordered_set<Point> result;
     copy(circlePoints.begin(), circlePoints.end(), inserter(result, result.begin()));
     
     // cerr << "points without neighbours: ";
-    // for (unordered_set<Point, PointHasher>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
+    // for (unordered_set<Point>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
     //   cerr << *ii << ", ";
     // cerr << ";" << endl;
     
@@ -89,7 +89,7 @@ public:
         }
         
         // cerr << "remaining: ";
-        // for (unordered_set<Point, PointHasher>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
+        // for (unordered_set<Point>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
         //   cerr << *ii << ", ";
         // cerr << ";" << endl;
       }

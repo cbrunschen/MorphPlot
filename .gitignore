@@ -4,6 +4,8 @@
 *.a
 mill
 plot
+stipple
+voronoi
 test_meijer
 Tests/tests
 **/xcshareddata/

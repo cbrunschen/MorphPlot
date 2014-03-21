@@ -3,7 +3,7 @@
 LIB_OBJECTS=Bitmap.o Primitives.o Circle.o K3M.o PathExtractor.o \
     ColorImage.o Workers.o
 
-LIB_HEADERS=FnvHash.h Hatcher.h Line.h HashMapSet.h \
+LIB_HEADERS=FnvHash.h Hatcher.h Line.h \
     Chain.h Bitmap.h ColorImage.h GreyImage.h Primitives.h \
     Image.h Output.h FloodFill.h Circle.h K3M.h Progress.h \
     PathExtractor.h PlotterPathExtractor.h MillPathExtractor.h \
@@ -19,6 +19,10 @@ PLOT_BIN=plot
 MILL_SRC=mill_main.cpp
 MILL_OBJ=mill_main.o
 MILL_BIN=mill
+
+STIPPLE_SRC=stipple_main.cpp
+STIPPLE_OBJ=stipple_main.o
+STIPPLE_BIN=stipple
 
 TEST_MEIJER_SRC=test_meijer.cpp
 TEST_MEIJER_OBJ=test_meijer.o
@@ -70,6 +74,9 @@ $(PLOT_BIN) : $(PLOT_OBJ) $(LIB_ARCHIVE)
 $(MILL_BIN) : $(MILL_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
+$(STIPPLE_BIN) : $(STIPPLE_OBJ) $(LIB_ARCHIVE)
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
+
 $(TEST_MEIJER_BIN) : $(TEST_MEIJER_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
@@ -77,7 +84,7 @@ $(LIB_ARCHIVE): $(LIB_OBJECTS)
 	$(AR) -r $@ $^
 
 clean :
-	-rm $(PLOT_BIN) $(PLOT_OBJ) $(MILL_BIN) $(MILL_OBJ) $(LIB_ARCHIVE) $(LIB_OBJECTS)
+	-rm $(PLOT_BIN) $(PLOT_OBJ) $(MILL_BIN) $(MILL_OBJ) $(STIPPLE_BIN) $(STIPPLE_OBJ) $(LIB_ARCHIVE) $(LIB_OBJECTS)
 	$(MAKE) -C Tests clean
 
 tests : $(LIB_ARCHIVE)

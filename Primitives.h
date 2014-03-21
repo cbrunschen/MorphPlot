@@ -13,7 +13,6 @@
 #define nColorComponents 3
 
 #include "FnvHash.h"
-#include "HashMapSet.h"
 
 #include <stdint.h>
 #include <limits>
@@ -27,6 +26,8 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 
 #if DEBUG
 #define D(x) do { x; } while(0)
@@ -179,6 +180,7 @@ class Point {
   int x_;
   int y_;
   friend ostream &operator<<(ostream &out, const Point &p);
+  friend struct std::hash<Point>;
 public:
   Point() { }  // leave contents uninitialized.
   Point(int x, int y) : x_(x), y_(y) { }
@@ -679,6 +681,28 @@ template <typename T> inline ostream &operator<<(ostream &out, const set<T> &poi
   out << " }]";
   return out;
 }
+
+#if 0
+{
+#endif
+}
+
+namespace std {
+#if 0 
+}
+#endif
+
+using namespace Primitives;
+template <>
+struct hash<Point>
+{
+  typedef Point         argument_type;
+  typedef std::size_t   result_type;
+  
+  result_type operator()(const Point &h) const {
+    return continue_hash<int>::hash(h.x_, continue_hash<int>::hash(h.y_));
+  }
+};
 
 #if 0
 {
