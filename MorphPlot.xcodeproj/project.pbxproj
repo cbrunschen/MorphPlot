@@ -599,9 +599,9 @@
 			productReference = 222C1BDF18BA25C600A5C5D9 /* test_meijer */;
 			productType = "com.apple.product-type.tool";
 		};
-		2267375018DB6845007C45A5 /* voronoi */ = {
+		2267375018DB6845007C45A5 /* stipple */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2267375718DB6845007C45A5 /* Build configuration list for PBXNativeTarget "voronoi" */;
+			buildConfigurationList = 2267375718DB6845007C45A5 /* Build configuration list for PBXNativeTarget "stipple" */;
 			buildPhases = (
 				2267374D18DB6845007C45A5 /* Sources */,
 				2267374E18DB6845007C45A5 /* Frameworks */,
@@ -612,7 +612,7 @@
 			dependencies = (
 				2267375C18DB688F007C45A5 /* PBXTargetDependency */,
 			);
-			name = voronoi;
+			name = stipple;
 			productName = voronoi;
 			productReference = 2267375118DB6845007C45A5 /* voronoi */;
 			productType = "com.apple.product-type.tool";
@@ -643,7 +643,7 @@
 				222209C318A9319F00ED90B0 /* mill */,
 				222209D418A9569000ED90B0 /* Tests */,
 				222C1BDE18BA25C600A5C5D9 /* test_meijer */,
-				2267375018DB6845007C45A5 /* voronoi */,
+				2267375018DB6845007C45A5 /* stipple */,
 			);
 		};
 /* End PBXProject section */
@@ -1287,7 +1287,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2267375718DB6845007C45A5 /* Build configuration list for PBXNativeTarget "voronoi" */ = {
+		2267375718DB6845007C45A5 /* Build configuration list for PBXNativeTarget "stipple" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2267375818DB6845007C45A5 /* Debug */,

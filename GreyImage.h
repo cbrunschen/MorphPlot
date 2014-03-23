@@ -91,8 +91,6 @@ public:
   shared_ptr<Bitmap> coverage(int threads) const;
   shared_ptr<Bitmap> coverage(Workers &workers) const;
 
-  static double frand();
-
   double sumOfValues(const Point &p0, const list<Point> &points) const;
 
   template <typename T>

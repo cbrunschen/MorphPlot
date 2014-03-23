@@ -31,6 +31,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <random>
 
 #include <stdarg.h>
 
@@ -38,18 +39,18 @@ using namespace Primitives;
 using namespace Images;
 using namespace std;
 
+static default_random_engine rng;
+static uniform_real_distribution<double> dist;
+static auto frand = bind(dist, rng);
+
+static inline int randInt(int max) {
+  return max * frand();
+}
+
 static inline double now() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
-}
-
-static inline double frand() {
-  return (double) rand() / ((double) RAND_MAX);
-}
-
-static inline int randInt(int max) {
-  return static_cast<int>(max * frand());
 }
 
 static inline void verifySame(const Bitmap &a, const Bitmap &b) {
@@ -64,9 +65,9 @@ static inline void verifySame(const Bitmap &a, const Bitmap &b) {
 
 #define T(op) do {                                                                                       \
   double t0 = now();                                                                                     \
-  shared_ptr<Bitmap> seq = image.op(cutoff);                                                                    \
+  shared_ptr<Bitmap> seq = image.op(cutoff);                                                             \
   double t1 = now();                                                                                     \
-  shared_ptr<Bitmap> par = image.op(cutoff, workers);                                                           \
+  shared_ptr<Bitmap> par = image.op(cutoff, workers);                                                    \
   double t2 = now();                                                                                     \
   double t01 = t1 - t0;                                                                                  \
   double t12 = t2 - t1;                                                                                  \

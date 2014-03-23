@@ -31,6 +31,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <random>
 
 #include <stdarg.h>
 
@@ -38,14 +39,14 @@ using namespace Primitives;
 using namespace Images;
 using namespace std;
 
+static default_random_engine rng;
+static uniform_real_distribution<double> dist;
+static auto frand = bind(dist, rng);
+
 static inline double now() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
-}
-
-static inline double frand() {
-  return (double) rand() / ((double) RAND_MAX);
 }
 
 class PGI {

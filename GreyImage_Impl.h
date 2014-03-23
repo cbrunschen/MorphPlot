@@ -134,11 +134,6 @@ inline shared_ptr<Bitmap> GreyImage<C>::where(Op &op, C value) const {
 }
 
 template<typename C>
-inline double GreyImage<C>::frand() {
-  return (double) rand() / ((double) RAND_MAX);
-}
-
-template<typename C>
 inline double GreyImage<C>::sumOfValues(const Point &p0, const list<Point> &points) const {
   double value = 0.0;
   for (list<Point>::const_iterator cp = points.begin(); cp != points.end(); ++cp) {

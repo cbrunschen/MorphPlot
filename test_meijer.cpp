@@ -24,6 +24,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <random>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -38,9 +39,9 @@ double now() {
   return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
 }
 
-double frand() {
-  return (double) rand() / ((double) RAND_MAX);
-}
+static default_random_engine rng;
+static uniform_real_distribution<double> dist;
+static auto frand = bind(dist, rng);
 
 class PGI {
 	shared_ptr< GreyImage<int> > g_;
