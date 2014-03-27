@@ -352,7 +352,7 @@ shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
 
   if (color_type != PNG_COLOR_TYPE_GRAY) {
     // convert colors to gray
-    png_set_rgb_to_gray(png_ptr, PNG_ERROR_ACTION_ERROR, PNG_RGB_TO_GRAY_DEFAULT, PNG_RGB_TO_GRAY_DEFAULT);
+    png_set_rgb_to_gray(png_ptr, PNG_ERROR_ACTION_NONE, PNG_RGB_TO_GRAY_DEFAULT, PNG_RGB_TO_GRAY_DEFAULT);
   } else if (bit_depth < 8) {
     // convert grays to 8 bits
     png_set_expand_gray_1_2_4_to_8(png_ptr);

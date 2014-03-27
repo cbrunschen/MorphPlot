@@ -453,15 +453,15 @@ void twoOpt(V &v, N &neighbours) {
     }
 #endif
     
-    for (int a = 0; a < n-2; a++) {
-      int sa = a+1;
+    for (int a = 0; a < n - 4; a++) {
+      int sa = a + 1;
       auto &na = neighbours[v[a]];
-      for (int b = sa; b < n-1; b++) {
-        int sb = b+1;
-        //        if (na.find(v[sb]) == na.end()) {
-        //          cerr << "* (" << a << "," << b << "," << "): not a neighbour, skipping" << endl << flush;
-        //          continue;
-        //        }
+      for (int b = a + 2; b < n - 2; b++) {
+        int sb = b + 1;
+//        if (na.find(v[sb]) == na.end()) {
+//          cerr << "* (" << a << "," << b << "," << "): not a neighbour, skipping" << endl << flush;
+//          continue;
+//        }
         auto &nb = neighbours[v[b]];
         
         double dBefore = d(v[a], v[sa]) + d(v[b], v[sb]);
@@ -472,7 +472,7 @@ void twoOpt(V &v, N &neighbours) {
           aMin = a;
           bMin = b;
           bestImprovement = improvement;
-          //          cerr << "  - have new best improvement " << bestImprovement << endl << flush;
+//          cerr << "  - have new best improvement " << bestImprovement << endl << flush;
         }
       }
     }
@@ -542,6 +542,55 @@ void randomTwoOpt(V &v, N &neighbours) {
     }
     if (unimproved > n*n) {
       cerr << "2-opt iteration " << i << ": no more improvement detected afer " << unimproved << " iterations, done." << endl << flush;
+      break;
+    }
+  }
+}
+
+template<typename P, typename V, typename N, typename D = EuclideanDistance<P> >
+void continuousTwoOpt(V &v, N &neighbours) {
+  D d;
+  size_t n = v.size();
+  for (int i = 0;; i++) {
+    double totalImprovement = 0.0;
+    int swaps = 0;
+#if 0
+    {
+      cerr << "2-opt, tour=[  ";
+      double total = 0.0;
+      Point p;
+      for (auto j = v.begin(); j != v.end(); ++j) {
+        if (j == v.begin()) p = *j; else {
+          double d = p.distance(*j);
+          cerr << "  +" << d << "+  ";
+          total += d; p = *j;
+        }
+        cerr << j->x() << "," << j->y();
+      }
+      cerr << "], length " << total << endl << flush;
+    }
+#endif
+    
+    for (int a = 0; a < n - 2; a++) {
+      int sa = a + 1;
+      for (int b = a + 2; b < n; b++) {
+        int sb = (b + 1) % n;
+        double dBefore = d(v[a], v[sa]) + d(v[b], v[sb]);
+        double dAfter = d(v[a], v[b]) + d(v[sb], v[sa]);
+        double improvement = dBefore - dAfter;
+        // cerr << "* (" << a << "," << b << "," << c << "): " << dBefore << " -> " << dAfter << endl << flush;
+        if (improvement > 0.0) {
+          totalImprovement += improvement;
+          ++swaps;
+          reverse(v, sa, b - a);
+        }
+      }
+    }
+    
+    if (totalImprovement > 0.0) {
+      cerr << "continuous 2-opt iteration " << i << ": improvement by " << totalImprovement << " in " << swaps << " swaps" << endl << flush;
+    } else {
+      cerr << "continuous 2-opt found no further improvement, done" << endl << flush;
       break;
     }
   }
@@ -979,8 +1028,13 @@ int main(int argc, char **argv) {
   
   // start with a nearest-neighbour tour
   nearestNeighbourTour(tour, neighboursBySite);
+#if 0
   // now improve it using a randomized 2-opt
   randomTwoOpt<Point>(tour, neighboursBySite);
+#else
+  // now improve it using 2-opt
+  continuousTwoOpt<Point>(tour, neighboursBySite);
+#endif
 
   cerr << "Tour has " << tour.size() << " points" << endl << flush;
 
