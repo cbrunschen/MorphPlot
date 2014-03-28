@@ -391,14 +391,14 @@ void calculateCentroids(const Image<Point> &regions, const Image<uint8_t> &weigh
   }
 }
 
-template<typename V> void rotateLeft(V &v, int offset, int len, int amount) {
+template<typename V> void rotateLeft(V &v, size_t offset, size_t len, long amount) {
   amount %= len;
   if (amount < 0) {
     amount = len + amount;
   }
   for (int m = 0, count = 0; count < len; m++) {
     auto t = v[offset + m];
-    int i, j;
+    long i, j;
     for (i = m, j = m + amount; j != m; i = j, j = (j + amount) % len, count++) {
       v[offset + i] = v[offset + j];
     }
@@ -870,6 +870,24 @@ void nearestNeighbourTour(V &tour, N &neighboursBySite) {
   }
 }
 
+template<typename V>
+void rotateToShortest(V &tour) {
+  long jMax = -1;
+  double dMax = 0;
+  long i = tour.size() - 1;
+  long j = 0;
+  while (j < tour.size()) {
+    double d = tour[i].distance(tour[j]);
+    if (d > dMax) {
+      dMax = d;
+      jMax = j;
+    }
+    i = j;
+    ++j;
+  }
+  rotateLeft(tour, 0, tour.size(), jMax);
+}
+
 int main(int argc, char **argv) {
   double scale = 1.0;
   int nStipples = 1000;
@@ -1028,13 +1046,11 @@ int main(int argc, char **argv) {
   
   // start with a nearest-neighbour tour
   nearestNeighbourTour(tour, neighboursBySite);
-#if 0
-  // now improve it using a randomized 2-opt
-  randomTwoOpt<Point>(tour, neighboursBySite);
-#else
   // now improve it using 2-opt
   continuousTwoOpt<Point>(tour, neighboursBySite);
-#endif
+
+  // find the adjacent sites with the greatest distance between them, and make those the start and end respectively
+  rotateToShortest(tour);
 
   cerr << "Tour has " << tour.size() << " points" << endl << flush;
 
@@ -1046,6 +1062,8 @@ int main(int argc, char **argv) {
   
   preamble(cout, sites->width(), sites->height());
   strokeTour(cout, tour);
+  cout << "gsave 0 1 0 setrgbcolor " << tour.front().x() << " " << tour.front().y() << " translate -5 -5 10 10 rectfill grestore" << endl << flush;
+  cout << "gsave 1 0 0 setrgbcolor " << tour.back().x() << " " << tour.back().y() << " translate -5 -5 10 10 rectfill grestore" << endl << flush;
   postamble(cout);
 
   exit(0);
