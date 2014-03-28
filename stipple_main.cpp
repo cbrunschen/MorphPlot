@@ -28,7 +28,7 @@ using namespace Images;
 static random_device rd;
 static default_random_engine rng(rd());
 static uniform_real_distribution<double> dist;
-static auto frand = bind(dist, rng);
+static inline double frand() { return dist(rng); }
 
 double now() {
   struct timeval tv;
@@ -428,51 +428,24 @@ struct EuclideanDistance {
   }
 };
 
-template<typename P, typename V, typename N, typename D = EuclideanDistance<P> >
-void twoOpt(V &v, N &neighbours) {
+template<typename P, typename V, typename D = EuclideanDistance<P> >
+void twoOpt(V &v) {
   D d;
   size_t n = v.size();
   for (int i = 0;; i++) {
     int aMin = -1, bMin = -1;
     double bestImprovement = -numeric_limits<double>::infinity();
-    
-#if 0
-    {
-      cerr << "2-opt, tour=[  ";
-      double total = 0.0;
-      Point p;
-      for (auto j = v.begin(); j != v.end(); ++j) {
-        if (j == v.begin()) p = *j; else {
-          double d = p.distance(*j);
-          cerr << "  +" << d << "+  ";
-          total += d; p = *j;
-        }
-        cerr << j->x() << "," << j->y();
-      }
-      cerr << "], length " << total << endl << flush;
-    }
-#endif
-    
     for (int a = 0; a < n - 4; a++) {
       int sa = a + 1;
-      auto &na = neighbours[v[a]];
       for (int b = a + 2; b < n - 2; b++) {
         int sb = b + 1;
-//        if (na.find(v[sb]) == na.end()) {
-//          cerr << "* (" << a << "," << b << "," << "): not a neighbour, skipping" << endl << flush;
-//          continue;
-//        }
-        auto &nb = neighbours[v[b]];
-        
         double dBefore = d(v[a], v[sa]) + d(v[b], v[sb]);
         double dAfter = d(v[a], v[b]) + d(v[sb], v[sa]);
         double improvement = dBefore - dAfter;
-        // cerr << "* (" << a << "," << b << "," << c << "): " << dBefore << " -> " << dAfter << endl << flush;
         if (improvement > bestImprovement) {
           aMin = a;
           bMin = b;
           bestImprovement = improvement;
-//          cerr << "  - have new best improvement " << bestImprovement << endl << flush;
         }
       }
     }
@@ -487,32 +460,16 @@ void twoOpt(V &v, N &neighbours) {
   }
 }
 
-template<typename P, typename V, typename N, typename D = EuclideanDistance<P> >
-void randomTwoOpt(V &v, N &neighbours) {
+template<typename P, typename V, typename D = EuclideanDistance<P> >
+void randomTwoOpt(V &v) {
   D d;
   int n = static_cast<int>(v.size());
   int unimproved = 0;
   double unreportedImprovement = 0.0;
   int unreportedSwaps = 0;
-  for (int i = 0; ; i++) {
-  #if 0
-    {
-      cerr << "2-opt, tour=[  ";
-      double total = 0.0;
-      Point p;
-      for (auto j = v.begin(); j != v.end(); ++j) {
-        if (j == v.begin()) p = *j; else {
-          double d = p.distance(*j);
-          cerr << "  +" << d << "+  ";
-          total += d; p = *j;
-        }
-        cerr << j->x() << "," << j->y();
-      }
-      cerr << "], length " << total << endl << flush;
-    }
-#endif
+  uniform_int_distribution<int> dist(0, n-4);
 
-    uniform_int_distribution<int> dist(0, n-4);
+  for (int i = 0; ; i++) {
     int a = dist(rng);
     int t = dist(rng);
     int b = (a + 2 + t) % n;
@@ -547,8 +504,8 @@ void randomTwoOpt(V &v, N &neighbours) {
   }
 }
 
-template<typename P, typename V, typename N, typename D = EuclideanDistance<P> >
-void continuousTwoOpt(V &v, N &neighbours) {
+template<typename P, typename V, typename D = EuclideanDistance<P> >
+void continuousTwoOpt(V &v) {
   D d;
   size_t n = v.size();
   for (int i = 0;; i++) {
@@ -755,14 +712,15 @@ void addRandomStipples(T &stipples, int nStipples, const I &weights, double scal
   int w = scale * weights.width();
   int h = scale * weights.height();
 
-  auto randX = bind(uniform_int_distribution<int>(0, w-1), rng);
-  auto randY = bind(uniform_int_distribution<int>(0, h-1), rng);
-  auto randWeight = bind(uniform_int_distribution<int>(0, WEIGHT_MAX), rng);
+  uniform_int_distribution<int> randX(0, w-1);
+  uniform_int_distribution<int> randY(0, h-1);
+  uniform_int_distribution<int> randWeight(0, WEIGHT_MAX);
   
   while (stipples.size() < nStipples) {
-    int x = randX();
-    int y = randY();
-    if (randWeight() > weights.at(y / scale, x / scale)) {
+    int x = randX(rng);
+    int y = randY(rng);
+    int weight = randWeight(rng);
+    if (weight >= weights.at(y / scale, x / scale)) {
       stipples.insert(Point(x, y));
     }
   }
@@ -1047,7 +1005,7 @@ int main(int argc, char **argv) {
   // start with a nearest-neighbour tour
   nearestNeighbourTour(tour, neighboursBySite);
   // now improve it using 2-opt
-  continuousTwoOpt<Point>(tour, neighboursBySite);
+  continuousTwoOpt<Point>(tour);
 
   // find the adjacent sites with the greatest distance between them, and make those the start and end respectively
   rotateToShortest(tour);

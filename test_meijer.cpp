@@ -41,7 +41,7 @@ double now() {
 
 static default_random_engine rng;
 static uniform_real_distribution<double> dist;
-static auto frand = bind(dist, rng);
+static inline double frand() { return dist(rng); }
 
 class PGI {
 	shared_ptr< GreyImage<int> > g_;
