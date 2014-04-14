@@ -28,7 +28,6 @@ using namespace Images;
 static random_device rd;
 static default_random_engine rng(rd());
 static uniform_real_distribution<double> dist;
-static inline double frand() { return dist(rng); }
 
 double now() {
   struct timeval tv;

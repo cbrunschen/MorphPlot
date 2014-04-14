@@ -210,7 +210,7 @@ inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
 template<bool background>
 inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) const {
   int dominantColumn[width_ + 2];
-  int dominanceExtent[width_ + 2];
+  int dominanceStarts[width_ + 2];
   int *gs, *gr;
   
   if (!background) {
@@ -231,12 +231,12 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
       std::copy(src, src + width_, gr);
     }
     int q = 0;
-    dominanceExtent[0] = 0;
+    dominanceStarts[0] = 0;
     dominantColumn[0] = background ? 0 : -1;
     
     // scan 3
     for (int u = u0; u < u1; u++) {
-      while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceExtent[q], gr) > distanceFromColumn(u, dominanceExtent[q], gr)) {
+      while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceStarts[q], gr) > distanceFromColumn(u, dominanceStarts[q], gr)) {
         q--;
       }
       
@@ -248,7 +248,7 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
         if (w < width_) {
           q++;
           dominantColumn[q] = u;
-          dominanceExtent[q] = w;
+          dominanceStarts[q] = w;
         }
       }
     }
@@ -256,7 +256,7 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
     // scan 4
     for (int u = width_ - 1; u >= 0; u--) {
       dst[u] = distanceFromColumn(dominantColumn[q], u, gr);
-      if (u == dominanceExtent[q]) {
+      if (u == dominanceStarts[q]) {
         q--;
       }
     }
@@ -402,7 +402,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
 template<bool background>
 inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point *result) const {
   int dominantColumn[width_ + 2];
-  int dominanceExtent[width_ + 2];
+  int dominanceStarts[width_ + 2];
   int dominantY[width_ + 2];
   int *gs, *gr;
   
@@ -425,13 +425,13 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
       std::copy(src, src + width_, gr);
     }
     int q = 0;
-    dominanceExtent[0] = 0;
+    dominanceStarts[0] = 0;
     dominantColumn[0] = background ? 0 : -1;
     dominantY[0] = background ? *yr : 0;
     
     // scan 3
     for (int u = u0; u < u1; u++) {
-      while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceExtent[q], gr) > distanceFromColumn(u, dominanceExtent[q], gr)) {
+      while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceStarts[q], gr) > distanceFromColumn(u, dominanceStarts[q], gr)) {
         q--;
       }
       
@@ -444,7 +444,7 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
         if (w < width_) {
           q++;
           dominantColumn[q] = u;
-          dominanceExtent[q] = w;
+          dominanceStarts[q] = w;
           dominantY[q] = yr[u];
         }
       }
@@ -454,7 +454,7 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
     for (int u = width_ - 1; u >= 0; u--) {
       dst[u] = Point(dominantColumn[q], dominantY[q]);
       
-      if (u == dominanceExtent[q]) {
+      if (u == dominanceStarts[q]) {
         q--;
       }
     }
