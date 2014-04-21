@@ -24,9 +24,9 @@ STIPPLE_SRC=stipple_main.cpp
 STIPPLE_OBJ=stipple_main.o
 STIPPLE_BIN=stipple
 
-TEST_MEIJER_SRC=test_meijer.cpp
-TEST_MEIJER_OBJ=test_meijer.o
-TEST_MEIJER_BIN=test_meijer
+TEST_MEIJSTER_SRC=test_meijster.cpp
+TEST_MEIJSTER_OBJ=test_meijster.o
+TEST_MEIJSTER_BIN=test_meijster
 
 # where to look for the libpng header & library files
 INCDIRS=-I/usr/local/include
@@ -39,18 +39,18 @@ COMPILER = clang
 ifeq ($(COMPILER),gcc)
   CXX=gcc
   CXXFLAGS=-O3
-  LDFLAGS=-lstdc++ -lc
+  LDFLAGS=-lstdc++ -lc -framework OpenCL
 else ifeq ($(COMPILER),clang)
   CXXFLAGS=-O3
-  LDFLAGS=-lc
+  LDFLAGS=-lc -framework OpenCL
   CXX=clang++ -std=gnu++11
 else ifeq ($(COMPILER),clang-3.1)
   CXXFLAGS=-O3
-  LDFLAGS=-lc
+  LDFLAGS=-lc -framework OpenCL
   CXX=clang++-mp-3.1
 else ifeq ($(COMPILER),clang-3.2)
   CXXFLAGS=-O3
-  LDFLAGS=-lc
+  LDFLAGS=-lc -framework OpenCL
   CXX=clang++-mp-3.2
 endif
 
@@ -68,6 +68,12 @@ all : mill plot
 %.o : %.cpp $(LIB_HEADERS)
 	$(CXX) $(CFLAGS) $(CXXFLAGS) -c -I. $(INCDIRS) $<
 
+%.inc : %.cl cl2inc
+	./cl2inc < $< > $@
+
+cl2inc : cl2inc.c
+	$(CC) -o $@ $<
+
 $(PLOT_BIN) : $(PLOT_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
@@ -75,9 +81,9 @@ $(MILL_BIN) : $(MILL_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
 $(STIPPLE_BIN) : $(STIPPLE_OBJ) $(LIB_ARCHIVE)
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng -framework OpenCL
 
-$(TEST_MEIJER_BIN) : $(TEST_MEIJER_OBJ) $(LIB_ARCHIVE)
+$(TEST_MEIJSTER_BIN) : $(TEST_MEIJSTER_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
 $(LIB_ARCHIVE): $(LIB_OBJECTS)

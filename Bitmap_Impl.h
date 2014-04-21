@@ -15,6 +15,7 @@
 #include "GreyImage_Impl.h"
 
 #include "Workers.h"
+#include "OpenCLWorkers.h"
 
 #include <memory>
 #include <algorithm>
@@ -1473,6 +1474,37 @@ ostream &operator<<(ostream &out, const Bitmap &i) {
   }
   out << flush;
   return out;
+}
+
+inline shared_ptr< GreyImage<cl_uint> > Bitmap::clDistanceTransform(OpenCLWorkers &workers) const {
+  auto nonZerosToSites = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "nonZerosToSites");
+  auto featureTransformPass1 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featureTransformPass1");
+  auto featureTransformPass2 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featureTransformPass2");
+  auto featureTransformPass3 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featureTransformPass3");
+  auto featuresToDistance = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featuresToDistance");
+  
+  cl::CommandQueue queue(workers.context, workers.device);
+  cl::Event event;
+
+  cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
+  // create and use the input buffer in a separate block of code, so that it can be deallocated on the graphics card before the second work buffer is allocated.
+  do {
+    cl::Buffer input(workers.context, CL_MEM_READ_ONLY, width_ * height_);
+    queue.enqueueWriteBuffer(input, false, 0, width_ * height_, data_, NULL, &event);
+    nonZerosToSites(cl::EnqueueArgs(queue, event, cl::NDRange(width_, height_)), input, a, width_, height_);
+  } while (0);
+  cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
+
+  featureTransformPass1(cl::EnqueueArgs(queue, cl::NDRange(width_)), a, b, width_, height_).wait();
+  featureTransformPass2(cl::EnqueueArgs(queue, cl::NDRange(height_)), b, a, width_, height_);
+  featureTransformPass3(cl::EnqueueArgs(queue, cl::NDRange(height_)), a, b, width_, height_);
+  event = featuresToDistance(cl::EnqueueArgs(queue, cl::NDRange(width_, height_)), b, a, width_, height_);
+
+  shared_ptr< GreyImage<cl_uint> > result = GreyImage<cl_uint>::make(width_, height_, false);
+  vector<cl::Event> events({ event });
+  queue.enqueueReadBuffer(a, true, 0, width_ * height_ * sizeof(cl_int), result->data(), &events);
+  
+  return result;
 }
 
 #if 0

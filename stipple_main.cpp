@@ -22,6 +22,8 @@
 #include "Progress.h"
 #include "Bitmap_Impl.h"
 
+#include "cl.hpp"
+
 using namespace std;
 using namespace Images;
 
@@ -845,7 +847,21 @@ void rotateToShortest(V &tour) {
   rotateLeft(tour, 0, tour.size(), jMax);
 }
 
+static string kernels =
+#include "kernels.inc"
+;
+
+static void tryCL() {
+  cl_int err;
+  cl::Context context(CL_DEVICE_TYPE_GPU);
+  cl::Program program(context, kernels, true, &err);
+  cerr << "err = " << err << endl << flush;
+}
+
+
 int main(int argc, char **argv) {
+  tryCL();
+  
   double scale = 1.0;
   int nStipples = 1000;
   double rMin = 0.0;

@@ -2,11 +2,13 @@
 *~
 *.o
 *.a
+*.inc
 mill
 plot
 stipple
 voronoi
-test_meijer
+test_meijster
+cl2inc
 Tests/tests
 **/xcshareddata/
 **/xcuserdata/

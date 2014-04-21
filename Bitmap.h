@@ -18,6 +18,7 @@
 #include "Hatcher.h"
 #include "FloodFill.h"
 #include "Workers.h"
+#include "OpenCLWorkers.h"
 
 #include <list>
 #include <vector>
@@ -100,6 +101,8 @@ public:
   
   shared_ptr< Image<Point> > featureTransform(bool background = true, int threads = 1) const;
   shared_ptr< Image<Point> > featureTransform(bool background, Workers &workers) const;
+
+  shared_ptr< GreyImage<cl_uint> > clDistanceTransform(OpenCLWorkers &workers) const;
 
   BitmapRef inset(int r, int threads = 1) const;
   
