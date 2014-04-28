@@ -14,6 +14,8 @@
 #include "GreyImage.h"
 #include "GreyImage_Impl.h"
 
+#include "OpenCLWorkers.h"
+
 #include <iterator>
 #include <list>
 #include <map>
@@ -33,11 +35,11 @@ using namespace Primitives;
 using namespace Images;
 using namespace std;
 
-double now() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
-}
+//double now() {
+//  struct timeval tv;
+//  gettimeofday(&tv, NULL);
+//  return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
+//}
 
 static default_random_engine rng;
 static uniform_real_distribution<double> dist;
@@ -57,8 +59,45 @@ public:
 	}
 };
 
+class PPI {
+	shared_ptr< Image<Point> > g_;
+public:
+	PPI(shared_ptr< Image<Point> > g) : g_(g) { }
+	void print(ostream &out) const {
+    for (int y = 0; y < g_->height(); y++) {
+      for (int x = 0; x < g_->width(); x++) {
+    	  out << setw(3) << right << g_->at(y, x).x() << "," << setw(3) << left << g_->at(y, x).y() << " ";
+      }
+      out << endl;
+    }
+	}
+};
+
+class PCI {
+	shared_ptr< Image<cl_short2> > g_;
+public:
+	PCI(shared_ptr< Image<cl_short2> > g) : g_(g) { }
+	void print(ostream &out) const {
+    for (int y = 0; y < g_->height(); y++) {
+      for (int x = 0; x < g_->width(); x++) {
+    	  out << setw(3) << right << g_->at(y, x).x << "," << setw(3) << left << g_->at(y, x).y << " ";
+      }
+      out << endl;
+    }
+	}
+};
+
+
 inline ostream &operator<<(ostream &out, const PGI &pgi) {
 	pgi.print(out);
+	return out;
+}
+inline ostream &operator<<(ostream &out, const PPI &ppi) {
+	ppi.print(out);
+	return out;
+}
+inline ostream &operator<<(ostream &out, const PCI &pci) {
+	pci.print(out);
 	return out;
 }
 
@@ -109,18 +148,22 @@ int main(int argc, char **argv) {
 #endif
 
 #if 1
-  int W = 8000;
+  int W = 6000;
   int H = 6000;
 #else
   int W = 20;
   int H = 20;
 #endif
+
   shared_ptr<Bitmap> large = Bitmap::make(W, H, true);
   Bitmap::Set set = large->set(true);
   
-#if 0
+  rng.seed(1001);
+  
+#if 1
   for (int a = 0; a < 10; a++) {
-    int r = 3 * frand();
+    int r = 0.05 * frand() * sqrt(W*W+H*H);
+    if (r == 0) r = 1;
     Circle circle(r);
   
     int extents[r];
@@ -177,12 +220,12 @@ int main(int argc, char **argv) {
         shared_ptr<Bitmap> outset = bm->outset(40, threads);
         double t5 = now();
         cerr << "outset " << w << "x" << h << ", " << threads << " threads: " << static_cast<int>((double)(w * h) / (t5 - t4)) << " pixels per second" << endl << flush;
-        
       }
     }
   }
 #endif
-  
+
+#if 0
   shared_ptr< Image<Point> > ft = large->featureTransform(true, 8);
   
   for (int y = 0; y < H; y++) {
@@ -191,4 +234,53 @@ int main(int argc, char **argv) {
     }
     cout << endl << flush;
   }
+#endif
+
+  Workers workers(8);
+  OpenCLWorkers clWorkers(1);
+  int N = 1;
+  
+  shared_ptr< Image<cl_short2> > oclResult;
+  shared_ptr< Image<Point> > cpuResult;
+
+  cerr << "starting measurements" << endl << flush;
+  double t0 = now();
+  for (int i = 0; i < N; i++) {
+    cerr << i << ", " << flush;
+    oclResult = large->clFeatureTransform<true>(clWorkers);
+  } while (0);
+  double t1 = now();
+  cerr << "OCL: " << (1000.0 * (t1 - t0)) << "ms" << endl << flush;
+//  cerr << PCI(oclResult) << endl << flush;
+
+  double t2 = now();
+  for (int i = 0; i < N; i++) {
+    cerr << i << ", " << flush;
+    cpuResult = large->featureTransform(true, workers);
+  }
+  double t3 = now();
+  cerr << "CPU: " << (1000.0 * (t3 - t2)) << "ms" << endl << flush;
+//  cerr << PPI(cpuResult) << endl << flush;
+  
+//  for (int y = 0; y < H; y++) {
+//    for (int x = 0; x < W; x++) {
+//      cerr << setw(3) << right << oclResult->at(y, x).x << "," << setw(3) << left << oclResult->at(y, x).y << " ";
+//    }
+//    cerr << endl;
+//    for (int x = 0; x < W; x++) {
+//      if (x == oclResult->at(y, x).x && y == oclResult->at(y, x).y) {
+//        cerr << setw(3) << right << "*" << "," << setw(3) << left << "*" << " ";
+//      } else {
+//        int dx = oclResult->at(y, x).x - cpuResult->at(y, x).x();
+//        int dy = oclResult->at(y, x).y - cpuResult->at(y, x).y();
+//        cerr << setw(3) << right << dx << "," << setw(3) << left << dy << " ";
+//      }
+//    }
+//    cerr << endl;
+//    for (int x = 0; x < W; x++) {
+//      cerr << setw(3) << right << cpuResult->at(y, x).x() << "," << setw(3) << left << cpuResult->at(y, x).y() << " ";
+//    }
+//    cerr << endl << endl;
+//  }
+//  cerr << endl << flush;
 }

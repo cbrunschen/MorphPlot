@@ -21,6 +21,14 @@
 #include <algorithm>
 #include <iomanip>
 
+
+#include <sys/time.h>
+static inline double now() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
+}
+
 namespace Images {
 #if 0
 }
@@ -441,11 +449,11 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
         dominantColumn[0] = u;
         dominantY[0] = yr[u];
       } else {
-        int w = 1 + meijsterSeparation_euclidean(dominantColumn[q], u, gr);
-        if (w < width_) {
+        int start = 1 + meijsterSeparation_euclidean(dominantColumn[q], u, gr);
+        if (start < width_) {
           q++;
           dominantColumn[q] = u;
-          dominanceStarts[q] = w;
+          dominanceStarts[q] = start;
           dominantY[q] = yr[u];
         }
       }
@@ -1472,40 +1480,150 @@ ostream &operator<<(ostream &out, const Bitmap &i) {
     }
     out << endl;
   }
-  out << flush;
+  out << endl << flush;
   return out;
 }
 
+inline static void printShort2(ostream &out, cl::CommandQueue &queue, cl::Buffer &buffer, int w, int h) {
+  cl_short2 *data = new cl_short2[w * h];
+  queue.enqueueReadBuffer(buffer, true, 0, w * h * sizeof(cl_short2), data);
+  cl_short2 *p = data;
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      out << setw(3) << right << p->x << "," << setw(3) << left << p->y << " ";
+      ++p;
+    }
+    out << endl << flush;
+  }
+  out << endl << flush;
+  delete data;
+}
+
+template<bool background>
 inline shared_ptr< GreyImage<cl_uint> > Bitmap::clDistanceTransform(OpenCLWorkers &workers) const {
-  auto nonZerosToSites = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "nonZerosToSites");
-  auto featureTransformPass1 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featureTransformPass1");
-  auto featureTransformPass2 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featureTransformPass2");
-  auto featureTransformPass3 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featureTransformPass3");
+  cl_int err;
+  
+#define DX (128)
+#define DY (128)
+  int ww = DX * ((width_ + (DX-1)) / DX);
+  int hh = DY * ((height_ + (DY-1)) / DY);
+  
+  auto toSites = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, background ? "nonZerosToSites" : "zerosToSites");
+  auto featureTransformPass1 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, background ? "featureTransformPass1" : "featureTransformPass1_edges");
+  auto featureTransformPass2 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, background ? "featureTransformPass2" : "featureTransformPass2_edges");
   auto featuresToDistance = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featuresToDistance");
   
   cl::CommandQueue queue(workers.context, workers.device);
   cl::Event event;
 
-  cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
+  cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2), NULL, &err);
   // create and use the input buffer in a separate block of code, so that it can be deallocated on the graphics card before the second work buffer is allocated.
   do {
     cl::Buffer input(workers.context, CL_MEM_READ_ONLY, width_ * height_);
     queue.enqueueWriteBuffer(input, false, 0, width_ * height_, data_, NULL, &event);
-    nonZerosToSites(cl::EnqueueArgs(queue, event, cl::NDRange(width_, height_)), input, a, width_, height_);
+    // input -> a
+    toSites(cl::EnqueueArgs(queue, event, cl::NDRange(ww, height_), cl::NDRange(32, 1)), input, a, width_, height_);
   } while (0);
   cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
 
-  featureTransformPass1(cl::EnqueueArgs(queue, cl::NDRange(width_)), a, b, width_, height_).wait();
-  featureTransformPass2(cl::EnqueueArgs(queue, cl::NDRange(height_)), b, a, width_, height_);
-  featureTransformPass3(cl::EnqueueArgs(queue, cl::NDRange(height_)), a, b, width_, height_);
-  event = featuresToDistance(cl::EnqueueArgs(queue, cl::NDRange(width_, height_)), b, a, width_, height_);
+  // a -> b
+  featureTransformPass1(cl::EnqueueArgs(queue, cl::NDRange(ww), cl::NDRange(32)), a, b, width_, height_);
+  // b -> a -> b
+  featureTransformPass2(cl::EnqueueArgs(queue, cl::NDRange(hh), cl::NDRange(32)), b, a, width_, height_);
+  // b -> a
+  event = featuresToDistance(cl::EnqueueArgs(queue, cl::NDRange(ww, height_), cl::NDRange(32, 1)), b, a, width_, height_);
 
   shared_ptr< GreyImage<cl_uint> > result = GreyImage<cl_uint>::make(width_, height_, false);
   vector<cl::Event> events({ event });
   queue.enqueueReadBuffer(a, true, 0, width_ * height_ * sizeof(cl_int), result->data(), &events);
   
+#undef DX
+#undef DY
+
   return result;
 }
+
+#define T(v) t[ti] = now(); s[ti++] = #v;
+
+#define BLOCK_DIM 16
+template<bool background>
+inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &workers) const {
+  cl_int err;
+
+#define DX (128)
+#define DY (128)
+  int ww = DX * ((width_ + (DX-1)) / DX);
+  int hh = DY * ((height_ + (DY-1)) / DY);
+
+  double t[32];
+  string s[32];
+  int ti = 0;
+  
+  T(start);
+  
+  cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2), NULL, &err);
+  
+  T(buffer a);
+  
+  cl::Buffer input(workers.context, CL_MEM_READ_ONLY, width_ * height_);
+
+  T(buffer input);
+
+  workers.queue.enqueueWriteBuffer(input, true, 0, width_ * height_, data_);
+
+  T(wrote to input);
+
+  // input -> a
+  cl::NDRange totalRange(ww, hh);
+  cl::NDRange groupRange = workers.fitNDRange(DX, DY);
+  cerr << "total range: " << ((const size_t *)totalRange)[0] << ", " << ((const size_t *)totalRange)[1] << endl << flush;
+  cerr << "group range: " << ((const size_t *)groupRange)[0] << ", " << ((const size_t *)groupRange)[1] << endl << flush;
+  if (background) {
+    workers.nonZerosToSites(cl::EnqueueArgs(workers.queue, totalRange, groupRange), input, a, width_, height_).wait();
+  } else {
+    workers.zerosToSites(cl::EnqueueArgs(workers.queue, totalRange, groupRange), input, a, width_, height_).wait();
+  }
+
+  T(converted to sites);
+//  cerr << "sites:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
+
+  cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
+  
+  T(buffer b);
+
+  // a -> b
+  workers.featureTransformPass1(cl::EnqueueArgs(workers.queue, cl::NDRange(ww), cl::NDRange(DX)), a, b, width_, height_).wait();
+
+  T(pass 1);
+//  cerr << "pass1:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
+
+  // a -> b -> a
+  workers.featureTransformPass2(cl::EnqueueArgs(workers.queue, cl::NDRange(hh), cl::NDRange(DY)), b, a, width_, height_).wait();
+  
+  T(pass 2);
+//  cerr << "stack:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
+//  cerr << "pass2:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
+
+  shared_ptr< Image<cl_short2> > result = Image<cl_short2>::make(width_, height_, false);
+
+  T(alloc result);
+
+  workers.queue.enqueueReadBuffer(b, true, 0, width_ * height_ * sizeof(cl_short2), result->data());
+  
+  T(read result);
+  
+  for (int tj = 1; tj < ti; tj++) {
+    double dt = t[tj] - t[tj-1];
+    cerr << tj << " " << s[tj] << ": " << 1000.0*dt << "ms" << endl << flush;
+  }
+  cerr << "total: " << 1000.0*(t[ti-1] - t[0]) << "ms" << endl << flush;
+
+#undef DX
+#undef DY
+
+  return result;
+}
+
 
 #if 0
 {

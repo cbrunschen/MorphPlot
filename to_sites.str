@@ -2,7 +2,7 @@ kernel void {{name}}(global {{type}} *src, global short2 *sites, short w, short 
   short x = get_global_id(0);
   short y = get_global_id(1);
   if (x < w && y < h) {
-    short offset = y*w + x;
+    uint offset = y*w + x;
 
     if (src[offset] {{comparison}}) {
       sites[offset] = (short2)( x, y );

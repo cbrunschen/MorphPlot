@@ -1,43 +1,66 @@
-constant short2 MARKER = (short2)(-32768, -32768);
+constant short2 MARKER = (short2)(-2, -2);
+
+#define BLOCK_DIM 16
+// This kernel is optimized to ensure all global reads and writes are coalesced,
+// and to avoid bank conflicts in shared memory.  This kernel is up to 11x faster
+// than the naive kernel below.  Note that the shared memory array is sized to
+// (BLOCK_DIM+1)*BLOCK_DIM.  This pads each row of the 2D block in shared memory
+// so that bank conflicts do not occur when threads address the array column-wise.
+kernel __attribute__((reqd_work_group_size(BLOCK_DIM, BLOCK_DIM, 1)))
+void transpose(global short2 *in, global short2 *out, int w, int h, local short2 *temp)
+{
+  // read the matrix tile into shared memory
+  short x = get_global_id(0);
+  short y = get_global_id(1);
+  short lx = get_local_id(0);
+  short ly = get_local_id(1);
+  
+  if ((x < w) && (y < h)) {
+    unsigned int src = y * w + x;
+    temp[ly * (BLOCK_DIM+1) + lx] = in[src];
+  }
+  
+  barrier(CLK_LOCAL_MEM_FENCE);
+  
+  // write the transposed matrix tile to global memory, transposing X and Y as well!
+  x = get_group_id(1) * BLOCK_DIM + lx;
+  y = get_group_id(0) * BLOCK_DIM + ly;
+  if ((x < h) && (y < w)) {
+    unsigned int dst = y * h + x;
+    out[dst] = temp[lx * (BLOCK_DIM+1) + ly].yx;
+  }
+}
 
 kernel void featureTransformPass1(global short2 *sites, global short2 *transform, short w, short h) {
-  int w = get_global_size(0);
-  int infinity = w + h + 1;
-  infinity *= infinity;
-  int stride = w;
-    
-  int x = get_global_id(0);
+  short x = get_global_id(0);
+  if (x >= w) {
+    return;
+  }
   
-  // scan 1:
-  global short2 *src = sites + x;
-  global short2 *p = transform + x;
-
+  short stride = w;
+  
   // - start with the primitive value
   short2 last = MARKER;
-    
-  if (src->x >= 0) {
-    last = *p = *src;
-  } else {
-    last = *p = MARKER;
-  }
-
-  int y = 1;
+  
+  // scan 1:
+  int y = 0;
+  global short2 *src = sites + x;
+  global short2 *p = transform + x;
   // - calculate the next one from the previous one(s)
-  for (p += stride, src += stride; y < h; p += stride, src += stride, ++y) {
+  for (; y < h; p += stride, src += stride, ++y) {
     if (src->x >= 0) {
       last = *p = *src;
-      // scan backwards
-      int rDistance = 1;
-      int ry = y - 1;
-      for (global short2 *q = p - stride; ry >= 0; q -= stride, --ry) {
-        int rd = ry - q->y;
-        if (rd <= rDistance) {
-          break;
-        } else {
-          *q = last;                    
-        }
-        rDistance++;
-      }
+    } else {
+      *p = last;
+    }
+  }
+  
+  y = h - 1;
+  p = transform + x + y * stride;
+  last = *p;
+  for (p -= stride, --y; y >= 0; p -= stride, --y) {
+    if (p->x >= 0 && abs(p->y - y) <= abs(last.y - y)) {
+      last = *p;
     } else {
       *p = last;
     }
@@ -45,65 +68,47 @@ kernel void featureTransformPass1(global short2 *sites, global short2 *transform
 }
 
 kernel void featureTransformPass1_edges(global short2 *sites, global short2 *transform, short w, short h) {
-  short w = get_global_size(0);
-  short infinity = w + h + 1;
-  short stride = w;
-    
   short x = get_global_id(0);
+  if (x >= w) {
+    return;
+  }
+  
+  short stride = w;
+  
+  // - start with the primitive value
+  short2 last = (short2)( x, -1 );
   
   // scan 1:
+  int y = 0;
   global short2 *src = sites + x;
   global short2 *p = transform + x;
-
-  // - start with the primitive value
-  short2 last;
-    
-  if (src->x >= 0) {
-    last = *p = *src;
-  } else {
-    last = *p = (short2)( x, -1 ); 
-  }
-
-  int y = 0;
   // - calculate the next one from the previous one(s)
-  for (p += stride, src += stride, y = 1; y < h; p += stride, src += stride, ++y) {
+  for (; y < h; p += stride, src += stride, ++y) {
     if (src->x >= 0) {
       last = *p = *src;
-      // scan backwards
-      int rDistance = 1;
-      int ry = y - 1;
-      for (global short2 *q = p - stride; ry >= 0; q -= stride, --ry) {
-        int rd = ry - q->y;
-        if (rd <= rDistance) {
-          break;
-        } else {
-          *q = last;                    
-        }
-        rDistance++;
-      }
     } else {
       *p = last;
     }
   }
-    
-  // scan backwards from the max-y edge
-  int rDistance = 1;
-  int ry = h - 1;
-  for (global short2 *q = p - stride; y >= 0; q -= stride, --y) {
-    int rd = ry - q->y;
-    if (rd <= rDistance) {
-      break;
+  
+  y = h - 1;
+  p = transform + x + y * stride;
+  last = (short2)( x, h );
+  for (; y >= 0; p -= stride, --y) {
+    if (abs(p->y - y) <= abs(last.y - y)) {
+      last = *p;
     } else {
-      *q = last;                    
+      *p = last;
     }
-    rDistance++;
   }
 }
 
-inline short meijsterSeparation(global short2 *gr, short y, short ix, short ux) {
-  short2 i = gr[ix] - (short2)( ix, y );
-  short2 u = gr[ux] - (short2)( ux, y );
-  return (u.x*u.x - i.x*i.x + u.y*u.y - i.y*i.y) / (2 * (u.x - i.x));
+inline short intersection(short ix, short iy, short ux, int uy) {
+  return (ux*ux - ix*ix + uy*uy - iy*iy) / (2 * (ux - ix));
+}
+
+inline short meijsterSeparation(global short2 *g, short y, short i, short u) {
+  return intersection(i, g[i].y - y, u, g[u].y - y);
 }
 
 inline int distanceFromColumn(global short2 *gr, short y, short column, short x) {
@@ -112,51 +117,64 @@ inline int distanceFromColumn(global short2 *gr, short y, short column, short x)
   return dx*dx + dy*dy;
 }
 
-kernel void featureTransformPass2(global short2 *g, global short2 *stacks, global short2 *transform, short w, short h) {
+kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short w, short h) {
   short y = get_global_id(0);
+  if (y >= h) {
+    return;
+  }
 
-  // In the stack, .x indicates the start of that parabola's extent; .y indicates the column where the parabola originates.
   global short2 *stack = stacks + (y * w);
-  global short2 *dst = transform + (y * w);
+  global short2 *dst = g + (y * w);
   global short2 *gr = g + (y * w);
-
-  short q = 0;
-  stack[0] = (short2)( 0, 0 );
   
   // scan 3
+  short u;
+  for (u = 0; u < w && gr[u].x < 0; u++);
+  
+  short q = 0;
+  short stackTopStart = 0;
+  stack[0] = gr[u].y;
+
   for (int u = 1; u < w; u++) {
-    while (q >= 0 && distanceFromColumn(gr, y, stack[q].y, stack[q].x) > distanceFromColumn(gr, y, u, stack[q].x)) {
+    if (gr[u].x < 0) {
+      continue;
+    }
+
+    while (q >= 0 && distanceFromColumn(gr, y, stack[q].x, stackTopStart) > distanceFromColumn(gr, y, u, stackTopStart)) {
       q--;
+      if (q > 0) {
+        stackTopStart = 1 + intersection(stack[q-1].x, stack[q-1].y - y, stack[q].x, stack[q].y - y);
+      } else {
+        stackTopStart = 0;
+      }
     }
     
     if (q < 0) {
       q = 0;
-      stack[0] = (short2)( 0, u );
+      stack[0] = gr[u];
     } else {
       // calculate the 'sep' function:
-      int start = 1 + meijsterSeparation(gr, y, stack[q].y, u);
+      short start = 1 + intersection(stack[q].x, stack[q].y - y, gr[u].x, gr[u].y - y);
       if (start < w) {
-        q++;
-        stack[q] = (short2)( w, u );
+        ++q;
+        stack[q] = gr[u];
+        stackTopStart = start;
       }
     }
   }
-}
-
-kernel void featureTransformPass3(global short2 *stacks, global short2 *transform, short w, short h) {
-  short y = get_global_id(0);
-
-  // In the stack, .x indicates the start of that parabola's extent; .y indicates the column where the parabola originates.
-  global short2 *stack = stacks + (y * w);
-  global short2 *dst = transform + (y * w);
-
+  
   // scan 4
-  short2 nearest = stack[q];
   for (int u = w - 1; u >= 0; u--) {
-    dst[u] = nearest;
-    if (u == nearest.x) {
-      nearest = stack[--q];
+    if (u < stackTopStart) {
+      --q;
+      if (q > 0) {
+        stackTopStart = 1 + intersection(stack[q-1].x, stack[q-1].y - y, stack[q].x, stack[q].y - y);
+      } else {
+        stackTopStart = -1;
+      }
     }
+
+    dst[u] = stack[q];
   }
 }
 
@@ -165,9 +183,18 @@ kernel void featuresToDistance(global short2 *feature, global uint *distance, sh
   short y = get_global_id(1);
   if (x < w && y < h) {
     int offset = w*y + x;
-    int2 d = ((short2)(x, y)) - feature[offset];
+    int2 d = convert_int2(((short2)(x, y)) - feature[offset]);
     d = d * d;
     distance[offset] = d.x + d.y;
+  }
+}
+
+kernel void distanceToEdges(global uint *distance, short w, short h) {
+  short x = get_global_id(0);
+  short y = get_global_id(1);
+  if (x < w && y < h) {
+    int offset = w*y + x;
+    distance[offset] = min(distance[offset], min(min((uint)(w - x), (uint)(x + 1)), min((uint)(h - y), (uint)(y + 1))));
   }
 }
 

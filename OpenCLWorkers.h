@@ -18,6 +18,49 @@
 
 using namespace std;
 
+template<typename T>
+ostream &operator<<(ostream &out, vector<T> v) {
+  out << "(";
+  bool first = true;
+  for (auto i = v.begin(); i != v.end(); ++i) {
+    if (first) first = false; else out << ", ";
+    out << *i;
+  }
+  return out << ")";
+}
+
+template <typename T>
+struct PlatformInfo {
+  const cl::Platform &platform;
+  cl_platform_info info;
+  PlatformInfo(const cl::Platform &p, cl_platform_info i) : platform(p), info(i) { }
+  operator T () const {
+    T value;
+    platform.getInfo(info, &value);
+    return value;
+  }
+};
+template<typename T>
+ostream &operator<<(ostream &out, const PlatformInfo<T> &info) {
+  return out << static_cast<T>(info);
+}
+
+template <typename T>
+struct DeviceInfo {
+  const cl::Device &device;
+  cl_device_info info;
+  DeviceInfo(const cl::Device &d, cl_device_info i) : device(d), info(i) { }
+  operator T () const {
+    T value;
+    device.getInfo(info, &value);
+    return value;
+  }
+};
+template<typename T>
+ostream &operator<<(ostream &out, const DeviceInfo<T> &info) {
+  return out << static_cast<T>(info);
+}
+
 class OpenCLWorkers {
   static string kernels;
   static string toSitesFormat;
@@ -45,6 +88,9 @@ class OpenCLWorkers {
   }
   
   static cl::Device findDevice(int i) {
+    if (i < 0) {
+      return findBestDevice();
+    }
     vector<cl::Device> devices;
     cl::Platform::getDefault().getDevices(CL_DEVICE_TYPE_ALL, &devices);
     return devices[i];
@@ -94,12 +140,86 @@ public:
   cl::Device device;
   cl::Context context;
   cl::Program program;
+  cl::CommandQueue queue;
+  
+  // kernels
+  cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> nonZerosToSites;
+  cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> zerosToSites;
+  cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass1;
+  cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass1_edges;
+  cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass2;
 
-  OpenCLWorkers() : device(findBestDevice()), context(device), program(context, makeKernels(), true) {
+  OpenCLWorkers(int i = -1)
+  : device(findDevice(i)),
+    context(device),
+    program(context, makeKernels(), true),
+    queue(context, device),
+    nonZerosToSites(program, "nonZerosToSites"),
+    zerosToSites(program, "zerosToSites"),
+    featureTransformPass1(program, "featureTransformPass1"),
+    featureTransformPass1_edges(program, "featureTransformPass1_edges"),
+    featureTransformPass2(program, "featureTransformPass2")
+  {
+  }
+  
+  cl::NDRange fitNDRange(size_t x, size_t y, size_t z) {
+    size_t maxOverall = DeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+    vector<size_t> maxSizes = DeviceInfo< vector<size_t> >(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
+    while (x * y * z > maxOverall) {
+      if (z > 1) z >>= 1;
+      else if (y > 1) y >>= 1;
+      else x >>= 1;
+    }
+    
+    while (z > maxSizes[2]) {
+      z >>= 1;
+      y <<= 1;
+    }
+
+    while (y > maxSizes[1]) {
+      y >>= 1;
+      x <<= 1;
+    }
+    while (x > maxSizes[0]) {
+      x >>= 1;
+    }
+    
+    return cl::NDRange(x, y, z);
   }
 
-  OpenCLWorkers(int i) : device(findDevice(i)), context(device), program(context, makeKernels(), true) {
+  cl::NDRange fitNDRange(size_t x, size_t y) {
+    size_t maxOverall = DeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+    vector<size_t> maxSizes = DeviceInfo< vector<size_t> >(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
+    while (x * y > maxOverall) {
+      if (y > 1) y >>= 1;
+      else x >>= 1;
+    }
+    
+    while (y > maxSizes[1]) {
+      y >>= 1;
+      x <<= 1;
+    }
+    while (x > maxSizes[0]) {
+      x >>= 1;
+    }
+    
+    return cl::NDRange(x, y);
+  }
+
+  cl::NDRange fitNDRange(size_t x) {
+    size_t maxOverall = DeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
+    vector<size_t> maxSizes = DeviceInfo< vector<size_t> >(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
+    while (x > maxOverall) {
+      x >>= 1;
+    }
+    
+    while (x > maxSizes[0]) {
+      x >>= 1;
+    }
+    
+    return cl::NDRange(x);
   }
 };
+
 
 #endif // __OpenCLWorkers__

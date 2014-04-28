@@ -1,13 +1,13 @@
 # Makefile for the 'plot' program and its supporting 'morph' library
 
 LIB_OBJECTS=Bitmap.o Primitives.o Circle.o K3M.o PathExtractor.o \
-    ColorImage.o Workers.o
+    ColorImage.o Workers.o OpenCLWorkers.o
 
 LIB_HEADERS=FnvHash.h Hatcher.h Line.h \
     Chain.h Bitmap.h ColorImage.h GreyImage.h Primitives.h \
     Image.h Output.h FloodFill.h Circle.h K3M.h Progress.h \
     PathExtractor.h PlotterPathExtractor.h MillPathExtractor.h \
-    Workers.h
+    Workers.h OpenCLWorkers.h to_sites.inc kernels.inc
 
 LIB=morph
 LIB_ARCHIVE=lib$(LIB).a
@@ -41,7 +41,7 @@ ifeq ($(COMPILER),gcc)
   CXXFLAGS=-O3
   LDFLAGS=-lstdc++ -lc -framework OpenCL
 else ifeq ($(COMPILER),clang)
-  CXXFLAGS=-O3
+  CXXFLAGS=-g
   LDFLAGS=-lc -framework OpenCL
   CXX=clang++ -std=gnu++11
 else ifeq ($(COMPILER),clang-3.1)
@@ -71,6 +71,9 @@ all : mill plot
 %.inc : %.cl cl2inc
 	./cl2inc < $< > $@
 
+%.inc : %.str cl2inc
+	./cl2inc < $< > $@
+
 cl2inc : cl2inc.c
 	$(CC) -o $@ $<
 
@@ -81,16 +84,16 @@ $(MILL_BIN) : $(MILL_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
 $(STIPPLE_BIN) : $(STIPPLE_OBJ) $(LIB_ARCHIVE)
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng -framework OpenCL
-
-$(TEST_MEIJSTER_BIN) : $(TEST_MEIJSTER_OBJ) $(LIB_ARCHIVE)
 	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
 
-$(LIB_ARCHIVE): $(LIB_OBJECTS)
-	$(AR) -r $@ $^
+$(TEST_MEIJSTER_BIN) : $(TEST_MEIJSTER_OBJ) $(LIB_ARCHIVE) to_sites.inc kernels.inc
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ -L. $(LIBDIRS) $< -l$(LIB) -lpng
+
+$(LIB_ARCHIVE): $(LIB_OBJECTS) to_sites.inc kernels.inc
+	$(AR) -r $@ $(LIB_OBJECTS)
 
 clean :
-	-rm $(PLOT_BIN) $(PLOT_OBJ) $(MILL_BIN) $(MILL_OBJ) $(STIPPLE_BIN) $(STIPPLE_OBJ) $(LIB_ARCHIVE) $(LIB_OBJECTS)
+	-rm $(PLOT_BIN) $(PLOT_OBJ) $(MILL_BIN) $(MILL_OBJ) $(STIPPLE_BIN) $(STIPPLE_OBJ) $(LIB_ARCHIVE) $(LIB_OBJECTS) to_sites.inc kernels.inc
 	$(MAKE) -C Tests clean
 
 tests : $(LIB_ARCHIVE)

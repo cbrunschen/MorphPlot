@@ -102,7 +102,8 @@ public:
   shared_ptr< Image<Point> > featureTransform(bool background = true, int threads = 1) const;
   shared_ptr< Image<Point> > featureTransform(bool background, Workers &workers) const;
 
-  shared_ptr< GreyImage<cl_uint> > clDistanceTransform(OpenCLWorkers &workers) const;
+  template<bool background> shared_ptr< GreyImage<cl_uint> > clDistanceTransform(OpenCLWorkers &workers) const;
+  template<bool background> shared_ptr< Image<cl_short2> > clFeatureTransform(OpenCLWorkers &workers) const;
 
   BitmapRef inset(int r, int threads = 1) const;
   
