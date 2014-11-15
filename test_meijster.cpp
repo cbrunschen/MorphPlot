@@ -148,8 +148,8 @@ int main(int argc, char **argv) {
 #endif
 
 #if 1
-  int W = 6000;
-  int H = 6000;
+  int W = 100;
+  int H = 100;
 #else
   int W = 20;
   int H = 20;
@@ -261,6 +261,20 @@ int main(int argc, char **argv) {
   double t3 = now();
   cerr << "CPU: " << (1000.0 * (t3 - t2)) << "ms" << endl << flush;
 //  cerr << PPI(cpuResult) << endl << flush;
+  
+  for (int y = 0; y < H; y++) {
+    for (int x = 0; x < W; x++) {
+      if (oclResult->at(y, x).x != cpuResult->at(y, x).x() || oclResult->at(y, x).y != cpuResult->at(y, x).y()) {
+        int dxCpu = cpuResult->at(y, x).x() - x;
+        int dyCpu = cpuResult->at(y, x).y() - y;
+        int dCpu = dxCpu*dxCpu + dyCpu*dyCpu;
+        int dxOcl = oclResult->at(y, x).x - x;
+        int dyOcl = oclResult->at(y, x).y - y;
+        int dOcl = dxOcl*dxOcl + dyOcl*dyOcl;
+        cerr << "differ at (" << x << "," << y << "): want (" <<  cpuResult->at(y, x).x() << "," << cpuResult->at(y, x).y() << ") @ " << dCpu << ", have (" << oclResult->at(y, x).x << "," << oclResult->at(y, x).y << ") @ " << dOcl << " ~= " << ((int16_t)dOcl) << endl << flush;
+      }
+    }
+  }
   
 //  for (int y = 0; y < H; y++) {
 //    for (int x = 0; x < W; x++) {

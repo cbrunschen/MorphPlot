@@ -104,6 +104,7 @@ public:
 
   template<bool background> shared_ptr< GreyImage<cl_uint> > clDistanceTransform(OpenCLWorkers &workers) const;
   template<bool background> shared_ptr< Image<cl_short2> > clFeatureTransform(OpenCLWorkers &workers) const;
+  template<bool background> shared_ptr< Image<cl_short2> > clFeatureTransform_transposed(OpenCLWorkers &workers) const;
 
   BitmapRef inset(int r, int threads = 1) const;
   

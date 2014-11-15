@@ -111,15 +111,20 @@ inline short meijsterSeparation(global short2 *g, short y, short i, short u) {
   return intersection(i, g[i].y - y, u, g[u].y - y);
 }
 
-inline int distanceFromColumn(global short2 *gr, short y, short column, short x) {
-  short dy = y - gr[column].y;
-  short dx = x - column;
+inline int squareDistance(short x1, short y1, short x2, short y2) {
+  int dy = y2 - y1;
+  int dx = x2 - x1;
   return dx*dx + dy*dy;
+}
+
+inline int distanceFromColumn(global short2 *gr, short y, short column, short x) {
+  return squareDistance(column, y, x, gr[column].y);
 }
 
 kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short w, short h) {
   short y = get_global_id(0);
   if (y >= h) {
+    printf("row %d: skipping.\n", y);
     return;
   }
 
@@ -130,12 +135,18 @@ kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short
   // scan 3
   short u;
   for (u = 0; u < w && gr[u].x < 0; u++);
+  if (u >= w) {
+    for (u = 0; u < w; u++) {
+      gr[u] = MARKER;
+    }
+    printf("row %d: nothing!\n", y);
+  }
   
   short q = 0;
   short stackTopStart = 0;
   stack[0] = gr[u].y;
 
-  for (int u = 1; u < w; u++) {
+  for (; u < w; u++) {
     if (gr[u].x < 0) {
       continue;
     }
@@ -177,6 +188,77 @@ kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short
     dst[u] = stack[q];
   }
 }
+
+inline int distanceFromRow(global short2 *gr, short w, short x, short row, short y) {
+  int dx = x - gr[row*w].x;
+  int dy = y - row;
+  return dx*dx + dy*dy;
+}
+
+kernel void featureTransformPass2_vertical(global short2 *g, global short2 *stacks, short w, short h) {
+  short x = get_global_id(0);
+  if (x >= w) {
+    return;
+  }
+
+  global short2 *stack = stacks + (x * h);
+  global short2 *dst = g + x;
+  global short2 *gr = g + x;
+  
+  // scan 3
+  short u;
+  for (u = 0; u < w && gr[u*w].x < 0; u++);
+  if (u >= h) {
+    return;
+  }
+  
+  short q = 0;
+  short stackTopStart = 0;
+  stack[0] = gr[u*w].y;
+
+  for (; u < w; u++) {
+    if (gr[u].x < 0) {
+      continue;
+    }
+
+    while (q >= 0 && distanceFromRow(gr, w, x, stack[q].y, stackTopStart) > distanceFromRow(gr, w, x, u, stackTopStart)) {
+      q--;
+      if (q > 0) {
+        stackTopStart = 1 + intersection(stack[(q-1)*w].y, stack[(q-1)*w].x - x, stack[q*w].y, stack[q*w].x - x);
+      } else {
+        stackTopStart = 0;
+      }
+    }
+    
+    if (q < 0) {
+      q = 0;
+      stack[0] = gr[u*w];
+    } else {
+      // calculate the 'sep' function:
+      short start = 1 + intersection(stack[q*w].y, stack[q*w].x - x, gr[u*w].y, gr[u*w].x - x);
+      if (start < h) {
+        ++q;
+        stack[q*w] = gr[u*w];
+        stackTopStart = start;
+      }
+    }
+  }
+  
+  // scan 4
+  for (int u = h - 1; u >= 0; u--) {
+    if (u < stackTopStart) {
+      --q;
+      if (q > 0) {
+        stackTopStart = 1 + intersection(stack[(q-1)*w].y, stack[(q-1)*w].x - x, stack[q*w].y, stack[q*w].x - x);
+      } else {
+        stackTopStart = -1;
+      }
+    }
+
+    dst[u*w] = stack[q*w];
+  }
+}
+
 
 kernel void featuresToDistance(global short2 *feature, global uint *distance, short w, short h) {
   short x = get_global_id(0);

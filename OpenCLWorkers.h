@@ -148,6 +148,7 @@ public:
   cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass1;
   cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass1_edges;
   cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass2;
+  cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> featureTransformPass2_vertical;
 
   OpenCLWorkers(int i = -1)
   : device(findDevice(i)),
@@ -158,8 +159,10 @@ public:
     zerosToSites(program, "zerosToSites"),
     featureTransformPass1(program, "featureTransformPass1"),
     featureTransformPass1_edges(program, "featureTransformPass1_edges"),
-    featureTransformPass2(program, "featureTransformPass2")
+    featureTransformPass2(program, "featureTransformPass2"),
+    featureTransformPass2_vertical(program, "featureTransformPass2_vertical")
   {
+    cerr << "Device: " << DeviceInfo<string>(device, CL_DEVICE_NAME) << endl << flush;
   }
   
   cl::NDRange fitNDRange(size_t x, size_t y, size_t z) {
@@ -191,18 +194,22 @@ public:
     size_t maxOverall = DeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
     vector<size_t> maxSizes = DeviceInfo< vector<size_t> >(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
     while (x * y > maxOverall) {
-      if (y > 1) y >>= 1;
-      else x >>= 1;
+      if (y > 1) {
+        y >>= 1;
+      } else {
+        x >>= 1;
+      }
     }
     
     while (y > maxSizes[1]) {
       y >>= 1;
       x <<= 1;
     }
+    
     while (x > maxSizes[0]) {
       x >>= 1;
     }
-    
+
     return cl::NDRange(x, y);
   }
 

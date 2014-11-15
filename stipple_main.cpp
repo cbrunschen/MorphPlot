@@ -31,11 +31,13 @@ static random_device rd;
 static default_random_engine rng(rd());
 static uniform_real_distribution<double> dist;
 
+#if 0
 double now() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
 }
+#endif
 
 int getInt(const string &s) {
   int value;

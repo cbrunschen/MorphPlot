@@ -23,6 +23,7 @@
 
 
 #include <sys/time.h>
+
 static inline double now() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -1585,7 +1586,7 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
   }
 
   T(converted to sites);
-//  cerr << "sites:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
+  cerr << "sites:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
 
   cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
   
@@ -1595,14 +1596,14 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
   workers.featureTransformPass1(cl::EnqueueArgs(workers.queue, cl::NDRange(ww), cl::NDRange(DX)), a, b, width_, height_).wait();
 
   T(pass 1);
-//  cerr << "pass1:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
+  cerr << "pass1:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
 
   // a -> b -> a
   workers.featureTransformPass2(cl::EnqueueArgs(workers.queue, cl::NDRange(hh), cl::NDRange(DY)), b, a, width_, height_).wait();
   
   T(pass 2);
-//  cerr << "stack:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
-//  cerr << "pass2:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
+  cerr << "stack:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
+  cerr << "pass2:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
 
   shared_ptr< Image<cl_short2> > result = Image<cl_short2>::make(width_, height_, false);
 
@@ -1624,6 +1625,83 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
   return result;
 }
 
+template<bool background>
+inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform_transposed(OpenCLWorkers &workers) const {
+  cl_int err;
+  
+#define DX (128)
+#define DY (128)
+  int ww = DX * ((width_ + (DX-1)) / DX);
+  int hh = DY * ((height_ + (DY-1)) / DY);
+  
+  double t[32];
+  string s[32];
+  int ti = 0;
+  
+  T(start);
+  
+  cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2), NULL, &err);
+  
+  T(buffer a);
+  
+  cl::Buffer input(workers.context, CL_MEM_READ_ONLY, width_ * height_);
+  
+  T(buffer input);
+  
+  workers.queue.enqueueWriteBuffer(input, true, 0, width_ * height_, data_);
+  
+  T(wrote to input);
+  
+  // input -> a
+  cl::NDRange totalRange(ww, hh);
+  cl::NDRange groupRange = workers.fitNDRange(DX, DY);
+  cerr << "total range: " << ((const size_t *)totalRange)[0] << ", " << ((const size_t *)totalRange)[1] << endl << flush;
+  cerr << "group range: " << ((const size_t *)groupRange)[0] << ", " << ((const size_t *)groupRange)[1] << endl << flush;
+  if (background) {
+    workers.nonZerosToSites(cl::EnqueueArgs(workers.queue, totalRange, groupRange), input, a, width_, height_).wait();
+  } else {
+    workers.zerosToSites(cl::EnqueueArgs(workers.queue, totalRange, groupRange), input, a, width_, height_).wait();
+  }
+  
+  T(converted to sites);
+  //  cerr << "sites:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
+  
+  cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
+  
+  T(buffer b);
+  
+  // a -> b
+  workers.featureTransformPass1(cl::EnqueueArgs(workers.queue, cl::NDRange(ww), cl::NDRange(DX)), a, b, width_, height_).wait();
+  
+  T(pass 1);
+  //  cerr << "pass1:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
+  
+  // a -> b -> a
+  workers.featureTransformPass2(cl::EnqueueArgs(workers.queue, cl::NDRange(hh), cl::NDRange(DY)), b, a, width_, height_).wait();
+  
+  T(pass 2);
+  //  cerr << "stack:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
+  //  cerr << "pass2:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
+  
+  shared_ptr< Image<cl_short2> > result = Image<cl_short2>::make(width_, height_, false);
+  
+  T(alloc result);
+  
+  workers.queue.enqueueReadBuffer(b, true, 0, width_ * height_ * sizeof(cl_short2), result->data());
+  
+  T(read result);
+  
+  for (int tj = 1; tj < ti; tj++) {
+    double dt = t[tj] - t[tj-1];
+    cerr << tj << " " << s[tj] << ": " << 1000.0*dt << "ms" << endl << flush;
+  }
+  cerr << "total: " << 1000.0*(t[ti-1] - t[0]) << "ms" << endl << flush;
+  
+#undef DX
+#undef DY
+  
+  return result;
+}
 
 #if 0
 {
