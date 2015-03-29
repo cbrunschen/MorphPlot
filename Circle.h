@@ -172,7 +172,7 @@ public:
       list<int> directionsCcw;
       
       // quadrant NE
-      int x = r_, e, y;
+      int x = r_, e = 0, y;
       for (y = 1; y <= r_; y++) {
         e = getExtent(r_, extents_, y);
         D(cerr << "y=" << y << ", x=" << x << ", e=" << e << " => ");

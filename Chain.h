@@ -23,7 +23,7 @@ namespace Chaining {
 #undef D
 #endif
 
-#ifdef DEBUF
+#ifdef DEBUG
 #undef DEBUG
 #endif
 

@@ -53,9 +53,11 @@
 		222209F218ABACFC00ED90B0 /* TestWorkers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 222209F018ABACFC00ED90B0 /* TestWorkers.cpp */; };
 		222209F518AF9D6D00ED90B0 /* TestGreyImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 222209F318AF9D6D00ED90B0 /* TestGreyImage.cpp */; };
 		222209F918B3C11600ED90B0 /* Circle_Impl.h in Headers */ = {isa = PBXBuildFile; fileRef = 222209F818B3C11600ED90B0 /* Circle_Impl.h */; };
-		222C1BE518BA25DC00A5C5D9 /* test_meijster.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 222C1BE418BA25DC00A5C5D9 /* test_meijster.cpp */; };
-		222C1BE818BA260100A5C5D9 /* morph.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2222098618A9311900ED90B0 /* morph.dylib */; };
 		22419C9918FDF6C800016D9A /* kernels.cl in Sources */ = {isa = PBXBuildFile; fileRef = 22419C9618FDE77F00016D9A /* kernels.cl */; };
+		22672E391AC84BC7001D1A9A /* test_meijster.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 222C1BE418BA25DC00A5C5D9 /* test_meijster.cpp */; };
+		22672E3B1AC84BD3001D1A9A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22672E3A1AC84BD3001D1A9A /* OpenCL.framework */; };
+		22672E3E1AC84C77001D1A9A /* morph.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2222098618A9311900ED90B0 /* morph.dylib */; };
+		22672E3F1AC84EBB001D1A9A /* libpng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2267375E18DB68C5007C45A5 /* libpng.dylib */; };
 		2267375A18DB684B007C45A5 /* stipple_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2267374918DADEEB007C45A5 /* stipple_main.cpp */; };
 		2267375D18DB6898007C45A5 /* morph.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2222098618A9311900ED90B0 /* morph.dylib */; };
 		2267375F18DB68C5007C45A5 /* libpng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2267375E18DB68C5007C45A5 /* libpng.dylib */; };
@@ -67,12 +69,10 @@
 		22B63FBC19013E2B00FA754A /* libpng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2267375E18DB68C5007C45A5 /* libpng.dylib */; };
 		22B63FBD19013E2E00FA754A /* libpng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2267375E18DB68C5007C45A5 /* libpng.dylib */; };
 		22B63FBE19013E3200FA754A /* libpng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2267375E18DB68C5007C45A5 /* libpng.dylib */; };
-		22B63FBF19013E3600FA754A /* libpng.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2267375E18DB68C5007C45A5 /* libpng.dylib */; };
 		22B63FC119013EEA00FA754A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B63FC019013EEA00FA754A /* OpenCL.framework */; };
 		22B63FC219013EEA00FA754A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B63FC019013EEA00FA754A /* OpenCL.framework */; };
 		22B63FC319013EEA00FA754A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B63FC019013EEA00FA754A /* OpenCL.framework */; };
 		22B63FC419013EEA00FA754A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B63FC019013EEA00FA754A /* OpenCL.framework */; };
-		22B63FC519013EEA00FA754A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B63FC019013EEA00FA754A /* OpenCL.framework */; };
 		22B63FC619013EEA00FA754A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22B63FC019013EEA00FA754A /* OpenCL.framework */; };
 /* End PBXBuildFile section */
 
@@ -134,7 +134,7 @@
 			remoteGlobalIDString = 2222098518A9311900ED90B0;
 			remoteInfo = morph;
 		};
-		222C1BE618BA25F800A5C5D9 /* PBXContainerItemProxy */ = {
+		22672E371AC84BBE001D1A9A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
@@ -178,7 +178,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
-		222C1BDD18BA25C600A5C5D9 /* CopyFiles */ = {
+		22672E301AC84BB6001D1A9A /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -251,7 +251,6 @@
 		222A4AD812D01FAE005846D9 /* Tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tests.cpp; sourceTree = "<group>"; };
 		222A4B1912D021DE005846D9 /* TestExtentsAndDelta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestExtentsAndDelta.h; sourceTree = "<group>"; };
 		222A4B1A12D021DE005846D9 /* TestExtentsAndDelta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestExtentsAndDelta.cpp; sourceTree = "<group>"; };
-		222C1BDF18BA25C600A5C5D9 /* test_meijer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test_meijer; sourceTree = BUILT_PRODUCTS_DIR; };
 		222C1BE418BA25DC00A5C5D9 /* test_meijster.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_meijster.cpp; sourceTree = "<group>"; };
 		2236126D12E3383A0075A193 /* TestFilling.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestFilling.h; sourceTree = "<group>"; };
 		2236126E12E3383A0075A193 /* TestFilling.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestFilling.cpp; sourceTree = "<group>"; };
@@ -261,6 +260,9 @@
 		22419C9618FDE77F00016D9A /* kernels.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; path = kernels.cl; sourceTree = "<group>"; };
 		224AA5C615FE7337008E84FD /* GreyImage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GreyImage.cpp; sourceTree = "<group>"; };
 		225FFEA114A39D06006BB437 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		22672E321AC84BB6001D1A9A /* test_meijster */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test_meijster; sourceTree = BUILT_PRODUCTS_DIR; };
+		22672E3A1AC84BD3001D1A9A /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
+		22672E3C1AC84C35001D1A9A /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		2267374918DADEEB007C45A5 /* stipple_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stipple_main.cpp; sourceTree = "<group>"; };
 		2267375118DB6845007C45A5 /* stipple */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = stipple; sourceTree = BUILT_PRODUCTS_DIR; };
 		2267375E18DB68C5007C45A5 /* libpng.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng.dylib; path = /usr/local/Cellar/libpng/1.5.17/lib/libpng.dylib; sourceTree = "<absolute>"; };
@@ -345,13 +347,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		222C1BDC18BA25C600A5C5D9 /* Frameworks */ = {
+		22672E2F1AC84BB6001D1A9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				222C1BE818BA260100A5C5D9 /* morph.dylib in Frameworks */,
-				22B63FBF19013E3600FA754A /* libpng.dylib in Frameworks */,
-				22B63FC519013EEA00FA754A /* OpenCL.framework in Frameworks */,
+				22672E3E1AC84C77001D1A9A /* morph.dylib in Frameworks */,
+				22672E3F1AC84EBB001D1A9A /* libpng.dylib in Frameworks */,
+				22672E3B1AC84BD3001D1A9A /* OpenCL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -371,12 +373,14 @@
 		08FB7794FE84155DC02AAC07 /* Morph */ = {
 			isa = PBXGroup;
 			children = (
+				22672E3C1AC84C35001D1A9A /* CoreFoundation.framework */,
+				22672E3A1AC84BD3001D1A9A /* OpenCL.framework */,
 				2280A10915FCD80300F74DAA /* Source */,
 				222A4A7812D01C47005846D9 /* Catch */,
 				222A4A6F12D01B8F005846D9 /* Tests */,
 				220343C3129FC5AE006D15BD /* Libraries */,
 				C6859E8C029090F304C91782 /* Documentation */,
-				222C1BE018BA25C600A5C5D9 /* test_meijer */,
+				22672E331AC84BB6001D1A9A /* test_meijster */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 				225FFEA114A39D06006BB437 /* Makefile */,
 			);
@@ -390,8 +394,8 @@
 				222209B318A9317B00ED90B0 /* plot */,
 				222209C418A9319F00ED90B0 /* mill */,
 				222209D518A9569000ED90B0 /* Tests */,
-				222C1BDF18BA25C600A5C5D9 /* test_meijer */,
 				2267375118DB6845007C45A5 /* stipple */,
+				22672E321AC84BB6001D1A9A /* test_meijster */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -480,11 +484,11 @@
 			path = internal;
 			sourceTree = "<group>";
 		};
-		222C1BE018BA25C600A5C5D9 /* test_meijer */ = {
+		22672E331AC84BB6001D1A9A /* test_meijster */ = {
 			isa = PBXGroup;
 			children = (
 			);
-			path = test_meijer;
+			path = test_meijster;
 			sourceTree = "<group>";
 		};
 		2280A10915FCD80300F74DAA /* Source */ = {
@@ -652,22 +656,22 @@
 			productReference = 222209D518A9569000ED90B0 /* Tests */;
 			productType = "com.apple.product-type.tool";
 		};
-		222C1BDE18BA25C600A5C5D9 /* test_meijer */ = {
+		22672E311AC84BB6001D1A9A /* test_meijster */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 222C1BE318BA25C600A5C5D9 /* Build configuration list for PBXNativeTarget "test_meijer" */;
+			buildConfigurationList = 22672E341AC84BB6001D1A9A /* Build configuration list for PBXNativeTarget "test_meijster" */;
 			buildPhases = (
-				222C1BDB18BA25C600A5C5D9 /* Sources */,
-				222C1BDC18BA25C600A5C5D9 /* Frameworks */,
-				222C1BDD18BA25C600A5C5D9 /* CopyFiles */,
+				22672E2E1AC84BB6001D1A9A /* Sources */,
+				22672E2F1AC84BB6001D1A9A /* Frameworks */,
+				22672E301AC84BB6001D1A9A /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				222C1BE718BA25F800A5C5D9 /* PBXTargetDependency */,
+				22672E381AC84BBE001D1A9A /* PBXTargetDependency */,
 			);
-			name = test_meijer;
-			productName = test_meijer;
-			productReference = 222C1BDF18BA25C600A5C5D9 /* test_meijer */;
+			name = test_meijster;
+			productName = test_meijster;
+			productReference = 22672E321AC84BB6001D1A9A /* test_meijster */;
 			productType = "com.apple.product-type.tool";
 		};
 		2267375018DB6845007C45A5 /* stipple */ = {
@@ -715,8 +719,8 @@
 				222209B218A9317B00ED90B0 /* plot */,
 				222209C318A9319F00ED90B0 /* mill */,
 				222209D418A9569000ED90B0 /* Tests */,
-				222C1BDE18BA25C600A5C5D9 /* test_meijer */,
 				2267375018DB6845007C45A5 /* stipple */,
+				22672E311AC84BB6001D1A9A /* test_meijster */,
 			);
 		};
 /* End PBXProject section */
@@ -793,11 +797,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		222C1BDB18BA25C600A5C5D9 /* Sources */ = {
+		22672E2E1AC84BB6001D1A9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				222C1BE518BA25DC00A5C5D9 /* test_meijster.cpp in Sources */,
+				22672E391AC84BC7001D1A9A /* test_meijster.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -828,10 +832,10 @@
 			target = 2222098518A9311900ED90B0 /* morph */;
 			targetProxy = 222209EA18A9572D00ED90B0 /* PBXContainerItemProxy */;
 		};
-		222C1BE718BA25F800A5C5D9 /* PBXTargetDependency */ = {
+		22672E381AC84BBE001D1A9A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2222098518A9311900ED90B0 /* morph */;
-			targetProxy = 222C1BE618BA25F800A5C5D9 /* PBXContainerItemProxy */;
+			targetProxy = 22672E371AC84BBE001D1A9A /* PBXContainerItemProxy */;
 		};
 		2267375C18DB688F007C45A5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1206,78 +1210,56 @@
 			};
 			name = Release;
 		};
-		222C1BE118BA25C600A5C5D9 /* Debug */ = {
+		22672E351AC84BB6001D1A9A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/libpng/1.5.17/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
-		222C1BE218BA25C600A5C5D9 /* Release */ = {
+		22672E361AC84BB6001D1A9A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_OPTIMIZATION_LEVEL = fast;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/usr/local/Cellar/libpng/1.5.17/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
 			};
 			name = Release;
 		};
@@ -1401,14 +1383,13 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		222C1BE318BA25C600A5C5D9 /* Build configuration list for PBXNativeTarget "test_meijer" */ = {
+		22672E341AC84BB6001D1A9A /* Build configuration list for PBXNativeTarget "test_meijster" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				222C1BE118BA25C600A5C5D9 /* Debug */,
-				222C1BE218BA25C600A5C5D9 /* Release */,
+				22672E351AC84BB6001D1A9A /* Debug */,
+				22672E361AC84BB6001D1A9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
 		};
 		2267375718DB6845007C45A5 /* Build configuration list for PBXNativeTarget "stipple" */ = {
 			isa = XCConfigurationList;

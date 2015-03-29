@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
   }
 #endif
 
-#if 1
+#if 0
   int W = 100;
   int H = 100;
 #else
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
   } while (0);
   double t1 = now();
   cerr << "OCL: " << (1000.0 * (t1 - t0)) << "ms" << endl << flush;
-//  cerr << PCI(oclResult) << endl << flush;
+  cerr << PCI(oclResult) << endl << flush;
 
   double t2 = now();
   for (int i = 0; i < N; i++) {
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
   }
   double t3 = now();
   cerr << "CPU: " << (1000.0 * (t3 - t2)) << "ms" << endl << flush;
-//  cerr << PPI(cpuResult) << endl << flush;
+  cerr << PPI(cpuResult) << endl << flush;
   
   for (int y = 0; y < H; y++) {
     for (int x = 0; x < W; x++) {

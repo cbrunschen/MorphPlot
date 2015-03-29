@@ -43,12 +43,6 @@ static default_random_engine rng;
 static uniform_real_distribution<double> dist;
 static inline double frand() { return dist(rng); }
 
-static inline double now() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
-}
-
 class PGI {
 	shared_ptr< GreyImage<int> > g_;
 public:
