@@ -86,10 +86,10 @@ template<typename C> class Carousel {
   typedef Primitives::PenColor<C> PenColor;
   typedef Primitives::Pen<C> Pen;
   typedef list<Pen> Pens;
-  
+
   map<PenColor, Pens> pensByColor_;
   list<PenColor> colors_;
-  
+
 public:
   typedef typename list<PenColor>::iterator iterator;
   typedef typename list<PenColor>::const_iterator const_iterator;
@@ -104,7 +104,7 @@ public:
       colors_.push_back(pen.color());
     }
   }
-  
+
   iterator begin() { return colors_.begin(); }
   const_iterator begin() const { return colors_.begin(); }
   iterator end() { return colors_.end(); }
@@ -113,7 +113,7 @@ public:
   list<Pen> &pensWithColor(const PenColor &color) {
     return pensByColor_[color];
   }
-  
+
   const list<Pen> &pensWithColor(const PenColor &color) const {
     return pensByColor_[color];
   }
@@ -131,7 +131,7 @@ public:
   pen_const_iterator end(const PenColor &color) const {
     return pensByColor_[color].end();
   }
-  
+
   const size_t size() const {
     return colors_.size();
   }
@@ -146,7 +146,7 @@ int main(int argc, char * const argv[]) {
   string stepPrefix = "/tmp/steps";
   bool approximate = false;
   string approximationFilename;
-  
+
   typedef uint8_t C;
   typedef ColorImage<C> ColorImage;
   typedef shared_ptr<ColorImage> ColorImageRef;
@@ -157,7 +157,7 @@ int main(int argc, char * const argv[]) {
   typedef PenColor<C> PenColor;
   typedef Pen<C> Pen;
   typedef Carousel<C> Carousel;
-  
+
   Carousel carousel;
   list< Output<Pen>* > outputs;
   int argn = 1;
@@ -165,7 +165,8 @@ int main(int argc, char * const argv[]) {
   Rotation rotation = None;
   int offsetX = 0, offsetY = 0;
   double scale = 1.0;
-    
+  bool dither = true;
+
   for (; argn < argc && argv[argn][0] == '-' && strlen(argv[argn]) > 1; argn++) {
     string arg(argv[argn]);
     D(cerr << "arg[" << argn << "] == '" << arg << "'" << endl << flush);
@@ -219,7 +220,7 @@ int main(int argc, char * const argv[]) {
             case 'i': // HPGL Index
               pen.hpglIndex() = getInt(value);
               break;
-              
+
             case 'a': // hatch angle
               pen.hatchAngle() = getDouble(value);
               break;
@@ -245,7 +246,7 @@ int main(int argc, char * const argv[]) {
         }
         rotationSpec = argv[argn];
       }
-      
+
       switch (rotationSpec[0]) {
         case 'l':
         case 'L':
@@ -278,10 +279,10 @@ int main(int argc, char * const argv[]) {
       size_t delim = offset.find_first_of("x,");
       if (delim == string::npos) {
         // no delimiter - offset both x & y by the same amount
-        offsetX = offsetY = getInt(offset); 
+        offsetX = offsetY = getInt(offset);
       } else {
-        offsetX = getInt(offset.substr(0, delim)); 
-        offsetY = getInt(offset.substr(delim+1)); 
+        offsetX = getInt(offset.substr(0, delim));
+        offsetY = getInt(offset.substr(delim+1));
       }
     } else if (0 == arg.find("-steps")) {
       steps = true;
@@ -295,6 +296,8 @@ int main(int argc, char * const argv[]) {
       } else {
         approximationFilename = "approximation.png";
       }
+    } else if (0 == arg.find("-nodither")) {
+      dither = false;
     } else if (0 == arg.find("-out")) {
       size_t eqPos;
       string outputFile;
@@ -355,13 +358,13 @@ int main(int argc, char * const argv[]) {
         }
         scaleString = argv[argn];
       }
-      scale = getDouble(scaleString); 
+      scale = getDouble(scaleString);
     } else {
       cerr << "Unrecognized argument '" << arg << "'" << endl << flush;
       exit(1);
     }
   }
-  
+
   string inputFile;
 
   if (argn == argc-1) {
@@ -375,7 +378,7 @@ int main(int argc, char * const argv[]) {
     exit(1);
   }
 
-  
+
   // If there's no specified carousel, use a default one.
   if (carousel.size() == 0) {
     cerr << "No pens specified, using default carousel" << endl << flush;
@@ -390,7 +393,7 @@ int main(int argc, char * const argv[]) {
     Pen cyan(1.0, 0.0, 0.0, 3); cyan.hpglIndex() = 5; cyan.hatchAngle() = 16.0 / 25.0;
     Pen magenta(0.0, 1.0, 0.0, 3); magenta.hpglIndex() = 6; magenta.hatchAngle() = 19.0 / 25.0;
     Pen yellow(0.0, 0.0, 1.0, 3); yellow.hpglIndex() = 7; yellow.hatchAngle() = 22.0 / 25.0;
-    
+
     // put the pens into the carousel in a suitable order
     carousel.addPen(black);
     carousel.addPen(orange);
@@ -401,20 +404,20 @@ int main(int argc, char * const argv[]) {
     carousel.addPen(magenta);
     carousel.addPen(yellow);
   }
-  
+
   // if there's no output specified, use a default one.
   if (outputs.size() == 0) {
     cerr << "No output specified, writing HPGL to standard output" << endl << flush;
     outputs.push_back(new HPGLAbsoluteOutput<Pen>(cout));
   }
-  
+
   FILE *f;
   if ("-" == inputFile) {
     cerr << "* Reading image from standard input" << endl << flush;
     f = stdin;
   } else {
     cerr << "* Reading image '" << inputFile << "'" << endl << flush;
-    
+
     f = fopen(inputFile.c_str(), "r");
     if (f == NULL) {
       cerr << "unable to open input file '" << inputFile << "'!" << endl << flush;
@@ -426,7 +429,7 @@ int main(int argc, char * const argv[]) {
     colored = scaleImage(colored, scale);
   }
   Approximator *approximator = NULL;
-  
+
   if (approximate) {
     approximator = new Approximator(colored->width(), colored->height());
     approximator->approximation().copyRes(colored);
@@ -435,12 +438,13 @@ int main(int argc, char * const argv[]) {
   }
 
   map<Pen, Chains> ditheredByPen;
-  
+
   double dTheta = 1.0 / carousel.size();
   double theta = 0.1;
 
   PlotterPathExtractor extractor;
   extractor.setOut(&cerr);
+  extractor.setDither(dither);
   Stepper *stepper;
   if (steps) {
     extractor.setStepper(stepper = new Stepper(stepPrefix));
@@ -448,7 +452,7 @@ int main(int argc, char * const argv[]) {
   if (approximate) {
     extractor.setApproximator(approximator);
   }
-  
+
   int p = 0;
   for (Carousel::iterator c = carousel.begin(); c != carousel.end(); ++c) {
     const PenColor &color = *c;
@@ -458,27 +462,27 @@ int main(int argc, char * const argv[]) {
       cerr << "  . writing separation" << endl;
       separated->writePng(stepper->makeName("separation.png", color.unparse().c_str()));
     }
-    
+
     if (approximate) {
       approximator->setPenColor(color);
     }
-    
+
     list<Pen> &pens = carousel.pensWithColor(color);
     extractor.outlineHatchThinDither(separated, pens, ditheredByPen);
 
     ++p;
     theta += dTheta;
   }
-  
+
   Matrix transform = Matrix::identity();
-  
+
   cerr << "initial transform: " << transform << endl << flush;
 
   cerr << "offsetX = " << offsetX << ", offsetY = " << offsetY << endl << flush;
   if (offsetX != 0 || offsetY != 0) {
     transform = transform.concat(Matrix::translate(offsetX, offsetY));
   }
-  cerr << "after offset: " << transform << endl << flush;  
+  cerr << "after offset: " << transform << endl << flush;
 
   cerr << "rotation = " << rotation << endl << flush;
   if (rotation == Left) {
@@ -489,7 +493,7 @@ int main(int argc, char * const argv[]) {
     transform = transform.concat(Matrix::pageUpsideDown(colored->width(), colored->height()));
   }
   cerr << "after rotation: " << transform << endl << flush;
-        
+
   int maxX = numeric_limits<int>::min(), maxY = numeric_limits<int>::min();
   int minX = numeric_limits<int>::max(), minY = numeric_limits<int>::max();
   for (int x = 0; x < colored->width(); x += colored->width()-1) {
@@ -502,13 +506,13 @@ int main(int argc, char * const argv[]) {
       maxY = max(p.y(), maxY);
     }
   }
-  
+
   cerr << "minX = " << minX << ", minY = " << minY << ", maxX = " << maxX << ", maxY = " << maxY << endl << flush;
-  
+
   // Finally, adjust for the top-to-bottom Y of our bitmaps
   // vs the bottom-to-top Y of our output devices
   Matrix adjustment(1, 0, 0, -1, 0, colored->height());
-  transform = transform.concat(adjustment);  
+  transform = transform.concat(adjustment);
   cerr << "after adjustment: " << transform << endl << flush;
 
   for (list< Output<Pen>* >::const_iterator outIter = outputs.begin();
@@ -517,18 +521,18 @@ int main(int argc, char * const argv[]) {
     (*outIter)->open();
     (*outIter)->beginPage(maxX + 1, maxY + 1);
   }
-  
+
   for (map<Pen, Chains>::iterator di = ditheredByPen.begin(); di != ditheredByPen.end(); ++di) {
     const Pen &pen = di->first;
     Chains &dithered = di->second;
-    
+
     if (transform != Matrix::identity()) {
       cerr << "- applying transform " << transform << endl << flush;
       dithered.transform(transform);
     } else {
       cerr << "-  skipping identity transform " << transform << endl << flush;
     }
-    
+
     for (list< Output<Pen>* >::const_iterator outIter = outputs.begin();
          outIter != outputs.end(); ++outIter) {
       (*outIter)->setPen(pen);
@@ -543,11 +547,11 @@ int main(int argc, char * const argv[]) {
     delete (*outIter);
   }
   outputs.clear();
-  
+
   if (approximate) {
     cerr << "    . drawing final approximation" << endl;
     approximator->approximation().writePng(approximationFilename.c_str());
-    
+
     delete approximator;
     approximator = NULL;
   }

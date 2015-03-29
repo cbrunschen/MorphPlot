@@ -96,7 +96,7 @@ public:
       erase(second, last);
     }
   }
-  
+
   void simplify(double tolerance = 0.3) {
     if (front() == back()) {
       if (size() > 5) {
@@ -143,7 +143,7 @@ public:
       *d++ = i->transformed(m);
     }
   }
-  
+
   Chain transformed(const Matrix &m) const {
     Chain result;
     for (const_iterator i = begin(); i != end(); ++i) {
@@ -151,7 +151,7 @@ public:
     }
     return result;
   }
-  
+
   double minDistance(const Chain &next) {
     if (size() == 1) {
       if (next.size() == 1) {
@@ -192,8 +192,8 @@ public:
 
   bool allPointsAreNeighbours() {
     if (size() <= 1) return true;
-    const_iterator i = begin();    
-    const_iterator j = i;    
+    const_iterator i = begin();
+    const_iterator j = i;
     for (++j; j != end(); i = j++) {
       if (!j->isNeighbour(*i)) return false;
     }
@@ -221,8 +221,18 @@ public:
     return front();
   }
 
-  void addChains(Chains &chains) {
+  void moveChains(Chains &chains) {
     splice(end(), chains);
+  }
+
+  void addChains(Chains &chains) {
+    for (Chains::iterator iter = chains.begin(); iter != chains.end(); ++iter) {
+      Chain &src = *iter;
+      Chain &dst = addChain();
+      for (Chain::iterator cIter = src.begin(); cIter != src.end(); ++cIter) {
+        dst.addPoint(*cIter);
+      }
+    }
   }
 
   void simplify(double tolerance = 0.3) {
@@ -272,14 +282,14 @@ public:
       result.push_back(i->transformed(m));
     }
     return result;
-  }  
+  }
 };
 
 class Boundary : public Chains {
 private:
   Boundary *parent_;
   list<Boundary *>children_;
-  
+
 public:
   Boundary() : parent_(NULL) { Chains(); }
   Boundary * &parent() { return parent_; }
