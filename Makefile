@@ -93,7 +93,7 @@ $(LIB_ARCHIVE): $(LIB_OBJECTS) to_sites.inc kernels.inc
 	$(AR) -r $@ $(LIB_OBJECTS)
 
 clean :
-	-rm $(PLOT_BIN) $(PLOT_OBJ) $(MILL_BIN) $(MILL_OBJ) $(STIPPLE_BIN) $(STIPPLE_OBJ) $(LIB_ARCHIVE) $(LIB_OBJECTS) to_sites.inc kernels.inc
+	-rm $(PLOT_BIN) $(PLOT_OBJ) $(MILL_BIN) $(MILL_OBJ) $(STIPPLE_BIN) $(STIPPLE_OBJ) $(LIB_ARCHIVE) $(LIB_OBJECTS) cl2inc to_sites.inc kernels.inc
 	$(MAKE) -C Tests clean
 
 tests : $(LIB_ARCHIVE)
