@@ -147,20 +147,20 @@ int main(int argc, char **argv) {
   }
 #endif
 
-#if 0
-  int W = 100;
-  int H = 100;
+#if 1
+  int W = 80;
+  int H = 300;
 #else
-  int W = 20;
-  int H = 20;
+  int W = 32;
+  int H = 60;
 #endif
 
   shared_ptr<Bitmap> large = Bitmap::make(W, H, true);
   Bitmap::Set set = large->set(true);
   
-  rng.seed(1001);
+  rng.seed(10017);
   
-#if 1
+#if 0
   for (int a = 0; a < 10; a++) {
     int r = 0.05 * frand() * sqrt(W*W+H*H);
     if (r == 0) r = 1;
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
     line(x0, y0, x1, y1, set, initial, deltaX, deltaXY);
   }
 #else 
-  for (int a = 0; a < 10; a++) {
+  for (int a = 0; a < (W * H / 100); a++) {
     int x = (W-1) * frand();
     int y = (H-1) * frand();
     set(y, x);
@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
 #endif
 
   Workers workers(8);
-  OpenCLWorkers clWorkers(1);
+  OpenCLWorkers clWorkers(2);
   int N = 1;
   
   shared_ptr< Image<cl_short2> > oclResult;
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
 //    cerr << endl;
 //    for (int x = 0; x < W; x++) {
 //      if (x == oclResult->at(y, x).x && y == oclResult->at(y, x).y) {
-//        cerr << setw(3) << right << "*" << "," << setw(3) << left << "*" << " ";
+//        cerr << "   *    ";
 //      } else {
 //        int dx = oclResult->at(y, x).x - cpuResult->at(y, x).x();
 //        int dy = oclResult->at(y, x).y - cpuResult->at(y, x).y();

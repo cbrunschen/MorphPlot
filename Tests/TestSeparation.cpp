@@ -25,7 +25,7 @@ using namespace Primitives;
 using namespace Images;
 
 
-TEST_CASE("reconstruct", "reconstruct: some should stay and some should go")
+TEST_CASE("color separation", "")
 {
   typedef uint8_t Component;
   typedef ColorImage<Component> ColorImage;

@@ -314,38 +314,10 @@ int main(int argc, char * const argv[]) {
       }
       string outputType = arg.substr(4);
       if (0 == outputType.length()) {
-        outputType = "HPGLAbsolute";
+        outputType = "ha"; // HPGL, absolute coordinates
       }
       std::transform(outputType.begin(), outputType.end(), outputType.begin(), ::tolower);
-      if ("hp" == outputType || "ha" == outputType) {
-        outputs.push_back(new HPGLAbsoluteOutput<Pen>(outputFile));
-      } else if ("hr" == outputType) {
-        outputs.push_back(new HPGLRelativeOutput<Pen>(outputFile));
-      } else if ("he" == outputType) {
-        outputs.push_back(new HPGLEncodedOutput<Pen, 64>(outputFile));
-      } else if ("he7" == outputType || "h7" == outputType) {
-        outputs.push_back(new HPGLEncodedOutput<Pen, 32>(outputFile));
-      } else if ("ps" == outputType) {
-        outputs.push_back(new PostScriptOutput<Pen>(outputFile));
-      } else if (string::npos != outputType.find("hp")) {
-        if (string::npos != outputType.find("abs")) {
-          outputs.push_back(new HPGLAbsoluteOutput<Pen>(outputFile));
-        } else if (string::npos != outputType.find("rel")) {
-          outputs.push_back(new HPGLRelativeOutput<Pen>(outputFile));
-        } else if (string::npos != outputType.find("enc")) {
-          if (string::npos != outputType.find("7") || string::npos != outputType.find("32")) {
-            outputs.push_back(new HPGLEncodedOutput<Pen, 32>(outputFile));
-          } else {
-            outputs.push_back(new HPGLEncodedOutput<Pen, 64>(outputFile));
-          }
-        } else {
-          outputs.push_back(new HPGLAbsoluteOutput<Pen>(outputFile));
-        }
-      } else if (string::npos != outputType.find("ps") || string::npos != outputType.find("post")) {
-        outputs.push_back(new PostScriptOutput<Pen>(outputFile));
-      } else {
-        outputs.push_back(new HPGLAbsoluteOutput<Pen>(outputFile));
-      }
+      outputs.push_back(makeOutput<Pen>(outputType, outputFile));
     } else if (0 == arg.find("-scale")) {
       string scaleString;
       if (6 == arg.find("=")) {

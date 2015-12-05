@@ -262,37 +262,7 @@ int main(int argc, char * const argv[]) {
         outputType = "rml";
       }
       std::transform(outputType.begin(), outputType.end(), outputType.begin(), ::tolower);
-      if ("hp" == outputType || "ha" == outputType) {
-        outputs.push_back(new HPGLAbsoluteOutput<Tool>(outputFile));
-      } else if ("hr" == outputType) {
-        outputs.push_back(new HPGLRelativeOutput<Tool>(outputFile));
-      } else if ("he" == outputType) {
-        outputs.push_back(new HPGLEncodedOutput<Tool, 64>(outputFile));
-      } else if ("he7" == outputType || "h7" == outputType) {
-        outputs.push_back(new HPGLEncodedOutput<Tool, 32>(outputFile));
-      } else if ("ps" == outputType) {
-        outputs.push_back(new PostScript3DOutput<Tool>(outputFile));
-      } else if (string::npos != outputType.find("hp")) {
-        if (string::npos != outputType.find("abs")) {
-          outputs.push_back(new HPGLAbsoluteOutput<Tool>(outputFile));
-        } else if (string::npos != outputType.find("rel")) {
-          outputs.push_back(new HPGLRelativeOutput<Tool>(outputFile));
-        } else if (string::npos != outputType.find("enc")) {
-          if (string::npos != outputType.find("7") || string::npos != outputType.find("32")) {
-            outputs.push_back(new HPGLEncodedOutput<Tool, 32>(outputFile));
-          } else {
-            outputs.push_back(new HPGLEncodedOutput<Tool, 64>(outputFile));
-          }
-        } else {
-          outputs.push_back(new HPGLAbsoluteOutput<Tool>(outputFile));
-        }
-      } else if (string::npos != outputType.find("ps") || string::npos != outputType.find("post")) {
-        outputs.push_back(new PostScriptOutput<Tool>(outputFile));
-      } else if (string::npos != outputType.find("rml")) {
-        outputs.push_back(new RML1Output<Tool>(outputFile));
-      } else {
-        outputs.push_back(new HPGLAbsoluteOutput<Tool>(outputFile));
-      }
+      outputs.push_back(make3DOutput<Tool>(outputType, outputFile));
     } else if (checkArg(argc, argv, argn, "-scale", spec)) {
       scale = getDouble(spec);
     } else if (checkArg(argc, argv, argn, "-dz", spec)) {

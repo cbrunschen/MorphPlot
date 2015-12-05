@@ -154,6 +154,99 @@ public:
   }
 };
 
+template<typename Pen> class SvgOutput : public FileStreamOutput<Pen> {
+  typedef FileStreamOutput<Pen> Base;
+protected:
+  using Base::out_;
+  using Base::filename_;
+  
+  string color_;
+  double w_;
+  int height_;
+  bool startGroup_;
+  bool endGroup_;
+public:
+  SvgOutput(ostream &out) : Base(out) { }
+  SvgOutput(const char *filename) : Base(filename) { }
+  SvgOutput(const string &filename) : Base(filename) { }
+  virtual ~SvgOutput() { }
+  
+  virtual void open() {
+    Base::open();
+    *out_ << "<?xml version=\"1.0\" standalone=\"yes\"?>" << endl;
+    *out_ << "<svg xmlns=\"http://www.w3.org/2000/svg\">" << endl;
+  }
+  
+  virtual void beginPage(int width, int height) {
+    Base::beginPage(width, height);
+    height_ = height;
+    *out_ << "<svg width=\"";
+    *out_ << width << "\" height=\"" << height << "\" viewBox=\"0 0 ";
+    *out_ << width << " " << height << "\">" << endl;
+    *out_ << "<g transform=\"translate(0, " << height_ << ") scale(1, -1)\">" << endl;
+  }
+  
+  virtual void setPen(const Pen &pen) {
+    double r = 1.0 - pen.cFraction();
+    double g = 1.0 - pen.mFraction();
+    double b = 1.0 - pen.yFraction();
+    ostringstream cs;
+    cs << "rgb(";
+    cs << (100 * r) << "%,";
+    cs << (100 * g) << "%,";
+    cs << (100 * b) << "%)";
+    color_ = cs.str();
+    w_ = 2.0 * pen.r() + 1;
+    if (endGroup_) {
+      *out_ << "</g>" << endl;
+      endGroup_ = false;
+    }
+    startGroup_ = true;
+  }
+  
+  virtual void outputChain(const Chain &chain) {
+    if (startGroup_) {
+      *out_ << "<g stroke-width=\"" << w_ << "\" stroke-linejoin=\"round\" stroke-linecap=\"round\" fill=\"none\" stroke=\"";
+      *out_ << color_ << "\">" << endl;
+      startGroup_ = false;
+      endGroup_ = true;
+    }
+    if (chain.size() == 1) {
+      const Point &p = chain.front();
+      *out_ << "<polyline points=\"" << p.x() << "," << p.y() << " " << p.x() << "," << p.y() << "\" />" << endl;
+    } else {
+      *out_ << "<polyline points=\"";
+      bool first = true;
+      for (Chain::const_iterator k = chain.begin(); k != chain.end(); ++k) {
+        if (first) {
+          first = false;
+        } else {
+          *out_ << " ";
+        }
+        *out_ << k->x() << "," << k->y();
+      }
+      *out_ << "\" />" << endl;
+    }
+  }
+  
+  virtual void endPage() {
+    if (endGroup_) {
+      *out_ << "</g>" << endl;
+    }
+    *out_ << "</g>" << endl << "</svg>" << endl;
+    Base::endPage();
+  }
+  
+  virtual void close() {
+    *out_ << "</svg>" << endl;
+    Base::close();
+  }
+  
+  virtual ostream &describe(ostream &out) const {
+    return out << "SVG to '" << filename_ << "'";
+  }
+};
+
 template<int base> struct HpEncode {
   int value_;
   HpEncode(int value) : value_(value) { }
@@ -219,7 +312,9 @@ public:
   HPGLAbsoluteOutput(ostream &out) : Base(out) { }
   HPGLAbsoluteOutput(const char *filename) : Base(filename) { }
   HPGLAbsoluteOutput(const string &filename) : Base(filename) { }
+
   virtual void outputChain(const Chain &chain) {
+    Base::outputChain(chain);
     Chain::const_iterator k = chain.begin();
     Point p = *k;
     *out_ << "PU " << p.x() << " " << p.y() << ";PD ";
@@ -252,8 +347,10 @@ public:
   HPGLRelativeOutput(ostream &out) : Base(out) { }
   HPGLRelativeOutput(const char *filename) : Base(filename) { }
   HPGLRelativeOutput(const string &filename) : Base(filename) { }
+
   virtual void outputChain(const Chain &chain) {
-    if (chain.size() < 2) return;
+    Base::outputChain(chain);
+    
     Chain::const_iterator k = chain.begin();
     Point p = *k;
     if (haveCurrentPoint_) {
@@ -302,7 +399,10 @@ public:
   HPGLEncodedOutput(ostream &out) : Base(out) { }
   HPGLEncodedOutput(const char *filename) : Base(filename) { }
   HPGLEncodedOutput(const string &filename) : Base(filename) { }
+  
   virtual void outputChain(const Chain &chain) {
+    Base::outputChain(chain);
+    
     Chain::const_iterator k = chain.begin();
     // first, an absolute move to the beginning of the start of the chain
     Point p = *k;
@@ -371,7 +471,6 @@ public:
   RML1Output(ostream &out) : Base(out) { init(); }
   RML1Output(const char *filename) : Base(filename) { init(); }
   RML1Output(const string &filename) : Base(filename) { init(); }
-  
   
   virtual void setPen(const Tool &tool) {
     zUp_ = tool.zUp();
@@ -493,6 +592,49 @@ public:
     *out_ << w << " setlinewidth" << endl;
   }
 };
+
+template<typename Pen> Output<Pen> *makeOutput(const string &outputType, const string &outputFile) {
+  if ("hp" == outputType || "ha" == outputType) {
+    return new HPGLAbsoluteOutput<Pen>(outputFile);
+  } else if ("hr" == outputType) {
+    return new HPGLRelativeOutput<Pen>(outputFile);
+  } else if ("he" == outputType) {
+    return new HPGLEncodedOutput<Pen, 64>(outputFile);
+  } else if ("he7" == outputType || "h7" == outputType) {
+    return new HPGLEncodedOutput<Pen, 32>(outputFile);
+  } else if ("ps" == outputType) {
+    return new PostScriptOutput<Pen>(outputFile);
+  } else if ("svg" == outputType) {
+    return new SvgOutput<Pen>(outputFile);
+  } else if (string::npos != outputType.find("hp")) {
+    if (string::npos != outputType.find("abs")) {
+      return new HPGLAbsoluteOutput<Pen>(outputFile);
+    } else if (string::npos != outputType.find("rel")) {
+      return new HPGLRelativeOutput<Pen>(outputFile);
+    } else if (string::npos != outputType.find("enc")) {
+      if (string::npos != outputType.find("7") || string::npos != outputType.find("32")) {
+        return new HPGLEncodedOutput<Pen, 32>(outputFile);
+      } else {
+        return new HPGLEncodedOutput<Pen, 64>(outputFile);
+      }
+    } else {
+      return new HPGLAbsoluteOutput<Pen>(outputFile);
+    }
+  } else {
+    return new HPGLAbsoluteOutput<Pen>(outputFile);
+  }
+}
+
+template<typename Tool> Output<Tool> *make3DOutput(const string &outputType, const string &outputFile) {
+  if (string::npos != outputType.find("rml")) {
+    return new RML1Output<Tool>(outputFile);
+  } else if (string::npos != outputType.find("ps") || string::npos != outputType.find("post")) {
+    return new PostScript3DOutput<Tool>(outputFile);
+  } else {
+    // fall back onto 2D output options
+    return makeOutput<Tool>(outputType, outputFile);
+  }
+}
 
 template<typename Pen, typename C> class ColorImageOutput : public Output<Pen> {
   typedef Output<Pen> Base;
