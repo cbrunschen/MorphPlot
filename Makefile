@@ -29,8 +29,8 @@ TEST_MEIJSTER_OBJ=test_meijster.o
 TEST_MEIJSTER_BIN=test_meijster
 
 # where to look for the libpng header & library files
-INCDIRS=-I/usr/local/include
-LIBDIRS=-L/usr/local/lib
+INCDIRS=-I/usr/local/include -I$(HOME)/homebrew/include
+LIBDIRS=-L/usr/local/lib -L$(HOME)/homebrew/lib
 
 #COMPILER = gcc
 COMPILER = clang
