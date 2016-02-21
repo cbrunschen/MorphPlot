@@ -11,4 +11,4 @@
 
 using namespace Primitives;
 
-list<Point> Circle::noPoints_;
+list<IPoint> Circle::noPoints_;

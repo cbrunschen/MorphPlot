@@ -85,10 +85,10 @@ template <typename Include> struct Hatcher {
     GridIterator row;
     RowIterator extent;
     bool isFrom;
-    const Point &point() {
+    const IPoint &point() {
       return isFrom ? extent->front() : extent->back();
     }
-    double squareDistance(const Point &p) {
+    double squareDistance(const IPoint &p) {
       return point().squareDistance(p);
     }
     double squareDistance(const GridCursor &c) {
@@ -99,13 +99,13 @@ template <typename Include> struct Hatcher {
   Grid grid_;
   Row *row_;
   Extent *extent_;
-  Point previous_;
+  IPoint previous_;
   int along_;
   
   Hatcher(Include include) : include_(include), previous_(numeric_limits<int>::min(), -numeric_limits<int>::min()) { }
   
   void operator() (int x, int y) {
-    Point p(x, y);
+    IPoint p(x, y);
     if (!p.isNeighbour(previous_)) {
       // started a new row!
       grid_.push_back(Row());
@@ -139,7 +139,7 @@ template <typename Include> struct Hatcher {
     return false;
   }
   
-  static double minDistance(Point &p, const Extent &e, bool &isFrom) {
+  static double minDistance(IPoint &p, const Extent &e, bool &isFrom) {
     double dFrom = p.squareDistance(e.front());
     double dTo = p.squareDistance(e.back());
     if (dFrom <= dTo) {
@@ -151,7 +151,7 @@ template <typename Include> struct Hatcher {
     }
   }
   
-  double findNearestExtentInRow(Row &row, Point &p, /*out*/ RowIterator &eOut, bool &isFrom) {
+  double findNearestExtentInRow(Row &row, IPoint &p, /*out*/ RowIterator &eOut, bool &isFrom) {
     int dMin = std::numeric_limits<int>::max();
     for (RowIterator e = row.begin(); e != row.end(); ++e) {
       double dFrom = p.squareDistance(e->front());
@@ -181,7 +181,7 @@ template <typename Include> struct Hatcher {
     }
   }
 
-  double findNearerExtent(GridIterator r0, int direction, Point &p, double period, double dMin, /*out*/ GridCursor &c) {
+  double findNearerExtent(GridIterator r0, int direction, IPoint &p, double period, double dMin, /*out*/ GridCursor &c) {
     GridIterator r = r0;
     move(r, direction);
     double dy = period;
@@ -203,7 +203,7 @@ template <typename Include> struct Hatcher {
     return dMin;
   }
   
-  double findNearestExtent(GridIterator r, Point &p, double period, /*out*/ GridCursor &c) {
+  double findNearestExtent(GridIterator r, IPoint &p, double period, /*out*/ GridCursor &c) {
     bool isFrom;
     RowIterator e;
     double d = findNearestExtentInRow(*r, p, e, isFrom);
@@ -287,7 +287,7 @@ template <typename Include> struct Hatcher {
       RowIterator e;
       start(rFront, e);
       rBack = rFront;
-      Point pFront = e->front(), pBack = e->back();
+      IPoint pFront = e->front(), pBack = e->back();
 
       // insert the current extent as the first chain of the sequence of chains
       Chain &chain = chains.addChain();
@@ -353,7 +353,7 @@ template <typename Include> struct Hatcher {
       for (RowIterator extent = row->begin(); extent != row->end(); ++extent) {
         cerr << extent->from_ << "->" << extent->to_ << " ";
         for (int x = extent->from_; x <= extent->to_; ++x) {
-          Point p(x, y);
+          IPoint p(x, y);
           b.at(p) = true;
         }
       }
@@ -367,7 +367,7 @@ template <typename Include> struct Hatcher {
       for (RowIterator e = r->begin(); e != r->end(); ++e) {
         if (e->size() > 1) {
           Chain::iterator j = e->begin();
-          Point p = *j;
+          IPoint p = *j;
           for (++j; j != e->end(); ++j) {
             if (!p.isNeighbour(*j)) {
               cerr << "not neighbours: " << p << " <-> " << *j << endl;

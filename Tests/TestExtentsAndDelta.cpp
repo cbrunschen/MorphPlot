@@ -60,18 +60,18 @@ template<typename I> static void drawDelta(int r, int extents[], const I &begin,
   }
 }
 
-static list<Point> checkDelta(int r) {
+static list<IPoint> checkDelta(int r) {
   int extents[r];
   Circle::makeExtents(r, extents);
   Circle circle(r);
-  const list<Point> &points = circle.getDeltaForDirection(Neighbourhood::NW);
+  const list<IPoint> &points = circle.getDeltaForDirection(Neighbourhood::NW);
 
   drawDelta(r, extents, points.begin(), points.end());
   
   // check that the result is symmetrixal around (x == y), i.e., that for each
-  // Point(x, y), Point(y, x) is also in the set
-  for (list<Point>::const_iterator i = points.begin(); i != points.end(); ++i) {
-    list<Point>::const_iterator found = find(points.begin(), points.end(), Point(i->y(), i->x()));
+  // IPoint(x, y), IPoint(y, x) is also in the set
+  for (list<IPoint>::const_iterator i = points.begin(); i != points.end(); ++i) {
+    list<IPoint>::const_iterator found = find(points.begin(), points.end(), IPoint(i->y(), i->x()));
     REQUIRE(found != points.end());
   }
 

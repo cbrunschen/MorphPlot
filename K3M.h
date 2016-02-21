@@ -32,10 +32,10 @@ extern bool A4[256];
 extern bool A5[256];
 extern bool A1pix[256];
 
-template<typename B> int k3m_subiter(B &bitmap, set<Point> &candidates, set<Point> &nextCandidates, bool (&a)[256]) {
-  list<Point> removed;
-  for (set<Point>::iterator i = candidates.begin(); i != candidates.end(); ++i) {
-    const Point &p = *i;
+template<typename B> int k3m_subiter(B &bitmap, set<IPoint> &candidates, set<IPoint> &nextCandidates, bool (&a)[256]) {
+  list<IPoint> removed;
+  for (set<IPoint>::iterator i = candidates.begin(); i != candidates.end(); ++i) {
+    const IPoint &p = *i;
     if (bitmap.at(p)) {
       int n = bitmap.neighbours(p);
       if (a[n]) {
@@ -49,14 +49,14 @@ template<typename B> int k3m_subiter(B &bitmap, set<Point> &candidates, set<Poin
       }
     }
   }
-  for (list<Point>::iterator i = removed.begin(); i != removed.end(); ++i) {
+  for (list<IPoint>::iterator i = removed.begin(); i != removed.end(); ++i) {
     candidates.erase(*i);
   }
   cerr << "  . subiteration removed " << removed.size() << endl;
   return static_cast<int>(removed.size());
 }
 
-template<typename B> int k3m_iter(B &bitmap, set<Point> &candidates, set<Point> &nextCandidates) {
+template<typename B> int k3m_iter(B &bitmap, set<IPoint> &candidates, set<IPoint> &nextCandidates) {
   int removed = 0;
   removed += k3m_subiter(bitmap, candidates, nextCandidates, A1);
   removed += k3m_subiter(bitmap, candidates, nextCandidates, A2);
@@ -69,10 +69,10 @@ template<typename B> int k3m_iter(B &bitmap, set<Point> &candidates, set<Point> 
 
 template<typename B> void k3m(B &bitmap) {  
   // First, find the initial set of candidates;
-  set<Point> candidates;
+  set<IPoint> candidates;
   for (int y = 0; y < bitmap.height(); y++) {
     for (int x = 0; x < bitmap.width(); x++) {
-      Point p(x, y);
+      IPoint p(x, y);
       int n = bitmap.neighbours(p);
       if (A0[n]) {
         candidates.insert(p);
@@ -94,7 +94,7 @@ template<typename B> void k3m(B &bitmap) {
   while (true) {
     cerr << " * considering " << candidates.size() << " candidate pixels" << endl;
     
-    set<Point> nextCandidates;
+    set<IPoint> nextCandidates;
     int removed = k3m_iter(bitmap, candidates, nextCandidates);
     
 #if DEBUG_THIN
@@ -105,8 +105,8 @@ template<typename B> void k3m(B &bitmap) {
     if (removed > 0) {
       nextCandidates.insert(candidates.begin(), candidates.end());
       candidates.clear();
-      for (set<Point>::iterator i = nextCandidates.begin(); i != nextCandidates.end(); ++i) {
-        const Point p = *i;
+      for (set<IPoint>::iterator i = nextCandidates.begin(); i != nextCandidates.end(); ++i) {
+        const IPoint p = *i;
         if (bitmap.get(p)) {
           int n = bitmap.neighbours(p);
           if (A0[n]) {
@@ -124,7 +124,7 @@ template<typename B> void k3m(B &bitmap) {
   // now run the 1-pixel pass
   for (int y = 0; y < bitmap.height(); y++) {
     for (int x = 0; x < bitmap.width(); x++) {
-      Point p(x, y);
+      IPoint p(x, y);
       int n = bitmap.neighbours(p);
       if (A1pix[n]) {
         bitmap.set(p, false);

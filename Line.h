@@ -26,19 +26,19 @@ namespace Primitives {
 using namespace std;
 
 template <typename F> void line(int x0, int y0, int x1, int y1, F &f) {
-  Matrix matrix = Matrix::translate(x0, y0);
+  IMatrix matrix = IMatrix::translate(x0, y0);
   int dx = x1 - x0;
   int dy = y1 - y0;
   if (dx < 0) {
-    matrix = matrix.concat(Matrix::flipX());
+    matrix = matrix.concat(IMatrix::flipX());
     dx = -dx;
   }
   if (dy < 0) {
-    matrix = matrix.concat(Matrix::flipY());
+    matrix = matrix.concat(IMatrix::flipY());
     dy = -dy;
   }
   if (dy > dx) {
-    matrix = matrix.concat(Matrix::flipXY());
+    matrix = matrix.concat(IMatrix::flipXY());
     swap(dy, dx);
   }
                          
@@ -57,7 +57,7 @@ template <typename F> void line(int x0, int y0, int x1, int y1, F &f) {
 }
 
 template <typename F, typename D>
-void drawAll(F &f, const Point &p, const D &points, const Matrix &matrix) {
+void drawAll(F &f, const IPoint &p, const D &points, const IMatrix &matrix) {
   for (typename D::const_iterator i = points.begin(); i != points.end(); ++i) {
     f(((*i) + p).transform(matrix));
   }
@@ -69,26 +69,26 @@ void line(int x0, int y0, int x1, int y1,
           const I &initial,
           const DX &deltaX,
           const DXY &deltaXY) {
-  Matrix matrix = Matrix::translate(x0, y0);
+  IMatrix matrix = IMatrix::translate(x0, y0);
   int dx = x1 - x0;
   int dy = y1 - y0;
   if (dx < 0) {
-    matrix = matrix.concat(Matrix::flipX());
+    matrix = matrix.concat(IMatrix::flipX());
     dx = -dx;
   }
   if (dy < 0) {
-    matrix = matrix.concat(Matrix::flipY());
+    matrix = matrix.concat(IMatrix::flipY());
     dy = -dy;
   }
   if (dy > dx) {
-    matrix = matrix.concat(Matrix::flipXY());
+    matrix = matrix.concat(IMatrix::flipXY());
     swap(dy, dx);
   }
 
-  drawAll(f, Point(0, 0), initial, matrix);
+  drawAll(f, IPoint(0, 0), initial, matrix);
 
   int error = dx / 2;
-  Point p(0, 0);
+  IPoint p(0, 0);
   for (p.x() = 1; p.x() <= dx; p.x()++) {
     error = error - dy;
     if (error < 0) {

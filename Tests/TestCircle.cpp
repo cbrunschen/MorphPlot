@@ -37,8 +37,8 @@ using namespace Primitives;
 using namespace Images;
 using namespace std;
 
-static void setAll(Bitmap &bitmap, const Circle &circle, const Point &p0) {
-  for (list<Point>::const_iterator i = circle.points().begin(); 
+static void setAll(Bitmap &bitmap, const Circle &circle, const IPoint &p0) {
+  for (list<IPoint>::const_iterator i = circle.points().begin(); 
        i != circle.points().end();
        ++i) {
     bitmap.at(p0 + *i) = true;
@@ -48,7 +48,7 @@ static void setAll(Bitmap &bitmap, const Circle &circle, const Point &p0) {
 void verifyFindOffsets(int r) {
   Circle circle(r);
   Bitmap bitmap(4*r + 16, 4*r + 16, true);
-  Point center(2*r + 8 - 2, 2*r + 8 + 3);
+  IPoint center(2*r + 8 - 2, 2*r + 8 + 3);
   setAll(bitmap, circle, center);
   vector<Boundary> boundaries(bitmap.scanBoundaries(false));
   REQUIRE(boundaries.size() == 1);
@@ -59,7 +59,7 @@ void verifyFindOffsets(int r) {
   circle.ensureDirectionsAndOffsets();
 
   int length = static_cast<int>(chain.size());
-  vector<Point> points, rpoints;
+  vector<IPoint> points, rpoints;
   points.reserve(2 * length);
   rpoints.reserve(2 * length);
   copy(chain.begin(), chain.end(), back_inserter(points));
@@ -69,9 +69,9 @@ void verifyFindOffsets(int r) {
   
   for (int l = length; l >= 1; l--) {
     for (int offset = 0; offset < length; offset++) {
-      list<Point> candidates;
-      vector<Point>::iterator a = points.begin() + offset;
-      vector<Point>::iterator b = a + l;
+      list<IPoint> candidates;
+      vector<IPoint>::iterator a = points.begin() + offset;
+      vector<IPoint>::iterator b = a + l;
       
       circle.findOffsets(a, b, back_inserter(candidates));
       REQUIRE(find(candidates.begin(), candidates.end(), center) != candidates.end());
@@ -98,7 +98,7 @@ TEST_CASE("offsets/find", "Find the offsets")
 void verifyFilterOffsets(int r) {
   Circle circle(r);
   Bitmap bitmap(4*r + 16, 4*r + 16, true);
-  Point center(2*r + 8 - 2, 2*r + 8 + 3);
+  IPoint center(2*r + 8 - 2, 2*r + 8 + 3);
   setAll(bitmap, circle, center);
   vector<Boundary> boundaries(bitmap.scanBoundaries(false));
   REQUIRE(boundaries.size() == 1);
@@ -110,7 +110,7 @@ void verifyFilterOffsets(int r) {
     Chain::const_iterator j = i;
     ++j;
     
-    set<Point> candidates, filtered;
+    set<IPoint> candidates, filtered;
     circle.findOffsets(i, j, inserter(candidates, candidates.begin()));
     
     circle.filterOffsets(candidates.begin(), candidates.end(), bitmap.get(), inserter(filtered, filtered.begin()));
@@ -138,11 +138,11 @@ TEST_CASE("offsets/fromHorizontalTInset", "testing a theory")
   
   Circle circle(r);
   
-  bitmap->line(Point(7, 10), Point(42, 10), true, circle);
-  bitmap->line(Point(7, 20), Point(42, 20), true, circle);
+  bitmap->line(IPoint(7, 10), IPoint(42, 10), true, circle);
+  bitmap->line(IPoint(7, 20), IPoint(42, 20), true, circle);
   
-  bitmap->line(Point(19, 25), Point(19, 49), true);
-  bitmap->line(Point(20, 25), Point(20, 49), true);
+  bitmap->line(IPoint(19, 25), IPoint(19, 49), true);
+  bitmap->line(IPoint(20, 25), IPoint(20, 49), true);
     
   cerr << *bitmap << endl;
 
@@ -179,7 +179,7 @@ TEST_CASE("offsets/fromHorizontalTInset", "testing a theory")
   
   return;
   
-  set<Point> candidates, filtered;
+  set<IPoint> candidates, filtered;
   circle.findOffsets(adjacents.begin()->begin()->begin(), adjacents.begin()->begin()->end(), inserter(candidates, candidates.begin()));
   
   cerr << candidates.size() << " candidates: " << candidates << endl;
@@ -200,13 +200,13 @@ TEST_CASE("offsets/fromAlmostHorizontalTInset", "testing a theory")
   
   Circle circle(r);
   
-  bitmap->line(Point(7, 10), Point(42, 14), true, circle);
-  bitmap->line(Point(7, 20), Point(42, 24), true, circle);
+  bitmap->line(IPoint(7, 10), IPoint(42, 14), true, circle);
+  bitmap->line(IPoint(7, 20), IPoint(42, 24), true, circle);
   
-  bitmap->line(Point(18, 26), Point(16, 49), true);
-  bitmap->line(Point(19, 26), Point(17, 49), true);
-  bitmap->line(Point(20, 26), Point(18, 49), true);
-  bitmap->line(Point(21, 26), Point(19, 49), true);
+  bitmap->line(IPoint(18, 26), IPoint(16, 49), true);
+  bitmap->line(IPoint(19, 26), IPoint(17, 49), true);
+  bitmap->line(IPoint(20, 26), IPoint(18, 49), true);
+  bitmap->line(IPoint(21, 26), IPoint(19, 49), true);
   
   cerr << *bitmap << endl;
   
@@ -241,7 +241,7 @@ TEST_CASE("offsets/fromAlmostHorizontalTInset", "testing a theory")
     cerr << *b << endl;
   }
   
-  set<Point> candidates, filtered;
+  set<IPoint> candidates, filtered;
   circle.findOffsets(adjacents.begin()->begin()->begin(), adjacents.begin()->begin()->end(), inserter(candidates, candidates.begin()));
   
   cerr << candidates.size() << " candidates: " << candidates << endl;
@@ -264,14 +264,14 @@ TEST_CASE("offsets/from45DegreeTInset", "testing a theory")
   
   Circle circle(r);
   
-  bitmap->line(Point(r, r), Point(3*r + 1 + 10, 3*r + 1 + 10), true, circle);
-  bitmap->line(Point(2*r, r), Point(3*r + 1 + 10, 2*r + 1 + 10), true, circle);
+  bitmap->line(IPoint(r, r), IPoint(3*r + 1 + 10, 3*r + 1 + 10), true, circle);
+  bitmap->line(IPoint(2*r, r), IPoint(3*r + 1 + 10, 2*r + 1 + 10), true, circle);
   
-  bitmap->line(Point(w2 - 1, w2), Point(6 - 1, width - 6), true);
-  bitmap->line(Point(w2 - 1, w2 - 1), Point(6 - 1, width - 6 - 1), true);
-  bitmap->line(Point(w2, w2), Point(6, width - 6), true);
-  bitmap->line(Point(w2 + 1, w2), Point(6 + 1, width - 6), true);
-  bitmap->line(Point(w2 + 1, w2 + 1), Point(6 + 1, width - 6 + 1), true);
+  bitmap->line(IPoint(w2 - 1, w2), IPoint(6 - 1, width - 6), true);
+  bitmap->line(IPoint(w2 - 1, w2 - 1), IPoint(6 - 1, width - 6 - 1), true);
+  bitmap->line(IPoint(w2, w2), IPoint(6, width - 6), true);
+  bitmap->line(IPoint(w2 + 1, w2), IPoint(6 + 1, width - 6), true);
+  bitmap->line(IPoint(w2 + 1, w2 + 1), IPoint(6 + 1, width - 6 + 1), true);
   
   cerr << *bitmap << endl;
   
@@ -306,7 +306,7 @@ TEST_CASE("offsets/from45DegreeTInset", "testing a theory")
     cerr << *b << endl;
   }
   
-  set<Point> candidates, filtered;
+  set<IPoint> candidates, filtered;
   circle.findOffsets(adjacents.begin()->begin()->begin(), adjacents.begin()->begin()->end(), inserter(candidates, candidates.begin()));
   
   cerr << candidates.size() << " candidates: " << candidates << endl;

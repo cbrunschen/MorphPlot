@@ -102,12 +102,12 @@ struct GetNeighboursParams {
   int y0;
   int y1;
   int w;
-  const Image<Point> *regions;
+  const Image<IPoint> *regions;
   NBS neighboursBySite;
 };
 
 template<typename NBS>
-inline static void addIfDifferent(const Point &a, const Point &b, NBS &result) {
+inline static void addIfDifferent(const IPoint &a, const IPoint &b, NBS &result) {
   if (a != b) {
     result[a].insert(b);
     result[b].insert(a);
@@ -118,7 +118,7 @@ template<typename NBS>
 void getNeighbours_workerFunction(void *v) {
   GetNeighboursParams<NBS> *params = static_cast<GetNeighboursParams<NBS> *>(v);
  
-  const Point *qx, *qy, *qxy;
+  const IPoint *qx, *qy, *qxy;
 
   if (params->y0 == 0) {
     // This is the top chunk; it has to deal with the top row, and thus also the top pixel in the left column, differently.
@@ -126,7 +126,7 @@ void getNeighbours_workerFunction(void *v) {
     // top row
     qx = params->regions->data();
     for (int x = 1; x < params->w; x++) {
-      const Point *p = qx + 1;
+      const IPoint *p = qx + 1;
       addIfDifferent(*p, *qx, params->neighboursBySite);
       qx = p;
     }
@@ -134,7 +134,7 @@ void getNeighbours_workerFunction(void *v) {
     // left column, skipping the top pixel
     qy = params->regions->data();
     for (int y = 1; y < params->y1; y++) {
-      const Point *p = qy + params->w;
+      const IPoint *p = qy + params->w;
       addIfDifferent(*p, *qy, params->neighboursBySite);
       qy = p;
     }
@@ -145,7 +145,7 @@ void getNeighbours_workerFunction(void *v) {
       qy = qxy + 1;
       qx = qxy + params->w;
       for (int x = 1; x < params->w; x++) {
-        const Point *p = qx + 1;
+        const IPoint *p = qx + 1;
         
         addIfDifferent(*p, *qx, params->neighboursBySite);
         addIfDifferent(*p, *qy, params->neighboursBySite);
@@ -161,7 +161,7 @@ void getNeighbours_workerFunction(void *v) {
     // left column, including the top pixel
     qy = &params->regions->data()[(params->y0 - 1) * params->w];
     for (int y = params->y0; y < params->y1; y++) {
-      const Point *p = qy + params->w;
+      const IPoint *p = qy + params->w;
       addIfDifferent(*p, *qy, params->neighboursBySite);
       qy = p;
     }
@@ -172,7 +172,7 @@ void getNeighbours_workerFunction(void *v) {
       qy = qxy + 1;
       qx = qxy + params->w;
       for (int x = 1; x < params->w; x++) {
-        const Point *p = qx + 1;
+        const IPoint *p = qx + 1;
         
         addIfDifferent(*p, *qx, params->neighboursBySite);
         addIfDifferent(*p, *qy, params->neighboursBySite);
@@ -188,16 +188,16 @@ void getNeighbours_workerFunction(void *v) {
 }
 
 template<typename NBS>
-void getNeighbours_single(const Image<Point> &vd, NBS &neighboursBySite) {
+void getNeighbours_single(const Image<IPoint> &vd, NBS &neighboursBySite) {
   int w = vd.width();
   int h = vd.height();
   
-  const Point *qx, *qy, *qxy;
+  const IPoint *qx, *qy, *qxy;
   
   // left column
   qy = vd.data();
   for (int y = 1; y < h; y++) {
-    const Point *p = qy + w;
+    const IPoint *p = qy + w;
     addIfDifferent(*p, *qy, neighboursBySite);
     qy = p;
   }
@@ -205,7 +205,7 @@ void getNeighbours_single(const Image<Point> &vd, NBS &neighboursBySite) {
   // top row
   qx = vd.data();
   for (int x = 1; x < w; x++) {
-    const Point *p = qx + 1;
+    const IPoint *p = qx + 1;
     addIfDifferent(*p, *qx, neighboursBySite);
     qx = p;
   }
@@ -216,7 +216,7 @@ void getNeighbours_single(const Image<Point> &vd, NBS &neighboursBySite) {
     qy = qxy + 1;
     qx = qxy + w;
     for (int x = 1; x < w; x++) {
-      const Point *p = qx + 1;
+      const IPoint *p = qx + 1;
       
       addIfDifferent(*p, *qx, neighboursBySite);
       addIfDifferent(*p, *qy, neighboursBySite);
@@ -231,7 +231,7 @@ void getNeighbours_single(const Image<Point> &vd, NBS &neighboursBySite) {
 }
 
 template<typename NBS>
-void getNeighbours(const Image<Point> &vd, NBS &neighboursBySite, Workers &workers) {
+void getNeighbours(const Image<IPoint> &vd, NBS &neighboursBySite, Workers &workers) {
   int threads = workers.n();
   
   if (threads == 1) {
@@ -264,7 +264,7 @@ void getNeighbours(const Image<Point> &vd, NBS &neighboursBySite, Workers &worke
 }
 
 template<typename NBS>
-void getNeighbours(const Image<Point> &vd, NBS &neighboursBySite, int threads = 1) {
+void getNeighbours(const Image<IPoint> &vd, NBS &neighboursBySite, int threads = 1) {
   if (threads == 1) {
     getNeighbours_single(vd, neighboursBySite);
   } else {
@@ -290,14 +290,14 @@ struct WeightedRegion {
   }
   double x() { return weight > 0 ? (double) weightedX / (double) weight : 0; }
   double y() { return weight > 0 ? (double) weightedY / (double) weight : 0; }
-  Point p() { return Point((int) x(), (int) y()); }
+  IPoint p() { return IPoint((int) x(), (int) y()); }
 };
 
 typedef uint8_t Weight;
 typedef GreyImage<Weight> WeightMap;
 typedef shared_ptr<WeightMap> WeightMapRef;
 typedef shared_ptr<Bitmap> BitmapRef;
-typedef Image<Point> Voronoi;
+typedef Image<IPoint> Voronoi;
 typedef shared_ptr<Voronoi> VoronoiRef;
 
 int WEIGHT_MAX = numeric_limits<Weight>::max();
@@ -309,7 +309,7 @@ struct CentroidCalculationParams {
   int w;
   double xScale;
   double yScale;
-  const Image<Point> *regions;
+  const Image<IPoint> *regions;
   const Image<uint8_t> *weights;
   WRBS weightedRegionsBySite;
 };
@@ -319,7 +319,7 @@ void calculateCentroid_workerFunction(void *v) {
   CentroidCalculationParams<WRBS> *params = static_cast<CentroidCalculationParams<WRBS> *>(v);
   for (int y = params->y0; y < params->y1; y++) {
     for (int x = 0; x < params->w; x++) {
-      const Point &p = params->regions->at(y, x);
+      const IPoint &p = params->regions->at(y, x);
       int weight = WEIGHT_MAX - params->weights->at((int) floor(y / params->yScale), (int) floor(x / params->xScale));
       params->weightedRegionsBySite[p].add(x - p.x(), y - p.y(), weight);
     }
@@ -327,7 +327,7 @@ void calculateCentroid_workerFunction(void *v) {
 }
 
 template<typename WRBS>
-inline void calculateCentroids_single(const Image<Point> &regions, const Image<uint8_t> &weights, WRBS &weightedRegionsBySite) {
+inline void calculateCentroids_single(const Image<IPoint> &regions, const Image<uint8_t> &weights, WRBS &weightedRegionsBySite) {
   int w = regions.width();
   double xScale = (double)w / (double)weights.width();
   
@@ -336,7 +336,7 @@ inline void calculateCentroids_single(const Image<Point> &regions, const Image<u
 
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
-      const Point &p = regions.at(y, x);
+      const IPoint &p = regions.at(y, x);
       int weight = WEIGHT_MAX - weights.at((int) floor(y / yScale), (int) floor(x / xScale));
       weightedRegionsBySite[p].add(x - p.x(), y - p.y(), weight);
     }
@@ -344,7 +344,7 @@ inline void calculateCentroids_single(const Image<Point> &regions, const Image<u
 }
 
 template<typename WRBS>
-void calculateCentroids(const Image<Point> &regions, const Image<uint8_t> &weights, WRBS &weightedRegionsBySite, Workers &workers) {
+void calculateCentroids(const Image<IPoint> &regions, const Image<uint8_t> &weights, WRBS &weightedRegionsBySite, Workers &workers) {
   int threads = workers.n();
   
   if (threads == 1) {
@@ -384,7 +384,7 @@ void calculateCentroids(const Image<Point> &regions, const Image<uint8_t> &weigh
 }
 
 template<typename WRBS>
-void calculateCentroids(const Image<Point> &regions, const Image<uint8_t> &weights,
+void calculateCentroids(const Image<IPoint> &regions, const Image<uint8_t> &weights,
                         WRBS &weightedRegionsBySite, int threads) {
   if (threads == 1) {
     calculateCentroids_single(regions, weights, weightedRegionsBySite);
@@ -518,7 +518,7 @@ void continuousTwoOpt(V &v) {
     {
       cerr << "2-opt, tour=[  ";
       double total = 0.0;
-      Point p;
+      IPoint p;
       for (auto j = v.begin(); j != v.end(); ++j) {
         if (j == v.begin()) p = *j; else {
           double d = p.distance(*j);
@@ -567,7 +567,7 @@ void threeOpt(V &v, N &neighbours) {
     {
       cerr << "3-opt, tour=[  ";
       double total = 0.0;
-      Point p;
+      IPoint p;
       for (auto j = v.begin(); j != v.end(); ++j) {
         if (j == v.begin()) p = *j; else {
           double d = p.distance(*j);
@@ -645,7 +645,7 @@ void randomThreeOpt(V &v, N &neighbours) {
     {
       cerr << "3-opt, tour=[  ";
       double total = 0.0;
-      Point p;
+      IPoint p;
       for (auto j = v.begin(); j != v.end(); ++j) {
         if (j == v.begin()) p = *j; else {
           double d = p.distance(*j);
@@ -724,7 +724,7 @@ void addRandomStipples(T &stipples, int nStipples, const I &weights, double scal
     int y = randY(rng);
     int weight = randWeight(rng);
     if (weight >= weights.at(y / scale, x / scale)) {
-      stipples.insert(Point(x, y));
+      stipples.insert(IPoint(x, y));
     }
   }
 }
@@ -745,7 +745,7 @@ void postamble(ostream &out) {
 template<typename WRBS>
 void fillScaledStipples(ostream &out, WRBS &weightedRegionsBySite, double rMin = 0.0) {
   for (auto i = weightedRegionsBySite.begin(); i != weightedRegionsBySite.end(); ++i) {
-    const Point &p = i->first;
+    const IPoint &p = i->first;
     WeightedRegion &c = i->second;
     double r = sqrt(c.weight / (WEIGHT_MAX * M_PI));
     if (r >= rMin) {
@@ -759,7 +759,7 @@ void strokeScaledStipples(ostream &out, WRBS &weightedRegionsBySite, double line
   out << lineWidth << " setlinewidth" << endl;
   
   for (auto i = weightedRegionsBySite.begin(); i != weightedRegionsBySite.end(); ++i) {
-    const Point &p = i->first;
+    const IPoint &p = i->first;
     WeightedRegion &c = i->second;
     double r = sqrt(c.weight / (WEIGHT_MAX * M_PI));
     if (r >= lineWidth) {
@@ -791,9 +791,9 @@ void strokeTour(ostream &out, V &tour, double lineWidth = 1.0) {
 
 template<typename V, typename N>
 void nearestNeighbourTour(V &tour, N &neighboursBySite) {
-  unordered_set<Point> remaining;
+  unordered_set<IPoint> remaining;
   auto siteIterator = neighboursBySite.begin();
-  Point p = (siteIterator++)->first;
+  IPoint p = (siteIterator++)->first;
   
   for (; siteIterator != neighboursBySite.end(); ++siteIterator) {
     remaining.insert(siteIterator->first);
@@ -802,9 +802,9 @@ void nearestNeighbourTour(V &tour, N &neighboursBySite) {
   tour.push_back(p);
   
   while (remaining.size() > 0) {
-    Point q;
+    IPoint q;
     double distance = numeric_limits<double>::infinity();
-    unordered_set<Point> candidates = neighboursBySite[p];
+    unordered_set<IPoint> candidates = neighboursBySite[p];
     while (isinf(distance)) {
       for (auto i = candidates.begin(); i != candidates.end(); ++i) {
         if (remaining.find(*i) != remaining.end()) {
@@ -816,7 +816,7 @@ void nearestNeighbourTour(V &tour, N &neighboursBySite) {
         }
       }
       if (isinf(distance)) {
-        unordered_set<Point> newCandidates;
+        unordered_set<IPoint> newCandidates;
         for (auto i = candidates.begin(); i != candidates.end(); ++i) {
           auto &ns = neighboursBySite[*i];
           newCandidates.insert(ns.begin(), ns.end());
@@ -934,12 +934,12 @@ int main(int argc, char **argv) {
   
   WeightMapRef weights = WeightMap::readPng(f);
   
-  unordered_set<Point> stipples;
+  unordered_set<IPoint> stipples;
   addRandomStipples(stipples, nStipples, *weights, scale);
   
-  unordered_map<Point, uint8_t> regionGreys;
+  unordered_map<IPoint, uint8_t> regionGreys;
   VoronoiRef voronoi;
-  unordered_map<Point, WeightedRegion> weightedRegionsBySite;
+  unordered_map<IPoint, WeightedRegion> weightedRegionsBySite;
   BitmapRef sites = Bitmap::make(weights->width() * scale, weights->height() * scale, true);
 
   Workers workers(threads);
@@ -949,7 +949,7 @@ int main(int argc, char **argv) {
   for (;;) {
     sites->clear();
     for (auto i = stipples.begin(); i != stipples.end(); ++i) {
-      const Point &p = *i;
+      const IPoint &p = *i;
       sites->at(p) = true;
     }
     
@@ -962,7 +962,7 @@ int main(int argc, char **argv) {
     if (steps) {
       regionGreys.clear();
       int j = 0;
-      for (unordered_set<Point>::iterator i = stipples.begin(); i != stipples.end(); ++i) {
+      for (unordered_set<IPoint>::iterator i = stipples.begin(); i != stipples.end(); ++i) {
         regionGreys[*i] = 5 + (j++ * 250 / nStipples);
       }
       
@@ -983,14 +983,14 @@ int main(int argc, char **argv) {
 
     stipples.clear();
     
-    for (unordered_map<Point, WeightedRegion>::iterator i = weightedRegionsBySite.begin();
+    for (unordered_map<IPoint, WeightedRegion>::iterator i = weightedRegionsBySite.begin();
          i != weightedRegionsBySite.end(); ++i) {
-      const Point &p = i->first;
+      const IPoint &p = i->first;
       WeightedRegion &c = i->second;
       if (c.weight > 0) {
         int x = round(p.x() + c.x());
         int y = round(p.y() + c.y());
-        Point q(x, y);
+        IPoint q(x, y);
         if (q == p) {
           ++same;
         } else {
@@ -1014,15 +1014,15 @@ int main(int argc, char **argv) {
   double t1 = now();
   cerr << "* done after " << i << " iterations in " << (t1 - t0) << " seconds with " << threads << " threads" << endl << flush;
 
-  unordered_map<Point, unordered_set<Point> > neighboursBySite;
+  unordered_map<IPoint, unordered_set<IPoint> > neighboursBySite;
 
   getNeighbours(*voronoi, neighboursBySite, workers);
-  vector<Point> tour;
+  vector<IPoint> tour;
   
   // start with a nearest-neighbour tour
   nearestNeighbourTour(tour, neighboursBySite);
   // now improve it using 2-opt
-  continuousTwoOpt<Point>(tour);
+  continuousTwoOpt<IPoint>(tour);
 
   // find the adjacent sites with the greatest distance between them, and make those the start and end respectively
   rotateToShortest(tour);

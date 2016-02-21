@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef FnvHash_
-#define FnvHash_
+#ifndef __FnvHash_h__
+#define __FnvHash_h__
 
 #define DEBUG_HASH 0
 
@@ -69,5 +69,5 @@ struct continue_hash {
 
 #undef DH
 
-#endif // FnvHash_
+#endif // __FnvHash_h__
 

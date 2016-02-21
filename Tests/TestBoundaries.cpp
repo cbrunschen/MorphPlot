@@ -59,7 +59,7 @@ TEST_CASE("boundary/square", "scan the boundary of a square")
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(10, 10), Neighbourhood::W, true);
+  bitmap.scanBoundary(marks, 1, result, IPoint(10, 10), Neighbourhood::W, true);
   result.simplify(0.5);
   REQUIRE(result.size() == 1);
   verifyChain(result.firstChain(), 5, 10,10, 29,10, 29,29, 10,29, 10,10);
@@ -74,7 +74,7 @@ TEST_CASE("boundary/horizontal line", "scan the boundary of a horizontal line")
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(10, 10), Neighbourhood::W, true);
+  bitmap.scanBoundary(marks, 1, result, IPoint(10, 10), Neighbourhood::W, true);
   result.simplify(0.5);
   REQUIRE(result.size() == 1);
   verifyChain(result.firstChain(), 2, 10,10, 30,10);
@@ -89,7 +89,7 @@ TEST_CASE("boundary/vertical lineboundary/", "scan the boundary of a vertical li
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(10, 10), Neighbourhood::W, true);
+  bitmap.scanBoundary(marks, 1, result, IPoint(10, 10), Neighbourhood::W, true);
   result.simplify(0.5);
   REQUIRE(result.size() == 1);
   verifyChain(result.firstChain(), 2, 10,10, 10, 30);
@@ -104,7 +104,7 @@ TEST_CASE("boundary/diagonal line", "scan the boundary of a diagonal line")
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(10, 10), Neighbourhood::W, true);
+  bitmap.scanBoundary(marks, 1, result, IPoint(10, 10), Neighbourhood::W, true);
   result.simplify(0.5);
   REQUIRE(result.size() == 1);
   verifyChain(result.firstChain(), 2, 10,10, 30, 30);
@@ -119,7 +119,7 @@ TEST_CASE("boundary/diagonal line, middle start", "scan the boundary of a diagon
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(20, 20), Neighbourhood::W, false);
+  bitmap.scanBoundary(marks, 1, result, IPoint(20, 20), Neighbourhood::W, false);
   result.simplify(0.5);
   REQUIRE(result.size() == 1);
   verifyChain(result.firstChain(), 2, 30,30, 10, 10);
@@ -135,7 +135,7 @@ TEST_CASE("boundary/inverted V", "scan the boundary of an inverted V")
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(20, 10), Neighbourhood::W, false);
+  bitmap.scanBoundary(marks, 1, result, IPoint(20, 10), Neighbourhood::W, false);
   result.simplify(0.5);
   REQUIRE(result.size() == 1);
   verifyChain(result.firstChain(), 3, 10,20, 20,10, 30,20);
@@ -152,7 +152,7 @@ TEST_CASE("boundary/slanted F", "scan the boundary of a slanted F")
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
-  bitmap.scanBoundary(marks, 1, result, Point(20, 10), Neighbourhood::W, false);
+  bitmap.scanBoundary(marks, 1, result, IPoint(20, 10), Neighbourhood::W, false);
   result.simplify(0.5);
   REQUIRE(result.size() == 2);
 

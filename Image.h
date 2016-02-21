@@ -177,16 +177,16 @@ public:
     }
   }
 
-  Pixel &at(const Point &p) {
+  Pixel &at(const IPoint &p) {
     return at(p.y(), p.x());
   }
-  const Pixel &at(const Point &p) const {
+  const Pixel &at(const IPoint &p) const {
     return at(p.y(), p.x());
   }
-  const Pixel get(const Point &p) {
+  const Pixel get(const IPoint &p) {
     return get(p.y(), p.x());
   }
-  const Pixel get(const Point &p) const {
+  const Pixel get(const IPoint &p) const {
     return get(p.y(), p.x());
   }
   
@@ -219,21 +219,21 @@ public:
     }
   }
 
-  void set(const Point &p, const Pixel &value) {
+  void set(const IPoint &p, const Pixel &value) {
     set(p.y(), p.x(), value);
   }
   
   struct Get {
     const Image &image_;
     Get(const Image &image) : image_(image)  { }
-    Pixel operator()(const Point &p) const { return image_.get(p); }
+    Pixel operator()(const IPoint &p) const { return image_.get(p); }
     Pixel operator()(const int y, const int x) const { return image_.get(y, x); }
   };
   
   struct At {
     const Image &image_;
     At(const Image &image) : image_(image)  { }
-    Pixel operator()(const Point &p) const { return image_.at(p); }
+    Pixel operator()(const IPoint &p) const { return image_.at(p); }
     Pixel operator()(const int y, const int x) const { return image_.at(y, x); }
   };
   
@@ -241,7 +241,7 @@ public:
     Image &image_;
     const Pixel &value_;
     Set(Image &image, const Pixel &value) : image_(image), value_(value) { }
-    void operator()(const Point &p) const { image_.set(p, value_); }
+    void operator()(const IPoint &p) const { image_.set(p, value_); }
     void operator()(const int y, const int x) const { return image_.set(y, x, value_); }
   };
   
@@ -261,14 +261,14 @@ public:
   struct GetXY {
     const Image &image_;
     GetXY(const Image &image) : image_(image)  { }
-    Pixel operator()(const Point &p) const { return image_.get(p); }
+    Pixel operator()(const IPoint &p) const { return image_.get(p); }
     Pixel operator()(const int x, const int y) const { return image_.get(y, x); }
   };
   
   struct AtXY {
     const Image &image_;
     AtXY(const Image &image) : image_(image)  { }
-    Pixel operator()(const Point &p) const { return image_.at(p); }
+    Pixel operator()(const IPoint &p) const { return image_.at(p); }
     Pixel operator()(const int x, const int y) const { return image_.at(y, x); }
   };
   
@@ -276,7 +276,7 @@ public:
     Image &image_;
     const Pixel &value_;
     SetXY(Image &image, const Pixel &value) : image_(image), value_(value) { }
-    void operator()(const Point &p) const { image_.set(p, value_); }
+    void operator()(const IPoint &p) const { image_.set(p, value_); }
     void operator()(const int x, const int y) const { return image_.set(y, x, value_); }
   };
   
@@ -349,13 +349,13 @@ public:
     }
   }
   
-  template <typename I> void set(const Point &p, const Pixel &value, I i, const I &iEnd) {
+  template <typename I> void set(const IPoint &p, const Pixel &value, I i, const I &iEnd) {
     for (; i != iEnd; ++i) {
       set(p + *i, value);
     }
   }
   
-  template <typename T> void set(const Point &p, const Pixel &value, const T &t) {
+  template <typename T> void set(const IPoint &p, const Pixel &value, const T &t) {
     set(p, value, t.points());
   }
   
@@ -366,28 +366,28 @@ public:
     Set set(*this, value);
     for (Chains::const_iterator i = chains.begin(); i != chains.end(); ++i) {
       Chain::const_iterator c = i->begin();
-      Point p = *c;
-      Matrix matrix(Matrix::identity());
+      IPoint p = *c;
+      IMatrix matrix(IMatrix::identity());
       drawAll(set, p, initial, matrix);
       for (++c; c != i->end(); ++c) {
-        matrix = Matrix::translate(c->x(), c->y());
+        matrix = IMatrix::translate(c->x(), c->y());
         int dx = c->x() - p.x();
         int dy = c->y() - p.y();
         if (dx < 0) {
-          matrix = matrix.concat(Matrix::flipX());
+          matrix = matrix.concat(IMatrix::flipX());
         } else if (dx == 0) {
-          matrix = matrix.concat(Matrix::rotateLeft());
+          matrix = matrix.concat(IMatrix::rotateLeft());
         }
         if (dy < 0) {
-          matrix = matrix.concat(Matrix::flipY());
+          matrix = matrix.concat(IMatrix::flipY());
         }
         
         p = *c;
         
         if (dx != 0 && dy != 0) {
-          drawAll(set, Point(0, 0), deltaXY, matrix);          
+          drawAll(set, IPoint(0, 0), deltaXY, matrix);          
         } else {
-          drawAll(set, Point(0, 0), deltaX, matrix);          
+          drawAll(set, IPoint(0, 0), deltaX, matrix);          
         }
       }
     }
@@ -396,7 +396,7 @@ public:
   void draw(const Chains &chains, const Pixel &value, int r) {
     int extents[r];
     Circle::makeExtents(r, extents);
-    list<Point> deltaX, deltaXY, initial;
+    list<IPoint> deltaX, deltaXY, initial;
     Circle::makePoints(r, extents, back_inserter(initial));
     Circle::makeHorizontalDelta(r, extents, back_inserter(deltaX));
     Circle::makeDiagonalDelta(r, extents, back_inserter(deltaXY));
@@ -420,7 +420,7 @@ public:
     }
   }
   
-  void line(const Point &p0, const Point &p1, const Pixel &value) {
+  void line(const IPoint &p0, const IPoint &p1, const Pixel &value) {
     Primitives::line(p0.x(), p0.y(), p1.x(), p1.y(), setXY(value));
   }
 
@@ -428,7 +428,7 @@ public:
     Primitives::line(x0, y0, x1, y1, setXY(value));
   }
 
-  void line(const Point &p0, const Point &p1, const Pixel &value, const Circle &circle) {
+  void line(const IPoint &p0, const IPoint &p1, const Pixel &value, const Circle &circle) {
     Primitives::line(p0.x(), p0.y(), p1.x(), p1.y(), setXY(value), circle);
   }
   

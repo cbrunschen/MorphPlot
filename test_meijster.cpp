@@ -60,9 +60,9 @@ public:
 };
 
 class PPI {
-	shared_ptr< Image<Point> > g_;
+	shared_ptr< Image<IPoint> > g_;
 public:
-	PPI(shared_ptr< Image<Point> > g) : g_(g) { }
+	PPI(shared_ptr< Image<IPoint> > g) : g_(g) { }
 	void print(ostream &out) const {
     for (int y = 0; y < g_->height(); y++) {
       for (int x = 0; x < g_->width(); x++) {
@@ -168,9 +168,9 @@ int main(int argc, char **argv) {
   
     int extents[r];
     Circle::makeExtents(r, extents);
-    const list<Point> &deltaX = circle.getHorizontalDelta();
-    const list<Point> &deltaXY = circle.getDiagonalDelta();
-    const list<Point> &initial = circle.points();
+    const list<IPoint> &deltaX = circle.getHorizontalDelta();
+    const list<IPoint> &deltaXY = circle.getDiagonalDelta();
+    const list<IPoint> &initial = circle.points();
     
     int x0 = (W-1) * frand();
     int x1 = (W-1) * frand();
@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
 #endif
 
 #if 0
-  shared_ptr< Image<Point> > ft = large->featureTransform(true, 8);
+  shared_ptr< Image<IPoint> > ft = large->featureTransform(true, 8);
   
   for (int y = 0; y < H; y++) {
     for (int x = 0; x < W; x++) {
@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
   int N = 1;
   
   shared_ptr< Image<cl_short2> > oclResult;
-  shared_ptr< Image<Point> > cpuResult;
+  shared_ptr< Image<IPoint> > cpuResult;
 
   cerr << "starting measurements" << endl << flush;
   double t0 = now();

@@ -194,8 +194,8 @@ public:
     marks.clear();
     adjacent->scanBoundaries(adjacents, marks, false);
 
-    set<Point> adjacentCircleCenters;
-    unordered_map<Chain*, set<Point> > circleCentersByChain;
+    set<IPoint> adjacentCircleCenters;
+    unordered_map<Chain*, set<IPoint> > circleCentersByChain;
 
     D((*out_) << "    . adjacent pixel chains:" << endl);
     for (vector<Boundary>::iterator b = adjacents.begin();
@@ -203,7 +203,7 @@ public:
          ++b) {
       for (Boundary::iterator c = b->begin(); c != b->end(); ++c) {
         Chain &chain = *c;
-        set<Point> &current = circleCentersByChain[&chain];
+        set<IPoint> &current = circleCentersByChain[&chain];
         penCircle.findFilteredOffsets(c->begin(), c->end(), alreadyCovered->get(),
                                       inserter(current, current.begin()));
         copy(current.begin(), current.end(),
@@ -213,7 +213,7 @@ public:
 
     Bitmap::Set setRemaining = remaining->set(true);
     D((*out_) << "- adding adjacent circles with centers: " << adjacentCircleCenters << endl);
-    for (set<Point>::iterator pi = adjacentCircleCenters.begin();
+    for (set<IPoint>::iterator pi = adjacentCircleCenters.begin();
          pi != adjacentCircleCenters.end();
          ++pi) {
       penCircle.setAt(*pi, setRemaining);
@@ -240,22 +240,22 @@ public:
       remainingOpened->writePng(stepper_->makeName("thinned.png"));
     }
 
-    map<Point, Point> linesToDraw;
-    set<Point> pointsToDraw;
+    map<IPoint, IPoint> linesToDraw;
+    set<IPoint> pointsToDraw;
     (*out_) << "  - finding lines to draw from adjacent thinned points to circle centers" << endl;
-    for (unordered_map<Chain*, set<Point> >::iterator pairIter = circleCentersByChain.begin();
+    for (unordered_map<Chain*, set<IPoint> >::iterator pairIter = circleCentersByChain.begin();
          pairIter != circleCentersByChain.end();
          ++pairIter) {
-      Point a(-1, -1), b(-1, -1);
+      IPoint a(-1, -1), b(-1, -1);
       int minD2 = numeric_limits<int>::max();
-      set<Point> &centres = pairIter->second;
+      set<IPoint> &centres = pairIter->second;
       Chain *chain = pairIter->first;
-      list<Point> thickened;
+      list<IPoint> thickened;
       Chain::iterator i = chain->begin();
-      Point g = *i;
+      IPoint g = *i;
       thickened.push_back(*i++);
       for (; i != chain->end(); ++i) {
-        const Point &h = *i;
+        const IPoint &h = *i;
         int d = g.directionTo(h);
         if ((d % 2) == 0) {
           // diagonal; add the two fill-in points
@@ -265,12 +265,12 @@ public:
         thickened.push_back(h);
         g = h;
       }
-      for (list<Point>::iterator i = thickened.begin(); i != thickened.end(); ++i) {
-        const Point &p = *i;
+      for (list<IPoint>::iterator i = thickened.begin(); i != thickened.end(); ++i) {
+        const IPoint &p = *i;
         if (remainingOpened->at(p)) {
           pointsToDraw.insert(p);
-          for (set<Point>::iterator j = centres.begin(); j != centres.end(); ++j) {
-            const Point &q = *j;
+          for (set<IPoint>::iterator j = centres.begin(); j != centres.end(); ++j) {
+            const IPoint &q = *j;
             int dx = q.x() - p.x();
             int dy = q.y() - p.y();
             int d2 = dx * dx + dy * dy;
@@ -289,7 +289,7 @@ public:
 
     Bitmap::Set unsetRemainingInset = remainingOpened->set(false);
     D((*out_) << "- removing adjacent circles with centers: " << adjacentCircleCenters << endl);
-    for (set<Point>::iterator pi = adjacentCircleCenters.begin();
+    for (set<IPoint>::iterator pi = adjacentCircleCenters.begin();
          pi != adjacentCircleCenters.end();
          ++pi) {
       penCircle.setAt(*pi, unsetRemainingInset);
@@ -301,14 +301,14 @@ public:
     }
 
     (*out_) << "  - drawing lines from adjacent thinned points to circle centers" << endl;
-    for (map<Point, Point>::iterator pairIter = linesToDraw.begin();
+    for (map<IPoint, IPoint>::iterator pairIter = linesToDraw.begin();
          pairIter != linesToDraw.end();
          ++pairIter) {
-      const Point &p = pairIter->first;
-      const Point &q = pairIter->second;
+      const IPoint &p = pairIter->first;
+      const IPoint &q = pairIter->second;
       line(p.y(), p.x(), q.y(), q.x(), remainingOpened->set(true));
     }
-    for (set<Point>::iterator pointIter = pointsToDraw.begin();
+    for (set<IPoint>::iterator pointIter = pointsToDraw.begin();
          pointIter != pointsToDraw.end();
          ++pointIter) {
       remainingOpened->set(*pointIter, true);
@@ -456,7 +456,7 @@ public:
           for (Boundary::iterator i = b->begin(); i != b->end(); ++i) {
             Chain *currentChain = NULL;
             for (Chain::iterator j = i->begin(); j != i->end(); ++j) {
-              const Point &p = *j;
+              const IPoint &p = *j;
               if (ditheredOnly->at(p)) {
                 if (currentChain == NULL) {
                   currentChain = &(dithered.addChain());

@@ -44,9 +44,9 @@ static void verifyLine(int x0, int y0, int x1, int y1) {
   REQUIRE(ci->x() == x0);
   REQUIRE(ci->y() == y0);
 
-  Point p(x0, y0);
+  IPoint p(x0, y0);
   for (++ci; ci != collector.chain_.end(); ++ci) {
-    Point q(ci->x(), ci->y());
+    IPoint q(ci->x(), ci->y());
     REQUIRE(q.isNeighbour(p));
     p = q;
   }
@@ -89,9 +89,9 @@ TEST_CASE("line/thick", "thick line")
   
   int extents[R];
   Circle::makeExtents(R, extents);
-  const list<Point> &deltaX = circle.getHorizontalDelta();
-  const list<Point> &deltaXY = circle.getDiagonalDelta();
-  const list<Point> &initial = circle.points();
+  const list<IPoint> &deltaX = circle.getHorizontalDelta();
+  const list<IPoint> &deltaXY = circle.getDiagonalDelta();
+  const list<IPoint> &initial = circle.points();
     
   int step = 5;
   int nSteps = 3;

@@ -66,7 +66,7 @@ ostream &strokeChains(ostream &out, Chains chains) {
 
 ostream &strokeBetween(ostream &out, Chains chains) {
   Chains::iterator j = chains.begin();
-  Point &prev = j->back();
+  IPoint &prev = j->back();
   for (++j;
        j != chains.end();
        ++j) {

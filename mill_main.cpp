@@ -56,7 +56,7 @@ void verifyChains(Chains &chains) {
   for (Chains::iterator hc = chains.begin(); hc != chains.end(); ++hc) {
     if (hc->size() > 1) {
       Chain::iterator j = hc->begin();
-      Point p = *j;
+      IPoint p = *j;
       for (++j; j != hc->end(); ++j) {
         if (!p.isNeighbour(*j)) {
           cerr << "not neighbours: " << p << " <-> " << *j << endl;
@@ -370,23 +370,23 @@ int main(int argc, char * const argv[]) {
   
   int defaultOffset = 1 + tool.r();
   
-  Matrix transform = Matrix::translate(-defaultOffset, -defaultOffset);
+  IMatrix transform = IMatrix::translate(-defaultOffset, -defaultOffset);
   
   cerr << "initial transform: " << transform << endl << flush;
 
   cerr << "offsetX = " << offsetX << ", offsetY = " << offsetY << endl << flush;
   if (offsetX != 0 || offsetY != 0) {
-    transform = transform.concat(Matrix::translate(offsetX, offsetY));
+    transform = transform.concat(IMatrix::translate(offsetX, offsetY));
   }
   cerr << "after offset: " << transform << endl << flush;  
 
   cerr << "rotation = " << rotation << endl << flush;
   if (rotation == Left) {
-    transform = transform.concat(Matrix::pageLeft(heightMap->width(), heightMap->height()));
+    transform = transform.concat(IMatrix::pageLeft(heightMap->width(), heightMap->height()));
   } else if (rotation == Right) {
-    transform = transform.concat(Matrix::pageRight(heightMap->width(), heightMap->height()));
+    transform = transform.concat(IMatrix::pageRight(heightMap->width(), heightMap->height()));
   } else if (rotation == UpsideDown) {
-    transform = transform.concat(Matrix::pageUpsideDown(heightMap->width(), heightMap->height()));
+    transform = transform.concat(IMatrix::pageUpsideDown(heightMap->width(), heightMap->height()));
   }
   cerr << "after rotation: " << transform << endl << flush;
 
@@ -394,7 +394,7 @@ int main(int argc, char * const argv[]) {
   int minX = numeric_limits<int>::max(), minY = numeric_limits<int>::max();
   for (int x = 0; x < heightMap->width(); x += heightMap->width()-1) {
     for (int y = 0; y < heightMap->height(); y += heightMap->height()-1) {
-      Point p(x, y);
+      IPoint p(x, y);
       p.transform(transform);
       minX = min(p.x(), minX);
       maxX = max(p.x(), maxX);
@@ -407,7 +407,7 @@ int main(int argc, char * const argv[]) {
   
   // Finally, adjust for the top-to-bottom Y of our bitmaps
   // vs the bottom-to-top Y of our output devices
-  Matrix adjustment(1, 0, 0, -1, 0, heightMap->height());
+  IMatrix adjustment(1, 0, 0, -1, 0, heightMap->height());
   transform = transform.concat(adjustment);  
   cerr << "after adjustment: " << transform << endl << flush;
 
@@ -428,7 +428,7 @@ int main(int argc, char * const argv[]) {
     
     tool.setZDown(z - maxZ);
     
-    if (transform != Matrix::identity()) {
+    if (transform != IMatrix::identity()) {
       cerr << "- applying transform " << transform << endl << flush;
       outline.transform(transform);
       fill.transform(transform);

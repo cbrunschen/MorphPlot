@@ -134,9 +134,9 @@ inline shared_ptr<Bitmap> GreyImage<C>::where(Op &op, C value) const {
 }
 
 template<typename C>
-inline double GreyImage<C>::sumOfValues(const Point &p0, const list<Point> &points) const {
+inline double GreyImage<C>::sumOfValues(const IPoint &p0, const list<IPoint> &points) const {
   double value = 0.0;
-  for (list<Point>::const_iterator cp = points.begin(); cp != points.end(); ++cp) {
+  for (list<IPoint>::const_iterator cp = points.begin(); cp != points.end(); ++cp) {
     value += Component<C>::fraction(GreyImage::get(p0 + *cp));
   }
   return value;
@@ -170,7 +170,7 @@ inline double GreyImage<C>::dither(Chains &results, const Chain &chain, const Ci
 
   for (Chain::const_iterator j = i++; i != chain.end(); j = i++) {
     int dir = i->directionTo(*j);
-    const list<Point> &delta = circle.getDeltaForDirection(dir);
+    const list<IPoint> &delta = circle.getDeltaForDirection(dir);
     double value = sumOfValues(*i, delta);
     error += value;
 

@@ -38,15 +38,15 @@ namespace Chaining {
 
 using namespace Primitives;
 
-class Chain : public list<Point> {
+class Chain : public list<IPoint> {
 public:
   struct PointAdder {
     Chain &chain_;
     PointAdder(Chain &chain) : chain_(chain) { }
     void operator()(int x, int y) {
-      chain_.push_back(Point(x, y));
+      chain_.push_back(IPoint(x, y));
     }
-    void operator()(const Point &p) const {
+    void operator()(const IPoint &p) const {
       chain_.push_back(p);
     }
   };
@@ -56,16 +56,16 @@ public:
   }
 
   void addPoint(int x, int y) {
-    push_back(Point(x, y));
+    push_back(IPoint(x, y));
   }
 
-  void addPoint(const Point &p) {
+  void addPoint(const IPoint &p) {
     push_back(p);
   }
 
   void simplify(const iterator &first, const iterator &last, double tolerance) {
-    const Point &p0 = *first;
-    const Point &p1 = *last;
+    const IPoint &p0 = *first;
+    const IPoint &p1 = *last;
     D(cerr << "Simplifying from " << p0 << " to " << p1 << endl);
     long dx = p1.x() - p0.x();
     long dy = p1.y() - p0.y();
@@ -76,7 +76,7 @@ public:
     iterator maxPointIter = first;
     iterator second = first; ++second;
     for (iterator iter = second; iter != last; ++iter) {
-      const Point &p = *iter;
+      const IPoint &p = *iter;
       long area = p.y() * dx - p.x() * dy + dxyyx;
 
       D(cerr << "@ " << p << ", area = " << area << endl);
@@ -103,11 +103,11 @@ public:
         iterator iter = begin();
         iterator last = end();
         --last;
-        const Point &p0 = *iter;
+        const IPoint &p0 = *iter;
         long maxSquareDistance = 0;
         iterator maxPointIter = iter;
         for (++iter; iter != last; ++iter) {
-          const Point &p = *iter;
+          const IPoint &p = *iter;
           long dx = p.x() - p0.x();
           long dy = p.y() - p0.y();
           long squareDistance = dx*dx + dy*dy;
@@ -132,19 +132,19 @@ public:
     }
   }
 
-  void transform(const Matrix &m) {
+  void transform(const IMatrix &m) {
     for (iterator i = begin(); i != end(); ++i) {
       i->transform(m);
     }
   }
 
-  template<typename D> void transform(const Matrix &m, D d) {
+  template<typename D> void transform(const IMatrix &m, D d) {
     for (iterator i = begin(); i != end(); ++i) {
       *d++ = i->transformed(m);
     }
   }
 
-  Chain transformed(const Matrix &m) const {
+  Chain transformed(const IMatrix &m) const {
     Chain result;
     for (const_iterator i = begin(); i != end(); ++i) {
       result.push_back(i->transformed(m));
@@ -160,10 +160,10 @@ public:
         return back().distance(next.front());
       } else {
         // one point vs a line segment
-        const Point &p = back();
+        const IPoint &p = back();
         Chain::const_iterator i = next.begin();
-        const Point &q0 = *i++;
-        const Point &q1 = *i;
+        const IPoint &q0 = *i++;
+        const IPoint &q1 = *i;
         // cerr << " ++ checking distance from " << p << " to [" << q0 << "->" << q1 << "]" << endl;
         return p.distance(q0, q1);
       }
@@ -171,19 +171,19 @@ public:
       if (next.size() == 1) {
         // a line segment vs one point
         Chain::const_reverse_iterator i = rbegin();
-        const Point &p0 = *i++;
-        const Point &p1 = *i;
-        const Point &q = next.front();
+        const IPoint &p0 = *i++;
+        const IPoint &p1 = *i;
+        const IPoint &q = next.front();
         // cerr << " ++ checking distance from [" << p0 << "->" << p1 << "] to " << q << endl;
         return q.distance(p0, p1);
       } else {
         // two line segments
         Chain::const_reverse_iterator i = rbegin();
-        const Point &p0 = *i++;
-        const Point &p1 = *i;
+        const IPoint &p0 = *i++;
+        const IPoint &p1 = *i;
         Chain::const_iterator j = next.begin();
-        const Point &q0 = *j++;
-        const Point &q1 = *j;
+        const IPoint &q0 = *j++;
+        const IPoint &q1 = *j;
         // cerr << " ++ checking distance from [" << p0 << "->" << p1 << "] to [" << q0 << "->" << q1 << "]" << endl;
         return min(p0.distance(q0, q1), q0.distance(p0, p1));
       }
@@ -248,8 +248,8 @@ public:
       double d = a->minDistance(*b);
       if (d <= maxDistance) {
         // cerr << " ** distance " << d << " < " << maxDistance << ";" << endl;
-        const Point &p = a->back();
-        const Point &q = b->front();
+        const IPoint &p = a->back();
+        const IPoint &q = b->front();
         Chain connectingLine;
         Chain::PointAdder adder = connectingLine.pointAdder();
         line(p.x(), p.y(), q.x(), q.y(), adder);
@@ -270,13 +270,13 @@ public:
     }
   }
 
-  void transform(const Matrix &m) {
+  void transform(const IMatrix &m) {
     for (iterator iter = begin(); iter != end(); ++iter) {
       iter->transform(m);
     }
   }
 
-  Chains transformed(const Matrix &m) const {
+  Chains transformed(const IMatrix &m) const {
     Chains result;
     for (const_iterator i = begin(); i != end(); ++i) {
       result.push_back(i->transformed(m));
@@ -299,8 +299,8 @@ public:
   }
   void close(bool connect = false) {
     if (size() == 1) {
-      const Point &p = front().front();
-      const Point &q = back().back();
+      const IPoint &p = front().front();
+      const IPoint &q = back().back();
       if (connect && p.isNeighbour(q)) {
         back().push_back(p);
       }

@@ -115,9 +115,9 @@ TEST_CASE("distanceTransform/threads", "verify that single- and multi-threaded g
     
     int extents[r];
     Circle::makeExtents(r, extents);
-    const list<Point> &deltaX = circle.getHorizontalDelta();
-    const list<Point> &deltaXY = circle.getDiagonalDelta();
-    const list<Point> &initial = circle.points();
+    const list<IPoint> &deltaX = circle.getHorizontalDelta();
+    const list<IPoint> &deltaXY = circle.getDiagonalDelta();
+    const list<IPoint> &initial = circle.points();
     
     int x0 = (W-1) * frand();
     int x1 = (W-1) * frand();
@@ -152,9 +152,9 @@ TEST_CASE("distanceTransform/workers", "verify that single- and multi-threaded g
     
     int extents[r];
     Circle::makeExtents(r, extents);
-    const list<Point> &deltaX = circle.getHorizontalDelta();
-    const list<Point> &deltaXY = circle.getDiagonalDelta();
-    const list<Point> &initial = circle.points();
+    const list<IPoint> &deltaX = circle.getHorizontalDelta();
+    const list<IPoint> &deltaXY = circle.getDiagonalDelta();
+    const list<IPoint> &initial = circle.points();
     
     int x0 = (W-1) * frand();
     int x1 = (W-1) * frand();

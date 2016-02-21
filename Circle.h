@@ -20,18 +20,18 @@ namespace Primitives {
 using namespace std;
 
 class Circle {
-  static list<Point> noPoints_;
+  static list<IPoint> noPoints_;
 
   int r_;
   int area_;
   int *extents_;
-  mutable list<Point> *points_;
+  mutable list<IPoint> *points_;
   mutable vector<int> *directionsCw_;
   mutable vector<int> *directionsCcw_;
-  mutable vector<Point> *offsetsCw_;
-  mutable vector<Point> *offsetsCcw_;
+  mutable vector<IPoint> *offsetsCw_;
+  mutable vector<IPoint> *offsetsCcw_;
   
-  typedef unordered_map<int, list<Point> > Deltas;
+  typedef unordered_map<int, list<IPoint> > Deltas;
   mutable Deltas deltas_;
 
 public:
@@ -40,21 +40,21 @@ public:
   template<typename I>
   static void makePoints(int r, int extents[], I i) {
     // centre point
-    *i++ = Point(0, 0);
+    *i++ = IPoint(0, 0);
     // central cross
     for (int t = 1; t <= r; t++) {
-      *i++ = Point(0, t);
-      *i++ = Point(0, -t);
-      *i++ = Point(t, 0);
-      *i++ = Point(-t, 0);
+      *i++ = IPoint(0, t);
+      *i++ = IPoint(0, -t);
+      *i++ = IPoint(t, 0);
+      *i++ = IPoint(-t, 0);
     }
     // quadrants
     for (int t = 1; t <= r; t++) {
       for (int u = 1; u <= extents[t-1]; u++) {
-        *i++ = Point(t, u);
-        *i++ = Point(-t, u);
-        *i++ = Point(t, -u);
-        *i++ = Point(-t, -u);
+        *i++ = IPoint(t, u);
+        *i++ = IPoint(-t, u);
+        *i++ = IPoint(t, -u);
+        *i++ = IPoint(-t, -u);
       }
     }
   }
@@ -67,13 +67,13 @@ public:
   }
     
   template<typename I>
-  static void makeNeighbourhoodDelta(int r, int extents[], I i, const list<Point>& circlePoints, int neighbours) {
+  static void makeNeighbourhoodDelta(int r, int extents[], I i, const list<IPoint>& circlePoints, int neighbours) {
     // cerr << "making delta for neighbourhood " << PH<int>(neighbours) << ": ";
-    unordered_set<Point> result;
+    unordered_set<IPoint> result;
     copy(circlePoints.begin(), circlePoints.end(), inserter(result, result.begin()));
     
     // cerr << "points without neighbours: ";
-    // for (unordered_set<Point>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
+    // for (unordered_set<IPoint>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
     //   cerr << *ii << ", ";
     // cerr << ";" << endl;
     
@@ -82,14 +82,14 @@ public:
         // cerr << "removing direction " << j << ": ";
         int dx = xOffsets[j];
         int dy = yOffsets[j];
-        for (list<Point>::const_iterator p = circlePoints.begin();
+        for (list<IPoint>::const_iterator p = circlePoints.begin();
              p != circlePoints.end();
              ++p) {
           result.erase(p->offset(dx, dy));
         }
         
         // cerr << "remaining: ";
-        // for (unordered_set<Point>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
+        // for (unordered_set<IPoint>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
         //   cerr << *ii << ", ";
         // cerr << ";" << endl;
       }
@@ -126,18 +126,18 @@ public:
     return extents_;
   }
   
-  const list<Point> &points() const {
+  const list<IPoint> &points() const {
     if (!points_) {
-      points_ = new list<Point>;
+      points_ = new list<IPoint>;
       makePoints(r_, extents_, back_inserter(*points_));
     }
     return *points_;
   }
   
-  const list<Point> &getDelta(int neighbours) const {
+  const list<IPoint> &getDelta(int neighbours) const {
     Deltas::iterator i = deltas_.find(neighbours);
     if (i == deltas_.end()) {
-      list<Point> &delta = deltas_[neighbours];
+      list<IPoint> &delta = deltas_[neighbours];
       makeNeighbourhoodDelta(r_, extents_, back_inserter(delta), points(), neighbours);
       return delta;              
     } else {
@@ -145,20 +145,20 @@ public:
     }
   }
   
-  const list<Point> &getHorizontalDelta() const {
+  const list<IPoint> &getHorizontalDelta() const {
     return getDelta(1 << Neighbourhood::W);
   }
   
-  const list<Point> &getDiagonalDelta() const {
+  const list<IPoint> &getDiagonalDelta() const {
     return getDelta(1 << Neighbourhood::NW);
   }
   
-  const list<Point> &getDeltaForDirection(int dir) const {
+  const list<IPoint> &getDeltaForDirection(int dir) const {
     if (dir < 0 || DIRECTIONS <= dir) return noPoints_;
     return getDelta(1 << dir);
   }
   
-  template<typename I, typename J> static void makeOffsets(I i, Point p, J j, const J &jEnd) {
+  template<typename I, typename J> static void makeOffsets(I i, IPoint p, J j, const J &jEnd) {
     *i++ = p;
     while (j != jEnd) {
       p = p.neighbour(*j++);
@@ -286,11 +286,11 @@ public:
         D(cerr << endl);
       }
       
-      offsetsCw_ = new vector<Point>(directionsCw.size() + 1);
-      makeOffsets(offsetsCw_->begin(), Point(r_, 0), directionsCw.begin(), directionsCw.end());
+      offsetsCw_ = new vector<IPoint>(directionsCw.size() + 1);
+      makeOffsets(offsetsCw_->begin(), IPoint(r_, 0), directionsCw.begin(), directionsCw.end());
       
-      offsetsCcw_ = new vector<Point>(directionsCw.size() + 1);
-      makeOffsets(offsetsCcw_->begin(), Point(r_, 0), directionsCcw.begin(), directionsCcw.end());
+      offsetsCcw_ = new vector<IPoint>(directionsCw.size() + 1);
+      makeOffsets(offsetsCcw_->begin(), IPoint(r_, 0), directionsCcw.begin(), directionsCcw.end());
       
 #if DEBUG
       cerr << "CW Directions: " << directionsCw << endl;
@@ -321,9 +321,9 @@ public:
   template<typename I, typename J> static void makeDirections(J j, const J &jEnd, I i) {
     if (j == jEnd) return;
     
-    Point p = *j++;
+    IPoint p = *j++;
     while (j != jEnd) {
-      Point q = *j++;
+      IPoint q = *j++;
       *i++ = p.directionTo(q);
       p = q;
     }
@@ -358,9 +358,9 @@ public:
   
   template<typename Source, typename Result, typename Check> void filterOffsets(Source source, const Source &sourceEnd, Check &check, Result result) {
     for (; source != sourceEnd; ++source) {
-      Point p = *source;
+      IPoint p = *source;
       bool allOk = true;
-      for (list<Point>::const_iterator q = points().begin(); allOk && q != points().end(); ++q) {
+      for (list<IPoint>::const_iterator q = points().begin(); allOk && q != points().end(); ++q) {
         allOk = check(p + *q);
       }
       if (allOk) {
@@ -369,9 +369,9 @@ public:
     }
   }
   
-  template<typename Result, typename Check> bool addFiltered(const Point &p, Check &check, Result &result) {
+  template<typename Result, typename Check> bool addFiltered(const IPoint &p, Check &check, Result &result) {
     bool allOk = true;
-    for (list<Point>::const_iterator q = points().begin(); allOk && q != points().end(); ++q) {
+    for (list<IPoint>::const_iterator q = points().begin(); allOk && q != points().end(); ++q) {
       allOk = check(p + *q);
     }
     if (allOk) {
@@ -381,7 +381,7 @@ public:
     return false;
   }
   
-  template<typename Dir, typename Result, typename Check> int _findFilteredOffsets(const vector<int> *directions, const vector<Point> *offsets, const Point &p, const Dir &dirStart, const Dir &dirEnd, Check &check, Result result) {
+  template<typename Dir, typename Result, typename Check> int _findFilteredOffsets(const vector<int> *directions, const vector<IPoint> *offsets, const IPoint &p, const Dir &dirStart, const Dir &dirEnd, Check &check, Result result) {
     int added = 0;
     for (int i = 0; i < offsets->size(); i++) {
       bool match = true;
@@ -396,7 +396,7 @@ public:
     return added;
   }
   
-  template<typename Dir, typename Result, typename Check> int _findFilteredOffsets(const Point &p, const Dir &dirStart, const Dir &dirEnd, Check &check, Result result) {
+  template<typename Dir, typename Result, typename Check> int _findFilteredOffsets(const IPoint &p, const Dir &dirStart, const Dir &dirEnd, Check &check, Result result) {
     return _findFilteredOffsets(directionsCw_, offsetsCw_, p, dirStart, dirEnd, check, result)
         + _findFilteredOffsets(directionsCcw_, offsetsCcw_, p, dirStart, dirEnd, check, result);
   }
@@ -420,8 +420,8 @@ public:
     return added;
   }
   
-  template<typename Set> void setAt(const Point &p, Set s) const {
-    for (list<Point>::const_iterator i = points().begin(); i != points().end(); ++i) {
+  template<typename Set> void setAt(const IPoint &p, Set s) const {
+    for (list<IPoint>::const_iterator i = points().begin(); i != points().end(); ++i) {
       s(p + *i);
     }
   }

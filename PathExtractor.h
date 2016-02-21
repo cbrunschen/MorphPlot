@@ -57,14 +57,14 @@ public:
   CanRetractWhenDeltaIsSetInReference(const Bitmap &thinInsetReference, const Circle &circle)
   : reference_(thinInsetReference), circle_(circle) { }
   
-  bool operator()(const Point &p, int neighbours) const {
-    const list<Point> &delta = circle_.getDelta(neighbours);
+  bool operator()(const IPoint &p, int neighbours) const {
+    const list<IPoint> &delta = circle_.getDelta(neighbours);
     
     bool result = true;
-    for (list<Point>::const_iterator i = delta.begin();
+    for (list<IPoint>::const_iterator i = delta.begin();
          result && i != delta.end();
          ++i) {
-      Point q(p + *i);
+      IPoint q(p + *i);
       result = reference_.get(q);
     }
     return result;

@@ -410,7 +410,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
 }
 
 template<bool background>
-inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point *result) const {
+inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, IPoint *result) const {
   int dominantColumn[width_ + 2];
   int dominanceStarts[width_ + 2];
   int dominantY[width_ + 2];
@@ -427,7 +427,7 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
   
   for (int y = y0; y < y1; y++) {
     int *yr = &ys[y * width_];
-    Point *dst = &result[y * width_];
+    IPoint *dst = &result[y * width_];
     if (background) {
       gr = &g[y * width_];
     } else {
@@ -462,7 +462,7 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
     
     // scan 4
     for (int u = width_ - 1; u >= 0; u--) {
-      dst[u] = Point(dominantColumn[q], dominantY[q]);
+      dst[u] = IPoint(dominantColumn[q], dominantY[q]);
       
       if (u == dominanceStarts[q]) {
         q--;
@@ -472,7 +472,7 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, Point
 }
 
 template<bool background>
-inline void Bitmap::featureTransform(int x0, int x1, int y0, int y1, int *g, int *ys, Point *result) const {
+inline void Bitmap::featureTransform(int x0, int x1, int y0, int y1, int *g, int *ys, IPoint *result) const {
   featureTransformPass1<background>(x0, x1, g, ys);
   featureTransformPass2<background>(g, ys, y0, y1, result);
 }
@@ -482,18 +482,18 @@ struct feature_transform_params {
   int x0, x1, y0, y1;
   int *g;
   int *ys;
-  Point *result;
+  IPoint *result;
   Workers::Barrier *barrier;
 };
 
 extern void feature_transform_thread_background(void *params);
 extern void feature_transform_thread_foreground(void *params);
 
-inline shared_ptr< Image<Point> > Bitmap::featureTransform(bool background, Workers &workers) const {
+inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, Workers &workers) const {
   int threads = workers.n();
   shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
   shared_ptr< GreyImage<int> > ys = GreyImage<int>::make(width_, height_, false);
-  shared_ptr< Image<Point> > result = Image<Point>::make(width_, height_, false);
+  shared_ptr< Image<IPoint> > result = Image<IPoint>::make(width_, height_, false);
   feature_transform_params *ft_params = new feature_transform_params[threads];
   Workers::Barrier barrier;
   
@@ -522,14 +522,14 @@ inline shared_ptr< Image<Point> > Bitmap::featureTransform(bool background, Work
   return result;
 }
 
-inline shared_ptr< Image<Point> > Bitmap::featureTransform(bool background, int threads) const {
+inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, int threads) const {
   if (threads > 1) {
     Workers workers(threads);
     return featureTransform(background, workers);
   } else {
     shared_ptr< GreyImage<int> > g = GreyImage<int>::make(width_, height_, false);
     shared_ptr< GreyImage<int> > ys = GreyImage<int>::make(width_, height_, false);
-    shared_ptr< Image<Point> > result = Image<Point>::make(width_, height_, false);
+    shared_ptr< Image<IPoint> > result = Image<IPoint>::make(width_, height_, false);
     if (background) {
       featureTransformPass1<true>(0, width_, g->data(), ys->data());
       featureTransformPass2<true>(g->data(), ys->data(), 0, height_, result->data());
@@ -909,7 +909,7 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
   
   for (int y = y0; y != y1; y += dy) {
     for (int x = x0; x != x1; x += dx) {
-      Point p(x, y);
+      IPoint p(x, y);
       D(cerr << "(" << y << "," << x << "): ");
       if (at(y, x)) {
 #if DEBUG
@@ -1119,7 +1119,7 @@ inline int Bitmap::thin() {
 }
 
 inline void Bitmap::prune() {
-  list<Point> pruned;
+  list<IPoint> pruned;
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
       if (at(y, x)) {
@@ -1130,12 +1130,12 @@ inline void Bitmap::prune() {
           }
         }
         if (neighbours < 2) {
-          pruned.push_back(Point(x, y));
+          pruned.push_back(IPoint(x, y));
         }
       }
     }
   }
-  for (list<Point>::iterator i = pruned.begin(); i != pruned.end(); ++i) {
+  for (list<IPoint>::iterator i = pruned.begin(); i != pruned.end(); ++i) {
     at(*i) = false;
   }
 }
@@ -1149,7 +1149,7 @@ inline void Bitmap::prune(int n) {
 inline void Bitmap::clearThinConnected() {
   for (int y = 0; y < height(); ++y) {
     for (int x = 0; x < width(); ++x) {
-      Point p(x, y);
+      IPoint p(x, y);
       if (at(p) && thinConnected[neighbours(p)]) {
         set(p, false);
       }
@@ -1176,7 +1176,7 @@ inline shared_ptr<Bitmap> Bitmap::reconstruct(const Bitmap &reference) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
       if (at(y, x) && !result->at(y, x)) {
-        D(cerr << "*** flood-filling from " << Point(x, y) << endl);
+        D(cerr << "*** flood-filling from " << IPoint(x, y) << endl);
         Filling::fill8(y, x, height_, width_, isMarked, setResult);
       }
     }
@@ -1231,7 +1231,7 @@ inline Bitmap &Bitmap::operator-=(const Bitmap &other) {
 }
 
 // boundary scanning
-inline Direction Bitmap::nextDir(const Point &p, Direction dir, Turn delta) {
+inline Direction Bitmap::nextDir(const IPoint &p, Direction dir, Turn delta) {
   for (Direction d = turn(dir, delta);
        d != dir;
        d = turn(d, delta)) {
@@ -1245,24 +1245,24 @@ inline Direction Bitmap::nextDir(const Point &p, Direction dir, Turn delta) {
   return DIRECTIONS;
 }
 
-inline Direction Bitmap::nextDirCW(const Point &p, Direction dir) {
+inline Direction Bitmap::nextDirCW(const IPoint &p, Direction dir) {
   return nextDir(p, dir, CW);
 }
 
-inline Direction Bitmap::nextDirCCW(const Point &p, Direction dir) {
+inline Direction Bitmap::nextDirCCW(const IPoint &p, Direction dir) {
   return nextDir(p, dir, CCW);
 }
 
-inline void Bitmap::scanBoundary(Image<int> &marks, int mark, Boundary &boundary, const Point &start, Direction from, bool connect) {
+inline void Bitmap::scanBoundary(Image<int> &marks, int mark, Boundary &boundary, const IPoint &start, Direction from, bool connect) {
   Direction preDir = nextDirCCW(start, from);
-  Point preStart(start.neighbour(preDir));
+  IPoint preStart(start.neighbour(preDir));
   
   // we arrived here from |from|, outside; so that's a good starting direction, as well
   // as a good direction for the initial 'preceding' point, since we know that will
   // never accidentally match any other useful preceding point.
-  Point current(start);
-  Point preceding(current.neighbour(from));
-  Point prepreceding(preceding);
+  IPoint current(start);
+  IPoint preceding(current.neighbour(from));
+  IPoint prepreceding(preceding);
   Direction dir = opposite(from);
   while (!(current == start && preceding == preStart)) {
     if (marks.get(current) == 0) {
@@ -1309,7 +1309,7 @@ inline void Bitmap::scanBoundaries(vector<Boundary> &result, Image<int> &marks, 
   for (int y = 0; y < height(); y++) {
     int inside = 0;
     for (int x = 0; x < width(); x++) {
-      Point p(x, y);
+      IPoint p(x, y);
       if (at(p)) {
         int current = marks.at(p);
         if (current == 0) {
@@ -1359,7 +1359,7 @@ inline vector<Boundary> Bitmap::scanBoundaries(bool connect) {
   return result;
 }
 
-inline int Bitmap::neighbours(const Point &p) const {
+inline int Bitmap::neighbours(const IPoint &p) const {
   int n = 0;
   int mask = 1;
   for (int i = 0; i < DIRECTIONS; i++) {
@@ -1369,7 +1369,7 @@ inline int Bitmap::neighbours(const Point &p) const {
   return n;
 }
 
-inline int Bitmap::countNeighbours(const Point &p) const {
+inline int Bitmap::countNeighbours(const IPoint &p) const {
   int n = 0;
   for (int i = 0; i < DIRECTIONS; i++) {
     if (get(p.neighbour(i))) n++;
@@ -1393,11 +1393,11 @@ inline Chains Bitmap::hatch(double angle, double period, double phase, CanRetrac
 
 inline void Bitmap::retract(const Bitmap &reference, const Circle &circle) {
   // find all extreme points - those that have exactly a single neighbour
-  std::set<Point> setA, setB;
-  std::set<Point> *a = &setA, *b = &setB;
+  std::set<IPoint> setA, setB;
+  std::set<IPoint> *a = &setA, *b = &setB;
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      Point p(x, y);
+      IPoint p(x, y);
       if (at(p) && countNeighbours(p) == 1) {
         a->insert(p);
       }
@@ -1410,12 +1410,12 @@ inline void Bitmap::retract(const Bitmap &reference, const Circle &circle) {
     D(cerr << " Bitmap::retract: " << a->size() << " extreme points to retract in iteration " << iterations << endl);
     ++iterations;
     didRetract = 0;
-    for (std::set<Point>::iterator i = a->begin(); i != a->end(); ++i) {
+    for (std::set<IPoint>::iterator i = a->begin(); i != a->end(); ++i) {
       int n = neighbours(*i);
       bool canRetract = (n == 0) || isSingleConnected(n);
       if (canRetract) {
-        const list<Point> &delta = circle.getDelta(n);
-        for (list<Point>::const_iterator j = delta.begin();
+        const list<IPoint> &delta = circle.getDelta(n);
+        for (list<IPoint>::const_iterator j = delta.begin();
              canRetract && j != delta.end();
              ++j) {
           canRetract = !reference.get(*i + *j);
@@ -1425,7 +1425,7 @@ inline void Bitmap::retract(const Bitmap &reference, const Circle &circle) {
         didRetract++;
         set(*i, false);
         for (int d = NW; d < DIRECTIONS; d++) {
-          Point q(i->neighbour(d));
+          IPoint q(i->neighbour(d));
           if (get(q)) {
             int qn = neighbours(q);
             if (qn == 0 || isSingleConnected(qn)) {
@@ -1438,7 +1438,7 @@ inline void Bitmap::retract(const Bitmap &reference, const Circle &circle) {
       }
     }
     D(cerr << " Bitmap::retract: retracted " << didRetract << " points" << endl);
-    std::set<Point> *tmp = a;
+    std::set<IPoint> *tmp = a;
     a = b;
     b = tmp;
     b->clear();

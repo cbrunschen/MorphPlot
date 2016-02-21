@@ -91,7 +91,7 @@ public:
   shared_ptr<Bitmap> coverage(int threads) const;
   shared_ptr<Bitmap> coverage(Workers &workers) const;
 
-  double sumOfValues(const Point &p0, const list<Point> &points) const;
+  double sumOfValues(const IPoint &p0, const list<IPoint> &points) const;
 
   template <typename T>
   double dither(Chains &results, const Chain &chain, const Circle &circle, const T &reference, double error);

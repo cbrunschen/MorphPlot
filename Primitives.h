@@ -47,6 +47,8 @@ namespace Primitives {
 }
 #endif
 
+template<typename C, typename P> class PointHasher;
+
 template <typename T> inline void writeToFile(const char * filename, const T &t) {
   ofstream s(filename);
   s << t;
@@ -108,19 +110,21 @@ namespace Neighbourhood {
 
 using namespace Neighbourhood;
 
+template<typename C, typename M>
 class Matrix {
-  int a_, b_, c_, d_, tx_, ty_;
+  C a_, b_, c_, d_, tx_, ty_;
 
 public:
-  Matrix(int a = 1, int b = 0, int c = 0, int d = 1, int tx = 0, int ty = 0)
+  Matrix(C a = 1, C b = 0, C c = 0, C d = 1, C tx = 0, C ty = 0)
       : a_(a), b_(b), c_(c), d_(d), tx_(tx), ty_(ty) { }
-  const int a() const { return a_; }
-  const int b() const { return b_; }
-  const int c() const { return c_; }
-  const int d() const { return d_; }
-  const int tx() const { return tx_; }
-  const int ty() const { return ty_; }
-  bool operator==(const Matrix &m) const {
+  const C a() const { return a_; }
+  const C b() const { return b_; }
+  const C c() const { return c_; }
+  const C d() const { return d_; }
+  const C tx() const { return tx_; }
+  const C ty() const { return ty_; }
+  
+  bool operator==(const M &m) const {
     return a_ == m.a_
         && b_ == m.b_
         && c_ == m.c_
@@ -128,67 +132,105 @@ public:
         && tx_ == m.tx_
         && ty_ == m.ty_;
   }
-  bool operator!=(const Matrix &m) const {
+  bool operator!=(const M &m) const {
     return !operator==(m);
   }
   
-  void transform(int &outX, int &outY, const int &x, const int &y) const {
+  void transform(C &outX, C &outY, const C &x, const C &y) const {
+    outX = x * a_ + y * c_ + tx_;
+    outY = x * b_ + y * d_ + ty_;
+  }
+
+  M concat(const M &m) const {
+    return IMatrix(m.a() * a() + m.b() * c(), m.a() * b() + m.b() * d(),
+                  m.c() * a() + m.d() * c(), m.c() * b() + m.d() * d(),
+                  m.tx() * a() + m.ty() * c() + tx(),
+                  m.tx() * b() + m.ty() * d() + ty());
+  }
+  
+  template<typename D, typename N> bool operator==(const Matrix<D, N> &m) const {
+    return a_ == m.a_
+    && b_ == m.b_
+    && c_ == m.c_
+    && d_ == m.d_
+    && tx_ == m.tx_
+    && ty_ == m.ty_;
+  }
+  template<typename D, typename N> bool operator!=(const Matrix<D, N> &m) const {
+    return !operator==(m);
+  }
+  
+  template<typename D> void transform(D &outX, D &outY, const D &x, const D &y) const {
     outX = x * a_ + y * c_ + tx_;
     outY = x * b_ + y * d_ + ty_;
   }
   
-  Matrix concat(const Matrix &m) const {
-    return Matrix(m.a() * a() + m.b() * c(), m.a() * b() + m.b() * d(),
+  template<typename D, typename N> M concat(const Matrix<D, M> &m) const {
+    return IMatrix(m.a() * a() + m.b() * c(), m.a() * b() + m.b() * d(),
                   m.c() * a() + m.d() * c(), m.c() * b() + m.d() * d(),
                   m.tx() * a() + m.ty() * c() + tx(),
                   m.tx() * b() + m.ty() * d() + ty());
   }
 
-  static Matrix identity() { return Matrix(1, 0, 0, 1, 0, 0); }
-  static Matrix rotateLeft() { return Matrix(0, 1, -1, 0, 0, 0); }
-  static Matrix rotateRight() { return Matrix(0, -1, 1, 0, 0, 0); }
-  static Matrix upsideDown() { return Matrix(-1, 0, 0, -1, 0, 0); }
-  static Matrix flipX() { return Matrix(-1, 0, 0, 1, 0, 0); }
-  static Matrix flipY() { return Matrix(1, 0, 0, -1, 0, 0); }
-  static Matrix translate(int tx, int ty) { return Matrix(1, 0, 0, 1, tx, ty); }
+  static M identity() { return M(1, 0, 0, 1, 0, 0); }
+  static M rotateLeft() { return M(0, 1, -1, 0, 0, 0); }
+  static M rotateRight() { return M(0, -1, 1, 0, 0, 0); }
+  static M upsideDown() { return M(-1, 0, 0, -1, 0, 0); }
+  static M flipX() { return M(-1, 0, 0, 1, 0, 0); }
+  static M flipY() { return M(1, 0, 0, -1, 0, 0); }
+  static M translate(int tx, int ty) { return M(1, 0, 0, 1, tx, ty); }
   
-  static Matrix flipXY() { return Matrix(0, 1, 1, 0, 0, 0); }
+  static M flipXY() { return M(0, 1, 1, 0, 0, 0); }
   
-  static Matrix pageLeft(int width, int height) {
-    return Matrix(0, 1, -1, 0, height-1, 0);
+  static M pageLeft(int width, int height) {
+    return M(0, 1, -1, 0, height-1, 0);
   }
-  static Matrix pageRight(int width, int height) {
-    return Matrix(0, -1, 1, 0, 0, width-1);
+  static M pageRight(int width, int height) {
+    return M(0, -1, 1, 0, 0, width-1);
   }
-  static Matrix pageUpsideDown(int width, int height) {
-    return Matrix(-1, 0, 0, -1, width-1, height-1);
+  static M pageUpsideDown(int width, int height) {
+    return M(-1, 0, 0, -1, width-1, height-1);
   }
-  static Matrix flipLeftRight(int width, int height) {
-    return Matrix(-1, 0, 0, 1, width-1, 0);
+  static M flipLeftRight(int width, int height) {
+    return M(-1, 0, 0, 1, width-1, 0);
   }
-  static Matrix flipTopBottom(int width, int height) {
-    return Matrix(1, 0, 0, -1, 0, height-1);
+  static M flipTopBottom(int width, int height) {
+    return M(1, 0, 0, -1, 0, height-1);
   }
 };
 
-inline ostream &operator<<(ostream &out, const Matrix &m) {
+class IMatrix : public Matrix<int, IMatrix> {
+public:
+  typedef Matrix<int, IMatrix> Super;
+  IMatrix(int a = 1, int b = 0, int c = 0, int d = 1, int tx = 0, int ty = 0) : Super(a, b, c, d, tx, ty) { }
+};
+
+class FMatrix : public Matrix<double, FMatrix> {
+public:
+  typedef Matrix<double, FMatrix> Super;
+  FMatrix(double a = 1, double b = 0, double c = 0, double d = 1, double tx = 0, double ty = 0) : Super(a, b, c, d, tx, ty) { }
+};
+
+inline ostream &operator<<(ostream &out, const IMatrix &m) {
   out << "[ " << m.a() << " " << m.b() << " " << m.c() << " " << m.d() << " " << m.tx() << " " << m.ty() << " ]";
   return out;
 }
 
-class Point {
-  int x_;
-  int y_;
-  friend ostream &operator<<(ostream &out, const Point &p);
+template<typename C, typename P> class Point {
+protected:
+  C x_;
+  C y_;
+  friend ostream &operator<<(ostream &out, const Point);
   friend struct std::hash<Point>;
+  friend class PointHasher<int, Point>;
 public:
   Point() { }  // leave contents uninitialized.
-  Point(int x, int y) : x_(x), y_(y) { }
+  Point(C x, C y) : x_(x), y_(y) { }
   Point(const Point &p) : x_(p.x_), y_(p.y_) { }
-  int &x() { return x_; }
-  int &y() { return y_; }
-  const int &x() const { return x_; }
-  const int &y() const { return y_; }
+  C &x() { return x_; }
+  C &y() { return y_; }
+  const C &x() const { return x_; }
+  const C &y() const { return y_; }
   Point &operator=(const Point &p) {
     x_ = p.x_;
     y_ = p.y_;
@@ -210,57 +252,78 @@ public:
     if (p.x_ > x_) return false;
     return y_ > p.y_;
   }
-  Point operator+(const Point &p) const {
-    return Point(x_ + p.x_, y_ + p.y_);
+  P operator+(const Point &p) const {
+    return P(x_ + p.x_, y_ + p.y_);
   }
-  Point &operator+=(const Point &p) {
+  P &operator+=(const Point &p) {
     x_ += p.x_;
     y_ += p.y_;
     return *this;
   }
-  Point operator-(const Point &p) const {
-    return Point(x_ - p.x_, y_ - p.y_);
+  P operator-(const Point &p) const {
+    return P(x_ - p.x_, y_ - p.y_);
   }
-  Point &operator-=(const Point &p) {
+  P &operator-=(const Point &p) {
     x_ -= p.x_;
     y_ -= p.y_;
     return *this;
   }
-  Point offset(int dx, int dy) {
-    return Point(x_ + dx, y_ + dy);
+  P offset(C dx, C dy) {
+    return P(x_ + dx, y_ + dy);
   }
-  Point offset(int dx, int dy) const {
-    return Point(x_ + dx, y_ + dy);
+  P offset(C dx, C dy) const {
+    return P(x_ + dx, y_ + dy);
   }
-  const Point neighbour(const int &dir) const {
-    return Point(x_ + xOffsets[dir], y_ + yOffsets[dir]);
+
+  template<typename D, typename Q> Point operator=(const Point<D, Q> &p) {
+    x_ = (C) p.x_;
+    y_ = (C) p.y_;
+    return *this;
   }
-  const bool isNeighbour(const Point &p) const {
-    if (p == *this) {
-      return false;
-    } else {
-      int dx = p.x_ - x_;
-      int dy = p.y_ - y_;
-      return -1 <= dx && dx <= 1 && -1 <= dy && dy <= 1;
-    }
+  template<typename D, typename Q> const bool operator==(const Point<D, Q> &p) const {
+    return p.x_ == x_ && p.y_ == y_;
   }
-  static int sign(int n) {
+  template<typename D, typename Q> const bool operator!=(const Point<D, Q> &p) const {
+    return p.x_ != x_ || p.y_ != y_;
+  }
+  template<typename D, typename Q> const bool operator<(const Point<D, Q> &p) const {
+    if (x_ < p.x_) return true;
+    if (p.x_ < x_) return false;
+    return y_ < p.y_;
+  }
+  template<typename D, typename Q> const bool operator>(const Point<D, Q> &p) const {
+    if (x_ > p.x_) return true;
+    if (p.x_ > x_) return false;
+    return y_ > p.y_;
+  }
+  template<typename D, typename Q> P operator+(const Point<D, Q> &p) const {
+    return Point(x_ + p.x_, y_ + p.y_);
+  }
+  template<typename D, typename Q> P &operator+=(const Point<D, Q> &p) {
+    x_ += p.x_;
+    y_ += p.y_;
+    return *this;
+  }
+  template<typename D, typename Q> P operator-(const Point<D, Q> &p) const {
+    return Point(x_ - p.x_, y_ - p.y_);
+  }
+  template<typename D, typename Q> P &operator-=(const Point<D, Q> &p) {
+    x_ -= p.x_;
+    y_ -= p.y_;
+    return *this;
+  }
+  template<typename D> P offset(D dx, D dy) {
+    return P(x_ + dx, y_ + dy);
+  }
+  template<typename D> P offset(D dx, D dy) const {
+    return P(x_ + dx, y_ + dy);
+  }
+
+  static int sign(C n) {
     return n == 0 ? 0 : n < 0 ? -1 : 1;
   }
-  const int directionTo(const Point &p) const {
-    int dx = sign(p.x_ - x_);
-    int dy = sign(p.y_ - y_);
-    if (dy < 0) {
-      return Neighbourhood::N + dx;
-    }
-    if (dy > 0) {
-      return Neighbourhood::S - dx;
-    }
-    if (dx < 0) return Neighbourhood::W;
-    if (dx > 0) return Neighbourhood::E;
-    return DIRECTIONS;
-  }
-  const double squareDistance(const Point &p) const {
+  
+  template<typename D, typename Q> const double squareDistance(const Point<D, Q> &p) const {
     double dx = p.x_ - x_;
     double dy = p.y_ - y_;
     return dx*dx + dy*dy;
@@ -270,14 +333,15 @@ public:
     double dy = y - y_;
     return dx*dx + dy*dy;
   }
-  const double distance(const Point &p) const {
+  template<typename D, typename Q> const double distance(const Point<D, Q> &p) const {
     return sqrt(squareDistance(p));
   }
   const double distance(const double x, const double y) const {
     return sqrt(squareDistance(x, y));
   }
   // calculates the squared distance from |this| to the segment (|p| to |q|)
-  const double squareDistance(const Point &p, const Point &q) const {
+  template<typename D, typename Q>
+  const double squareDistance(const Point<D, Q> &p, const Point<D, Q> &q) const {
     double pqx = q.x_ - p.x_;
     double pqy = q.y_ - p.y_;
     double pqlen = sqrt(pqx*pqx + pqy+pqy);
@@ -299,11 +363,47 @@ public:
     }
   }
   // calculates the distance from |this| to the segment (|p| to |q|)
-  const double distance(const Point &p, const Point &q) const {
+  template<typename D, typename Q> const double distance(const Point<D, Q> &p, const Point<D, Q> &q) const {
     return sqrt(squareDistance(p, q));
   }
   
-  Point &transform(const Matrix &m) {
+};
+
+class IPoint : public Point<int, IPoint> {
+public:
+  typedef Point<int, IPoint> Super;
+  friend struct std::hash<IPoint>;
+
+  IPoint(int x = 0, int y = 0) : Super(x, y) { }
+
+  const IPoint neighbour(const int &dir) const {
+    return IPoint(x_ + xOffsets[dir], y_ + yOffsets[dir]);
+  }
+  const bool isNeighbour(const IPoint &p) const {
+    if (p == *this) {
+      return false;
+    } else {
+      int dx = p.x_ - x_;
+      int dy = p.y_ - y_;
+      return -1 <= dx && dx <= 1 && -1 <= dy && dy <= 1;
+    }
+  }
+
+  const int directionTo(const IPoint &p) const {
+    int dx = sign(p.x_ - x_);
+    int dy = sign(p.y_ - y_);
+    if (dy < 0) {
+      return Neighbourhood::N + dx;
+    }
+    if (dy > 0) {
+      return Neighbourhood::S - dx;
+    }
+    if (dx < 0) return Neighbourhood::W;
+    if (dx > 0) return Neighbourhood::E;
+    return DIRECTIONS;
+  }
+
+  IPoint &transform(const IMatrix &m) {
     int x, y;
     m.transform(x, y, x_, y_);
     x_ = x;
@@ -311,23 +411,43 @@ public:
     return *this;
   }
   
-  Point transformed(const Matrix &m) const {
+  IPoint transformed(const IMatrix &m) const {
     int x, y;
     m.transform(x, y, x_, y_);
-    return Point(x, y);
+    return IPoint(x, y);
   }
-  
-  friend class PointHasher;
 };
 
-class PointHasher : public unary_function<Point, size_t> {
+class FPoint : public Point<double, FPoint> {
 public:
-  size_t operator() (const Point &h) const {
+  typedef Point<double, FPoint> Super;
+  friend struct std::hash<FPoint>;
+  
+  FPoint(double x = 0, double y = 0) : Super(x, y) { }
+  
+  FPoint &transform(const IMatrix &m) {
+    double x, y;
+    m.transform(x, y, x_, y_);
+    x_ = x;
+    y_ = y;
+    return *this;
+  }
+  
+  FPoint transformed(const IMatrix &m) const {
+    double x, y;
+    m.transform(x, y, x_, y_);
+    return FPoint(x, y);
+  }
+};
+
+template<typename C, typename P> class PointHasher : public unary_function<Point<C, P>, size_t> {
+public:
+  size_t operator() (const Point<C, P> &h) const {
     return continue_hash<int>::hash(h.x_, continue_hash<int>::hash(h.y_));
   }
 };
 
-inline ostream &operator<<(ostream &out, const Point &p) {
+template<typename C, typename P> inline ostream &operator<<(ostream &out, const Point<C, P> &p) {
   out << "(" << p.x() << "," << p.y() << ")";
   return out;
 }
@@ -693,13 +813,24 @@ namespace std {
 #endif
 
 using namespace Primitives;
-template <>
-struct hash<Point>
+template <typename C, typename P>
+struct hash<Point<C, P>>
 {
-  typedef Point         argument_type;
+  typedef Point<C, P>         argument_type;
   typedef std::size_t   result_type;
   
-  result_type operator()(const Point &h) const {
+  result_type operator()(const Point<C, P> &h) const {
+    return continue_hash<int>::hash(h.x_, continue_hash<int>::hash(h.y_));
+  }
+};
+
+template <>
+struct hash<IPoint>
+{
+  typedef IPoint         argument_type;
+  typedef std::size_t   result_type;
+  
+  result_type operator()(const IPoint &h) const {
     return continue_hash<int>::hash(h.x_, continue_hash<int>::hash(h.y_));
   }
 };

@@ -96,11 +96,11 @@ public:
   shared_ptr< GreyImage<int> > distanceTransform(bool background, Workers &workers) const;
 
   template<bool background> void featureTransformPass1(int x0, int x1, int *g, int *ys) const;
-  template<bool background> void featureTransformPass2(int *g, int *ys, int y0, int y1, Point *result) const;
-  template<bool background> void featureTransform(int x0, int x1, int y0, int y1, int *g, int *ys, Point *result) const;
+  template<bool background> void featureTransformPass2(int *g, int *ys, int y0, int y1, IPoint *result) const;
+  template<bool background> void featureTransform(int x0, int x1, int y0, int y1, int *g, int *ys, IPoint *result) const;
   
-  shared_ptr< Image<Point> > featureTransform(bool background = true, int threads = 1) const;
-  shared_ptr< Image<Point> > featureTransform(bool background, Workers &workers) const;
+  shared_ptr< Image<IPoint> > featureTransform(bool background = true, int threads = 1) const;
+  shared_ptr< Image<IPoint> > featureTransform(bool background, Workers &workers) const;
 
   template<bool background> shared_ptr< GreyImage<cl_uint> > clDistanceTransform(OpenCLWorkers &workers) const;
   template<bool background> shared_ptr< Image<cl_short2> > clFeatureTransform(OpenCLWorkers &workers) const;
@@ -178,21 +178,21 @@ public:
   Bitmap &operator-=(const Bitmap &other);
 
   // boundary scanning
-  Direction nextDir(const Point &p, Direction dir, Turn delta);
+  Direction nextDir(const IPoint &p, Direction dir, Turn delta);
   
-  Direction nextDirCW(const Point &p, Direction dir);
+  Direction nextDirCW(const IPoint &p, Direction dir);
   
-  Direction nextDirCCW(const Point &p, Direction dir);
+  Direction nextDirCCW(const IPoint &p, Direction dir);
   
-  void scanBoundary(Image<int> &marks, int mark, Boundary &boundary, const Point &start, Direction from, bool connect = false);
+  void scanBoundary(Image<int> &marks, int mark, Boundary &boundary, const IPoint &start, Direction from, bool connect = false);
   
   void scanBoundaries(vector<Boundary> &result, Image<int> &marks, bool connect = false);
   
   vector<Boundary> scanBoundaries(bool connect = false);
   
-  int neighbours(const Point &p) const;
+  int neighbours(const IPoint &p) const;
   
-  int countNeighbours(const Point &p) const;
+  int countNeighbours(const IPoint &p) const;
   
   template<typename CanRetract> void hatch(Chains &chains, double angle, double period, double phase, CanRetract &canRetract);
 

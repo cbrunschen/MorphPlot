@@ -212,7 +212,7 @@ public:
       endGroup_ = true;
     }
     if (chain.size() == 1) {
-      const Point &p = chain.front();
+      const IPoint &p = chain.front();
       *out_ << "<polyline points=\"" << p.x() << "," << p.y() << " " << p.x() << "," << p.y() << "\" />" << endl;
     } else {
       *out_ << "<polyline points=\"";
@@ -316,7 +316,7 @@ public:
   virtual void outputChain(const Chain &chain) {
     Base::outputChain(chain);
     Chain::const_iterator k = chain.begin();
-    Point p = *k;
+    IPoint p = *k;
     *out_ << "PU " << p.x() << " " << p.y() << ";PD ";
     bool first = true;
     for (++k; k != chain.end(); ++k) {
@@ -341,7 +341,7 @@ template<typename Pen> class HPGLRelativeOutput : public HPGLOutput<Pen> {
   using Base::out_;
 protected:
   using Base::filename_;
-  Point currentPoint_;
+  IPoint currentPoint_;
   bool haveCurrentPoint_;
 public:
   HPGLRelativeOutput(ostream &out) : Base(out) { }
@@ -352,7 +352,7 @@ public:
     Base::outputChain(chain);
     
     Chain::const_iterator k = chain.begin();
-    Point p = *k;
+    IPoint p = *k;
     if (haveCurrentPoint_) {
       int dx = p.x() - currentPoint_.x();
       int dy = p.y() - currentPoint_.y();
@@ -363,7 +363,7 @@ public:
     bool first = true;
     for (++k; k != chain.end(); ++k) {
       if (first) { first = false; } else { *out_ << " "; }
-      Point q = *k;
+      IPoint q = *k;
       int dx = q.x() - p.x();
       int dy = q.y() - p.y();
       *out_ << dx << " " << dy;
@@ -393,7 +393,7 @@ template<typename Pen, int base> class HPGLEncodedOutput : public HPGLOutput<Pen
   typedef ::HpEncode<base> HpEncode;
 protected:
   using Base::filename_;
-  Point currentPoint_;
+  IPoint currentPoint_;
   bool haveCurrentPoint_;
 public:
   HPGLEncodedOutput(ostream &out) : Base(out) { }
@@ -405,7 +405,7 @@ public:
     
     Chain::const_iterator k = chain.begin();
     // first, an absolute move to the beginning of the start of the chain
-    Point p = *k;
+    IPoint p = *k;
     if (haveCurrentPoint_) {
       int dx = p.x() - currentPoint_.x();
       int dy = p.y() - currentPoint_.y();
@@ -416,7 +416,7 @@ public:
     bool first = true;
     for (++k; k != chain.end(); ++k) {
       // relative moves for the rest of the chain
-      Point q = *k;
+      IPoint q = *k;
       int dx = q.x() - p.x();
       int dy = q.y() - p.y();
       *out_ << HpEncode(dx) << HpEncode(dy);
@@ -552,7 +552,7 @@ public:
   
   virtual void outputChain(const Chain &chain) {
     Chain::const_iterator k = chain.begin();
-    Point p = *k;
+    IPoint p = *k;
     
     moveTo(p.x(), p.y(), zUp_);
 

@@ -57,7 +57,7 @@ void verifyChains(Chains &chains) {
   for (Chains::iterator hc = chains.begin(); hc != chains.end(); ++hc) {
     if (hc->size() > 1) {
       Chain::iterator j = hc->begin();
-      Point p = *j;
+      IPoint p = *j;
       for (++j; j != hc->end(); ++j) {
         if (!p.isNeighbour(*j)) {
           cerr << "not neighbours: " << p << " <-> " << *j << endl;
@@ -446,23 +446,23 @@ int main(int argc, char * const argv[]) {
     theta += dTheta;
   }
 
-  Matrix transform = Matrix::identity();
+  IMatrix transform = IMatrix::identity();
 
   cerr << "initial transform: " << transform << endl << flush;
 
   cerr << "offsetX = " << offsetX << ", offsetY = " << offsetY << endl << flush;
   if (offsetX != 0 || offsetY != 0) {
-    transform = transform.concat(Matrix::translate(offsetX, offsetY));
+    transform = transform.concat(IMatrix::translate(offsetX, offsetY));
   }
   cerr << "after offset: " << transform << endl << flush;
 
   cerr << "rotation = " << rotation << endl << flush;
   if (rotation == Left) {
-    transform = transform.concat(Matrix::pageLeft(colored->width(), colored->height()));
+    transform = transform.concat(IMatrix::pageLeft(colored->width(), colored->height()));
   } else if (rotation == Right) {
-    transform = transform.concat(Matrix::pageRight(colored->width(), colored->height()));
+    transform = transform.concat(IMatrix::pageRight(colored->width(), colored->height()));
   } else if (rotation == UpsideDown) {
-    transform = transform.concat(Matrix::pageUpsideDown(colored->width(), colored->height()));
+    transform = transform.concat(IMatrix::pageUpsideDown(colored->width(), colored->height()));
   }
   cerr << "after rotation: " << transform << endl << flush;
 
@@ -470,7 +470,7 @@ int main(int argc, char * const argv[]) {
   int minX = numeric_limits<int>::max(), minY = numeric_limits<int>::max();
   for (int x = 0; x < colored->width(); x += colored->width()-1) {
     for (int y = 0; y < colored->height(); y += colored->height()-1) {
-      Point p(x, y);
+      IPoint p(x, y);
       p.transform(transform);
       minX = min(p.x(), minX);
       maxX = max(p.x(), maxX);
@@ -483,7 +483,7 @@ int main(int argc, char * const argv[]) {
 
   // Finally, adjust for the top-to-bottom Y of our bitmaps
   // vs the bottom-to-top Y of our output devices
-  Matrix adjustment(1, 0, 0, -1, 0, colored->height());
+  IMatrix adjustment(1, 0, 0, -1, 0, colored->height());
   transform = transform.concat(adjustment);
   cerr << "after adjustment: " << transform << endl << flush;
 
@@ -498,7 +498,7 @@ int main(int argc, char * const argv[]) {
     const Pen &pen = di->first;
     Chains &dithered = di->second;
 
-    if (transform != Matrix::identity()) {
+    if (transform != IMatrix::identity()) {
       cerr << "- applying transform " << transform << endl << flush;
       dithered.transform(transform);
     } else {
