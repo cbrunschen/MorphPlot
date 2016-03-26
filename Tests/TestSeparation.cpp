@@ -32,19 +32,19 @@ TEST_CASE("color separation", "")
   typedef GreyImage<Component> GreyImage;
   typedef RGBPixel<Component> RGBPixel;
   typedef Pen<Component> Pen;
-  
+
   Pen redPen(0.0, 1.0, 1.0);
   Pen bluePen(1.0, 1.0, 0.0);
-  
+
   shared_ptr<ColorImage> colorImage(new ColorImage(4, 4));
   for (int y = 0; y < 4; y++) {
     int vy = y | (y << 2) | (y << 4) | (y << 6);
     for (int x = 0; x < 4; x++) {
       int vx = x | (x << 2) | (x << 4) | (x << 6);
-      colorImage->at(y, x) = RGBPixel((Component) (255 - vy), 255, (Component) (255 - vx));
+      colorImage->at(x, y) = RGBPixel((Component) (255 - vy), 255, (Component) (255 - vx));
     }
   }
-  
+
   shared_ptr<GreyImage> redSeparation = colorImage->separateAndSubtract(redPen);
   shared_ptr<GreyImage> blueSeparation = colorImage->separateAndSubtract(bluePen);
 
@@ -52,40 +52,38 @@ TEST_CASE("color separation", "")
     int vy = y | (y << 2) | (y << 4) | (y << 6);
     for (int x = 0; x < 4; x++) {
       int vx = x | (x << 2) | (x << 4) | (x << 6);
-      colorImage->at(y, x) = RGBPixel((Component) (255 - vy), 255, (Component) (255 - vx));
+      colorImage->at(x, y) = RGBPixel((Component) (255 - vy), 255, (Component) (255 - vx));
     }
   }
-  
+
   cout << "Red:" << endl;
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
-      cout << " " << (int)redSeparation->at(y, x);
+      cout << " " << (int)redSeparation->at(x, y);
     }
     cout << endl;
-  }  
+  }
 
   cout << "Blue:" << endl;
   for (int y = 0; y < 4; y++) {
     for (int x = 0; x < 4; x++) {
-      cout << " " << (int)blueSeparation->at(y, x);
+      cout << " " << (int)blueSeparation->at(x, y);
     }
     cout << endl;
   }
-  
+
   cout << flush;
-  
-  return;
-  
-  for (int y = 0; y < 4; y++) {
-    int vy = y | (y << 2) | (y << 4) | (y << 6);
-    for (int x = 0; x < 4; x++) {
-      int vx = x | (x << 2) | (x << 4) | (x << 6);
-      RGBPixel &p = colorImage->at(y, x);
-      REQUIRE(p.r() == 255);
-      REQUIRE(p.g() == 255);
-      REQUIRE(p.b() == 255);
-      REQUIRE(redSeparation->at(y, x) == vy);
-      REQUIRE(blueSeparation->at(y, x) == vx);
-    }
-  }  
+
+//  for (int y = 0; y < 4; y++) {
+//    int vy = y | (y << 2) | (y << 4) | (y << 6);
+//    for (int x = 0; x < 4; x++) {
+//      int vx = x | (x << 2) | (x << 4) | (x << 6);
+//      RGBPixel &p = colorImage->at(x, y);
+//      REQUIRE(p.r() == 255);
+//      REQUIRE(p.g() == 255);
+//      REQUIRE(p.b() == 255);
+//      REQUIRE(redSeparation->at(x, y) == vy);
+//      REQUIRE(blueSeparation->at(x, y) == vx);
+//    }
+//  }
 }

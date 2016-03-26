@@ -50,30 +50,30 @@ struct Stack : public list<StackEntry> {
 };
 
 template <typename IsMarked, typename Mark, int extend>
-void fill(int y, int x, int H, int W, IsMarked isMarked, Mark mark) {
+void fill(int x, int y, int W, int H, IsMarked isMarked, Mark mark) {
   Stack stack;
   int l, x1, x2, dy;
-  if (x < 0 || x >= W || y < 0 || y >= H || isMarked(y, x)) {
+  if (x < 0 || x >= W || y < 0 || y >= H || isMarked(x, y)) {
     return;
   }
-  
+
   stack.push(y, x, x, 1); /* needed in some cases */
   stack.push(y+1, x, x, -1);  /* seed segment (popped 1st) */
-  
+
   while (!stack.empty()) {
     /* pop segment off stack and fill a neighboring scan line */
     stack.pop(y, x1, x2, dy);
-    
+
     if (y < 0 || y >= H) {
       continue;
     }
-    
+
     /*
      * segment of scan line y-dy for x1<=x<=x2 was previously filled,
      * now explore adjacent pixels in scan line y
      */
-    for (x = x1 - extend; x >= 0 && !isMarked(y, x); x--) {
-      mark(y, x);
+    for (x = x1 - extend; x >= 0 && !isMarked(x, y); x--) {
+      mark(x, y);
     }
     if (x >= x1 - extend) {
       goto skip;
@@ -84,15 +84,15 @@ void fill(int y, int x, int H, int W, IsMarked isMarked, Mark mark) {
     }
     x = x1 - extend + 1;
     do {
-      for (; x < W && !isMarked(y, x); x++) {
-        mark(y, x);
+      for (; x < W && !isMarked(x, y); x++) {
+        mark(x, y);
       }
       stack.push(y, l, x - 1, dy);
       if (x > x2 + 1) {
         stack.push(y, x2 + 1, x - 1, -dy);  /* leak on right? */
       }
     skip:
-      for (x++; x <= x2 + extend && isMarked(y, x); x++)
+      for (x++; x <= x2 + extend && isMarked(x, y); x++)
         ;
       l = x;
     } while (x <= x2 + extend);
@@ -105,13 +105,13 @@ void fill(int y, int x, int H, int W, IsMarked isMarked, Mark mark) {
 }
 
 template <typename IsMarked, typename Mark>
-void fill4(int y, int x, int H, int W, IsMarked isMarked, Mark mark) {
-  Filling::Private::fill<IsMarked, Mark, 0>(y, x, H, W, isMarked, mark);
+void fill4(int x, int y, int W, int H, IsMarked isMarked, Mark mark) {
+  Filling::Private::fill<IsMarked, Mark, 0>(x, y, W, H, isMarked, mark);
 }
 
 template <typename IsMarked, typename Mark>
-void fill8(int y, int x, int H, int W, IsMarked isMarked, Mark mark) {
-  Filling::Private::fill<IsMarked, Mark, 1>(y, x, H, W, isMarked, mark);
+void fill8(int x, int y, int W, int H, IsMarked isMarked, Mark mark) {
+  Filling::Private::fill<IsMarked, Mark, 1>(x, y, W, H, isMarked, mark);
 }
 
 #if 0

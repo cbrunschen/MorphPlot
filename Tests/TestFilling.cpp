@@ -34,9 +34,9 @@ TEST_CASE("fill/4/simple", "simple 4-connected flood fill test")
   bitmap.line(36, 36, 20, 36, true);
   bitmap.line(20, 36, 20,  4, true);
   bitmap.line(20,  4,  4,  4, true);
-  
+
   cerr << "before fill-4:" << endl << bitmap << endl << flush;
-  
+
   fill4(10, 10, 40, 40, isMarked, mark);
 
   cerr << "after fill-4:" << endl << bitmap << endl << flush;
@@ -48,7 +48,7 @@ TEST_CASE("fill/4/leak", "simple 4-connected flood fill test with a diaglonal le
   Bitmap bitmap(40, 40);
   Bitmap::Get isMarked = bitmap.get();
   Bitmap::Set mark = bitmap.set(true);
-  
+
   bitmap.clear();
   bitmap.line( 4,  4,  4, 20, true);
   bitmap.line( 4, 20, 36, 20, true);
@@ -57,11 +57,11 @@ TEST_CASE("fill/4/leak", "simple 4-connected flood fill test with a diaglonal le
   bitmap.line(20, 36, 20,  4, true);
   bitmap.line(20,  4,  4,  4, true);
   bitmap.set(20, 20, false);
-  
+
   cerr << "before fill-4:" << endl << bitmap << endl << flush;
-  
+
   fill4(10, 10, 40, 40, isMarked, mark);
-  
+
   cerr << "after fill-4:" << endl << bitmap << endl << flush;
 }
 
@@ -70,7 +70,7 @@ TEST_CASE("fill/8/leak", "simple 8-connected flood fill test with a leak between
   Bitmap bitmap(40, 40);
   Bitmap::Get isMarked = bitmap.get();
   Bitmap::Set mark = bitmap.set(true);
-  
+
   bitmap.clear();
   bitmap.line( 4,  4,  4, 20, true);
   bitmap.line( 4, 20, 36, 20, true);
@@ -81,11 +81,11 @@ TEST_CASE("fill/8/leak", "simple 8-connected flood fill test with a leak between
   bitmap.set(20, 20, false);
   bitmap.set(19, 21, true);
   bitmap.set(21, 19, true);
-  
+
   cerr << "before fill-8:" << endl << bitmap << endl << flush;
-  
+
   fill8(10, 10, 40, 40, isMarked, mark);
-  
+
   cerr << "after fill-8:" << endl << bitmap << endl << flush;
 }
 
@@ -94,9 +94,9 @@ TEST_CASE("fill/8/sawtooth", "lots of things that need the 8-connectivity in all
   Bitmap bitmap(9, 9);
   Bitmap::Get isMarked = bitmap.get();
   Bitmap::Set mark = bitmap.set(true);
-  
+
   bitmap.clear();
-  
+
   bitmap.line(0, 0, 0, 8, true);
   bitmap.line(0, 8, 8, 8, true);
   bitmap.line(8, 8, 8, 0, true);
@@ -106,7 +106,7 @@ TEST_CASE("fill/8/sawtooth", "lots of things that need the 8-connectivity in all
   bitmap.line(2, 5, 6, 5, true);
   bitmap.line(5, 6, 5, 2, true);
   bitmap.line(6, 3, 2, 3, true);
-  
+
   bitmap.set(2, 1, true);
   bitmap.set(4, 1, true);
   bitmap.set(6, 1, true);
@@ -118,15 +118,15 @@ TEST_CASE("fill/8/sawtooth", "lots of things that need the 8-connectivity in all
   bitmap.set(1, 2, true);
   bitmap.set(1, 4, true);
   bitmap.set(1, 6, true);
-  
+
   bitmap.set(7, 2, true);
   bitmap.set(7, 4, true);
   bitmap.set(7, 6, true);
-  
+
   cerr << "before fill-8:" << endl << bitmap << endl << flush;
-  
+
   fill8(1, 1, 10, 10, isMarked, mark);
-  
+
   cerr << "after fill-8:" << endl << bitmap << endl << flush;
 }
 

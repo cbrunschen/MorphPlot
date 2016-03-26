@@ -29,7 +29,7 @@ int pthread_barrier_init(pthread_barrier_t *barrier, const pthread_barrierattr_t
   }
   barrier->tripCount = count;
   barrier->count = 0;
-  
+
   return 0;
 }
 
@@ -61,30 +61,30 @@ int pthread_barrier_wait(pthread_barrier_t *barrier) {
 
 void *Workers::worker_thread(void *params) {
   Workers::Worker *worker = static_cast<Workers::Worker *>(params);
-  
+
   pthread_mutex_lock(&worker->lock);
   for (;;) {
     // wait for work
     while (worker->status == Workers::waiting) {
       pthread_cond_wait(&worker->status_changed, &worker->lock);
     }
-    
+
     if (worker->status == Workers::quit) {
       // done!
       break;
     }
-    
+
     void (*func)(void *) = worker->func;
     void *func_params = worker->func_params;
     pthread_mutex_unlock(&worker->lock);
-    
+
     func(func_params);
-    
+
     pthread_mutex_lock(&worker->lock);
     worker->status = Workers::waiting;
     pthread_cond_broadcast(&worker->status_changed);
   }
   pthread_mutex_unlock(&worker->lock);
-  
+
   return NULL;
 }

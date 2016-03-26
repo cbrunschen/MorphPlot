@@ -34,10 +34,10 @@ protected:
   int yRes_;
   int resUnit_;
   Pixel *data_;
-  
+
   template <typename P> friend ostream &operator<<(ostream &out, const Image<P> &i);
-  
-public:  
+
+public:
   typedef Image<Pixel> Self;
   typedef shared_ptr< Image<Pixel> > ImageRef;
 
@@ -55,7 +55,7 @@ public:
     Pixel * const data() { return data_; }
     const Pixel * const data() const { return data_; }
   };
-  
+
   Image(const int width = 0, const int height = 0, const bool doClear = true)
   : width_(width), height_(height), xRes_(0), yRes_(0), resUnit_(0), data_(new Pixel[width * height]) {
     if (doClear) {
@@ -65,10 +65,10 @@ public:
   virtual ~Image() {
     delete data_;
   }
-  
+
   Image(const Image &other) : width_(other.width_), height_(other.height_),
   data_(new Pixel[other.width_ * other.height_])
-  {    
+  {
     bcopy(other.data_, data_, width_ * height_ * sizeof(Pixel));
   }
 
@@ -77,15 +77,15 @@ public:
   {
     bcopy(other->data_, data_, width_ * height_ * sizeof(Pixel));
   }
-  
+
   static ImageRef make(int width = 0, int height = 0, bool doClear = true) {
     return make_shared<Image>(width, height, doClear);
   }
-  
+
   void clear() {
     memset(data_, 0, width_ * height_ * sizeof(Pixel));
   }
-  
+
   Image &operator=(const Image &other) {
     delete data_;
     width_ = other.width_;
@@ -98,16 +98,16 @@ public:
   Image &operator=(const Image *other) {
     *this = *other;
   }
-  
+
   Pixel *data() { return data_; }
   const Pixel *data() const { return data_; }
-  
+
   int &width() { return width_; }
   const int width() const { return width_; }
   int &height() { return height_; }
   const int height() const { return height_; }
   const int length() const { return width_ * height_; }
-  
+
   int &xRes() { return xRes_; }
   const int xRes() const { return xRes_; }
   void setXRes(int xRes) { xRes_ = xRes; }
@@ -117,7 +117,7 @@ public:
   int &resUnit() { return resUnit_; }
   const int resUnit() const { return resUnit_; }
   void setResUnit(int resUnit) { resUnit_ = resUnit; }
-  
+
   template<typename T> void copyRes(const T &other) {
     xRes_ = other.xRes();
     yRes_ = other.yRes();
@@ -127,19 +127,19 @@ public:
   template<typename T> void copyRes(const T *other) {
     copyRes(*other);
   }
-  
+
   template<typename T> void copyRes(shared_ptr< T > other) {
     copyRes(*other);
   }
-    
+
   Row operator[](int y) {
     return Row(&data_[width_ * y]);
   }
   const Row operator[](int y) const {
     return Row(&data_[width_ * y]);
   }
-  
-  Pixel &at(int y, int x) {
+
+  Pixel &at(int x, int y) {
 #if DEBUG_AT
     if (y < 0 || height_ <= y || x < 0 || width_ <= x) {
       cerr << "!!: " << y << "," << x << " not in " << height_ << "x" << width_ << endl;
@@ -147,7 +147,7 @@ public:
 #endif  // DEBUG_AT
     return data_[width_ * y + x];
   }
-  const Pixel &at(int y, int x) const {
+  const Pixel &at(int x, int y) const {
 #if DEBUG_AT
     if (y < 0 || height_ <= y || x < 0 || width_ <= x) {
       cerr << "!!: " << y << "," << x << " not in " << height_ << "x" << width_ << endl;
@@ -155,21 +155,21 @@ public:
 #endif  // DEBUG_AT
     return data_[width_ * y + x];
   }
-  const Pixel get(int y, int x) {
+  const Pixel get(int x, int y) {
     if (0 <= y && y < height_ && 0 <= x && x < width_) {
       return data_[width_ * y + x];
     } else {
       return 0;
     }
   }
-  const Pixel get(int y, int x) const {
+  const Pixel get(int x, int y) const {
     if (0 <= y && y < height_ && 0 <= x && x < width_) {
       return data_[width_ * y + x];
     } else {
       return 0;
     }
   }
-  const Pixel getVal(int y, int x) const {
+  const Pixel getVal(int x, int y) const {
     if (0 <= y && y < height_ && 0 <= x && x < width_) {
       return data_[width_ * y + x];
     } else {
@@ -178,18 +178,18 @@ public:
   }
 
   Pixel &at(const IPoint &p) {
-    return at(p.y(), p.x());
+    return at(p.x(), p.y());
   }
   const Pixel &at(const IPoint &p) const {
-    return at(p.y(), p.x());
+    return at(p.x(), p.y());
   }
   const Pixel get(const IPoint &p) {
-    return get(p.y(), p.x());
+    return get(p.x(), p.y());
   }
   const Pixel get(const IPoint &p) const {
-    return get(p.y(), p.x());
+    return get(p.x(), p.y());
   }
-  
+
   typedef Pixel *iterator;
   typedef const Pixel *const_iterator;
 
@@ -205,93 +205,95 @@ public:
   const_iterator end() const {
     return &data_[width_ * height_];
   }
-  
-  iterator iter_at(int row) {
+
+  iterator row_iterator(int row) {
     return &data_[row * width_];
   }
-  const_iterator iter_at(int row) const {
+  const_iterator row_iterator(int row) const {
     return &data_[row * width_];
   }
 
   void set(int y, int x, const Pixel &value) {
     if (0 <= x && x < width_ && 0 <= y && y < height_) {
-      at(y, x) = value;
+      at(x, y) = value;
     }
   }
 
   void set(const IPoint &p, const Pixel &value) {
-    set(p.y(), p.x(), value);
+    set(p.x(), p.y(), value);
   }
-  
+
   struct Get {
     const Image &image_;
     Get(const Image &image) : image_(image)  { }
     Pixel operator()(const IPoint &p) const { return image_.get(p); }
-    Pixel operator()(const int y, const int x) const { return image_.get(y, x); }
+    Pixel operator()(const int x, const int y) const { return image_.get(x, y); }
   };
-  
+
   struct At {
-    const Image &image_;
-    At(const Image &image) : image_(image)  { }
-    Pixel operator()(const IPoint &p) const { return image_.at(p); }
-    Pixel operator()(const int y, const int x) const { return image_.at(y, x); }
+    Image &image_;
+    At(Image &image) : image_(image)  { }
+    Pixel &operator()(const IPoint &p) { return image_.at(p); }
+    Pixel &operator()(const int y, const int x) { return image_.at(x, y); }
+    const Pixel operator()(const IPoint &p) const { return image_.at(p); }
+    const Pixel operator()(const int x, const int y) const { return image_.at(x, y); }
   };
-  
+
   struct Set {
     Image &image_;
     const Pixel &value_;
     Set(Image &image, const Pixel &value) : image_(image), value_(value) { }
     void operator()(const IPoint &p) const { image_.set(p, value_); }
-    void operator()(const int y, const int x) const { return image_.set(y, x, value_); }
+    void operator()(const int x, const int y) const { return image_.set(y, x, value_); }
   };
-  
+
   const Get get() const {
     return Get(*this);
   }
-  
+
   const At at() const {
     return At(*this);
   }
-  
+
   const Set set(const Pixel &value) {
     return Set(*this, value);
   }
-  
-  // XY variants
-  struct GetXY {
+
+  // YX variants
+  struct GetYX {
     const Image &image_;
-    GetXY(const Image &image) : image_(image)  { }
+    GetYX(const Image &image) : image_(image)  { }
     Pixel operator()(const IPoint &p) const { return image_.get(p); }
-    Pixel operator()(const int x, const int y) const { return image_.get(y, x); }
+    Pixel operator()(const int y, const int x) const { return image_.get(x, y); }
   };
-  
-  struct AtXY {
+
+  struct AtYX {
     const Image &image_;
-    AtXY(const Image &image) : image_(image)  { }
+    AtYX(const Image &image) : image_(image)  { }
     Pixel operator()(const IPoint &p) const { return image_.at(p); }
-    Pixel operator()(const int x, const int y) const { return image_.at(y, x); }
+    Pixel operator()(const int y, const int x) const { return image_.at(x, y); }
   };
-  
-  struct SetXY {
+
+  struct SetYX {
     Image &image_;
     const Pixel &value_;
-    SetXY(Image &image, const Pixel &value) : image_(image), value_(value) { }
+    SetYX(Image &image, const Pixel &value) : image_(image), value_(value) { }
     void operator()(const IPoint &p) const { image_.set(p, value_); }
-    void operator()(const int x, const int y) const { return image_.set(y, x, value_); }
+    void operator()(const int y, const int x) const { return image_.set(y, x, value_); }
   };
-  
-  const GetXY getXY() const {
-    return GetXY(*this);
+
+  const GetYX getYX() const {
+    return GetYX(*this);
   }
-  
-  const AtXY atXY() const {
-    return AtXY(*this);
+
+  const AtYX atYX() const {
+    return AtYX(*this);
   }
-  
-  const SetXY setXY(const Pixel &value) {
-    return SetXY(*this, value);
+
+  const SetYX setYX(const Pixel &value) {
+    return SetYX(*this, value);
   }
-  
+
   int set(const Chain &chain, const Pixel &value) {
     int n = 0;
     for (Chain::const_iterator i = chain.begin(); i != chain.end(); ++i) {
@@ -300,7 +302,7 @@ public:
     }
     return n;
   }
-  
+
   int set(const Chains &chains, const Pixel &value) {
     int n = 0;
     for (Chains::const_iterator i = chains.begin(); i != chains.end(); ++i) {
@@ -308,7 +310,7 @@ public:
     }
     return n;
   }
-  
+
   void set(const Chains &chains, const Pixel &value, int r, int const extents[]) {
     for (Chains::const_iterator i = chains.begin(); i != chains.end(); ++i) {
       for (Chain::const_iterator c = i->begin(); c != i->end(); ++c) {
@@ -332,33 +334,33 @@ public:
       }
     }
   }
-    
+
   void set(const Chains &chains, const Pixel &value, int r) {
     int extents[r];
     Circle::makeExtents(r, extents);
     set(chains, value, r, extents);
   }
-  
+
   void set(const Chains &chains, const Pixel &value, const Circle &circle) {
     set(chains, value, circle.r(), circle.extents());
   }
-  
+
   template <typename T> void set(const T &t, const Pixel &value) {
     for (typename T::const_iterator i = t.begin(); i != t.end(); ++i) {
       set(*i, value);
     }
   }
-  
+
   template <typename I> void set(const IPoint &p, const Pixel &value, I i, const I &iEnd) {
     for (; i != iEnd; ++i) {
       set(p + *i, value);
     }
   }
-  
+
   template <typename T> void set(const IPoint &p, const Pixel &value, const T &t) {
     set(p, value, t.points());
   }
-  
+
   /*
   template<typename I, typename DX, typename DXY>
   void draw(const Chains &chains, const Pixel &value,
@@ -381,13 +383,13 @@ public:
         if (dy < 0) {
           matrix = matrix.concat(IMatrix::flipY());
         }
-        
+
         p = *c;
-        
+
         if (dx != 0 && dy != 0) {
-          drawAll(set, IPoint(0, 0), deltaXY, matrix);          
+          drawAll(set, IPoint(0, 0), deltaXY, matrix);
         } else {
-          drawAll(set, IPoint(0, 0), deltaX, matrix);          
+          drawAll(set, IPoint(0, 0), deltaX, matrix);
         }
       }
     }
@@ -404,53 +406,53 @@ public:
     draw(chains, value, initial, deltaX, deltaXY);
   }
    */
-  
+
   void draw(const Chains &chains, const Pixel &value, const Circle &circle) {
     Set set(*this, value);
     for (Chains::const_iterator i = chains.begin(); i != chains.end(); ++i) {
       circle.setAll(i->begin(), i->end(), set);
     }
   }
-    
+
   void setAll(const Pixel &value) {
     for (int y = 0; y < height_; ++y) {
       for (int x = 0; x < width_; x++) {
-        at(y, x) = value;
+        at(x, y) = value;
       }
     }
   }
-  
+
   void line(const IPoint &p0, const IPoint &p1, const Pixel &value) {
-    Primitives::line(p0.x(), p0.y(), p1.x(), p1.y(), setXY(value));
+    Primitives::line(p0.x(), p0.y(), p1.x(), p1.y(), set(value));
   }
 
   void line(int x0, int y0, int x1, int y1, const Pixel &value) {
-    Primitives::line(x0, y0, x1, y1, setXY(value));
+    Primitives::line(x0, y0, x1, y1, set(value));
   }
 
   void line(const IPoint &p0, const IPoint &p1, const Pixel &value, const Circle &circle) {
-    Primitives::line(p0.x(), p0.y(), p1.x(), p1.y(), setXY(value), circle);
+    Primitives::line(p0.x(), p0.y(), p1.x(), p1.y(), set(value), circle);
   }
-  
+
   void line(int x0, int y0, int x1, int y1, const Pixel &value, const Circle &circle) {
-    Primitives::line(x0, y0, x1, y1, setXY(value), circle);
+    Primitives::line(x0, y0, x1, y1, set(value), circle);
   }
-  
+
   bool operator==(const Image<Pixel> &other) const {
     if (other.width_ != width_) return false;
     if (other.height_ != height_) return false;
     for (int y = 0; y < height_; y++) {
       for (int x = 0; x < width_; x++) {
-        if (other.at(y, x) != at(y, x)) return false;
+        if (other.at(x, y) != at(x, y)) return false;
       }
     }
     return true;
   }
-  
+
   bool operator!=(const Image<Pixel> &other) const {
     return !(*this == other);
   }
-  
+
 #define DECLARE_OP(op, name)                                             \
 shared_ptr<Bitmap> name(const Pixel &value) const;			                 \
 shared_ptr<Bitmap> name(const Pixel &value, int threads) const;		       \
@@ -464,17 +466,17 @@ shared_ptr<Bitmap> operator op(Workers::Job<Pixel> &job) const;
   DECLARE_OP(<=, le);
   DECLARE_OP(==, eq);
   DECLARE_OP(!=, ne);
-  
+
 #undef DECLARE_OP
 
   shared_ptr<Bitmap> distribute(void (*func)(void *), Pixel value, Workers &workers) const;
-  
+
   Pixel min() const;
   Pixel min(Workers &workers) const;
-  
+
   Pixel max() const;
   Pixel max(Workers &workers) const;
-    
+
   static void ge(void *); // takes a Range<Bitmap::iterator>
   static void gt(void *); // takes a Range<Bitmap::iterator>
   static void le(void *); // takes a Range<Bitmap::iterator>
@@ -483,12 +485,12 @@ shared_ptr<Bitmap> operator op(Workers::Job<Pixel> &job) const;
   static void ne(void *); // takes a Range<Bitmap::iterator>
   static void min(void *);  // takes a ReductionRange
   static void max(void *);  // takes a ReductionRange
-  
+
   template<typename F, typename R> shared_ptr< Image<R> > apply(F &f) {
     shared_ptr< Image<R> > result = Image<R>::make(width(), height(), false);
     for (int y = 0; y < height(); ++y) {
       for (int x = 0; x < width(); ++x) {
-        result.at(y, x) = f(get(y, x));
+        result.at(x, y) = f(get(x, y));
       }
     }
   }
@@ -500,7 +502,7 @@ template <typename P> ostream &operator<<(ostream &out, const Image<P> &i) {
   out << hex;
   for (y = 0; y < i.height(); y++) {
     for (x = 0; x < i.width(); x ++) {
-      out << i.at(y, x) << " ";
+      out << i.at(x, y) << " ";
     }
     out << endl;
   }

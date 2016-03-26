@@ -122,21 +122,29 @@ static bool checkArg(int argc, const char * const * const argv, int &argn, const
 }
 
 class Tool {
-  int r_;
+public:
+  typedef uint16_t H;
+  typedef GreyImage<H> HeightMap;
+  typedef shared_ptr<HeightMap> HeightMapRef;
+
+private:
+  HeightMapRef shape_;
   int zUp_;
   int zDown_;
   int zBottom_;
 public:
-  Tool(int r) : r_(r), zUp_(40), zDown_(0), zBottom_(-256) {}
-  
-  const int r() const { return r_; }
-  void setR(int r) { r_ = r; }
+  Tool(HeightMapRef shape) : shape_(shape), zUp_(40), zDown_(0), zBottom_(-256) {}
+
+  HeightMapRef shape() { return shape_; }
+  const HeightMapRef shape() const { return shape_; }
+  void setShape(HeightMapRef shape) { shape_ = shape; }
+
   const int hpglIndex() const { return 1; }
   const double zLevel() const { return (double)(zDown_) / (double)(zBottom_); }
   const double cFraction() const { return zLevel(); }
   const double mFraction() const { return zLevel(); }
   const double yFraction() const { return zLevel(); }
-  
+
   const int zUp() const { return zUp_; }
   void setZUp(int z) { zUp_ = z; }
   const int zDown() const { return zDown_; }
@@ -164,12 +172,12 @@ int main(int argc, char * const argv[]) {
   double scale = 1.0;
   Tool tool(40); // 1mm radius = 2mm tool.
   int threads = 4;  // run reasonably parallel if we can.
-  
+
   int extraInset = 0;  // 0.2mm extra inset in the roughing pass
   int dz = 1;  // how far apart the layers are
-  
+
   bool concentric = false;
-    
+
   for (; argn < argc && argv[argn][0] == '-' && strlen(argv[argn]) > 1; argn++) {
     string arg(argv[argn]);
     bool hasSpec = false;
@@ -283,7 +291,7 @@ int main(int argc, char * const argv[]) {
       exit(1);
     }
   }
-  
+
   string inputFile;
 
   if (argn == argc-1) {
@@ -296,37 +304,37 @@ int main(int argc, char * const argv[]) {
     cerr << endl << flush;
     exit(1);
   }
-  
+
   // if there's no output specified, use a default one.
   if (outputs.size() == 0) {
     cerr << "No output specified, writing RML1 to standard output" << endl << flush;
     outputs.push_back(new RML1Output<Tool>(cout));
   }
-  
+
   FILE *f;
   if ("-" == inputFile) {
     cerr << "* Reading image from standard input" << endl << flush;
     f = stdin;
   } else {
     cerr << "* Reading image '" << inputFile << "'" << endl << flush;
-    
+
     f = fopen(inputFile.c_str(), "r");
     if (f == NULL) {
       cerr << "unable to open input file '" << inputFile << "'!" << endl << flush;
       exit(1);
     }
   }
-  
+
   HeightMapRef heightMap = HeightMap::readPngHeightmap(f);
-  
+
   cerr << "running with " << threads << " threads" << endl << flush;
   Workers workers(threads);
-  
+
   if (scale != 1.0) {
     heightMap = scaleImage(heightMap, scale);
   }
   // Approximator *approximator = NULL;
-  
+
   if (approximate) {
   }
 
@@ -338,15 +346,15 @@ int main(int argc, char * const argv[]) {
   if (steps) {
     extractor.setStepper(stepper = new Stepper(stepPrefix));
   }
-  
+
   if (approximate) {
     // extractor.setApproximator(approximator);
     // approximator->setPenColor(PenColor<C>(1.0, 1.0, 1.0));
   }
-  
+
   H minZ = heightMap->min(workers);
   H maxZ = heightMap->max(workers);
-  
+
   for (int z = maxZ; z >= minZ; z -= dz) {
     if (stepper) {
       ostringstream s;
@@ -367,18 +375,18 @@ int main(int argc, char * const argv[]) {
     outline.simplify(1.5);
     fill.simplify(1.5);
   }
-  
+
   int defaultOffset = 1 + tool.r();
-  
+
   IMatrix transform = IMatrix::translate(-defaultOffset, -defaultOffset);
-  
+
   cerr << "initial transform: " << transform << endl << flush;
 
   cerr << "offsetX = " << offsetX << ", offsetY = " << offsetY << endl << flush;
   if (offsetX != 0 || offsetY != 0) {
     transform = transform.concat(IMatrix::translate(offsetX, offsetY));
   }
-  cerr << "after offset: " << transform << endl << flush;  
+  cerr << "after offset: " << transform << endl << flush;
 
   cerr << "rotation = " << rotation << endl << flush;
   if (rotation == Left) {
@@ -402,13 +410,13 @@ int main(int argc, char * const argv[]) {
       maxY = max(p.y(), maxY);
     }
   }
-  
+
   cerr << "minX = " << minX << ", minY = " << minY << ", maxX = " << maxX << ", maxY = " << maxY << endl << flush;
-  
+
   // Finally, adjust for the top-to-bottom Y of our bitmaps
   // vs the bottom-to-top Y of our output devices
   IMatrix adjustment(1, 0, 0, -1, 0, heightMap->height());
-  transform = transform.concat(adjustment);  
+  transform = transform.concat(adjustment);
   cerr << "after adjustment: " << transform << endl << flush;
 
   for (list< Output<Tool>* >::const_iterator outIter = outputs.begin();
@@ -420,14 +428,14 @@ int main(int argc, char * const argv[]) {
 
   list<Chains>::iterator outlineIter = outlineChains.begin();
   list<Chains>::iterator fillIter = fillChains.begin();
-  
+
   tool.setZBottom(minZ - maxZ);
   for (int z = maxZ; z >= minZ; z -= dz) {
     Chains &outline = *outlineIter++;
     Chains &fill = *fillIter++;
-    
+
     tool.setZDown(z - maxZ);
-    
+
     if (transform != IMatrix::identity()) {
       cerr << "- applying transform " << transform << endl << flush;
       outline.transform(transform);
@@ -435,7 +443,7 @@ int main(int argc, char * const argv[]) {
     } else {
       cerr << "-  skipping identity transform " << transform << endl << flush;
     }
-    
+
     for (list< Output<Tool>* >::const_iterator outIter = outputs.begin();
          outIter != outputs.end(); ++outIter) {
       (*outIter)->setPen(tool);
@@ -451,11 +459,11 @@ int main(int argc, char * const argv[]) {
     delete (*outIter);
   }
   outputs.clear();
-  
+
   if (approximate) {
 //    cerr << "    . drawing final approximation" << endl;
 //    approximator->approximation().writePng(approximationFilename.c_str());
-    
+
 //    delete approximator;
 //    approximator = NULL;
   }

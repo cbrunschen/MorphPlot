@@ -246,7 +246,7 @@ inline ostream &operator<<(ostream &out, const GreyImage<C> &i) {
   out << hex;
   for (y = 0; y < i.height(); y++) {
     for (x = 0; x < i.width(); x ++) {
-      Component<C>::print(out, i.at(y, x));
+      Component<C>::print(out, i.at(x, y));
     }
     out << endl;
   }
@@ -425,11 +425,11 @@ shared_ptr< GreyImage<T> > readPng(FILE *fp, T defaultBackground) {
     int zom = 0, znm = 0;
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        uint16_t z = result->at(y, x);
+        uint16_t z = result->at(x, y);
         if (z > zom) zom = z;
         z = z >> shift;
         if (z > znm) znm = z;
-        result->at(y, x) = z;
+        result->at(x, y) = z;
       }
     }
     cerr << "zMax should have shifted from " << zom << " to " << znm << endl << flush;

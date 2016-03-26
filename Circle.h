@@ -30,13 +30,13 @@ class Circle {
   mutable vector<int> *directionsCcw_;
   mutable vector<IPoint> *offsetsCw_;
   mutable vector<IPoint> *offsetsCcw_;
-  
+
   typedef unordered_map<int, list<IPoint> > Deltas;
   mutable Deltas deltas_;
 
 public:
   static int makeExtents(int r, int extents[], double adjust = 0.0);
-  
+
   template<typename I>
   static void makePoints(int r, int extents[], I i) {
     // centre point
@@ -58,25 +58,25 @@ public:
       }
     }
   }
-  
+
   static int getExtent(int r, int extents[], int y) {
     if (y < 0) y = -y;
     if (y > r) return 0;
     if (y == 0) return r;
     return extents[y - 1];
   }
-    
+
   template<typename I>
   static void makeNeighbourhoodDelta(int r, int extents[], I i, const list<IPoint>& circlePoints, int neighbours) {
     // cerr << "making delta for neighbourhood " << PH<int>(neighbours) << ": ";
     unordered_set<IPoint> result;
     copy(circlePoints.begin(), circlePoints.end(), inserter(result, result.begin()));
-    
+
     // cerr << "points without neighbours: ";
     // for (unordered_set<IPoint>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
     //   cerr << *ii << ", ";
     // cerr << ";" << endl;
-    
+
     for (int j = 0; j < DIRECTIONS; j++) {
       if (neighbours & (1 << j)) {
         // cerr << "removing direction " << j << ": ";
@@ -87,7 +87,7 @@ public:
              ++p) {
           result.erase(p->offset(dx, dy));
         }
-        
+
         // cerr << "remaining: ";
         // for (unordered_set<IPoint>::const_iterator ii = result.begin(); ii != result.end(); ++ii)
         //   cerr << *ii << ", ";
@@ -96,7 +96,7 @@ public:
     }
     copy(result.begin(), result.end(), i);
   }
-  
+
 public:
   Circle(int r)
   : r_(r), area_(0), extents_(new int[r]), points_(NULL), directionsCw_(NULL), directionsCcw_(NULL), offsetsCw_(NULL), offsetsCcw_(NULL)
@@ -104,7 +104,7 @@ public:
     int count = makeExtents(r_, extents_);
     area_ = 4 * (count + r) + 1;
   }
-  
+
   virtual ~Circle() {
     delete extents_;
     if (points_) delete points_;
@@ -113,19 +113,19 @@ public:
     if (offsetsCw_) delete offsetsCw_;
     if (offsetsCcw_) delete offsetsCcw_;
   }
-  
+
   int r() const {
     return r_;
   }
-  
+
   int area() const {
     return area_;
   }
-  
+
   const int * const extents() const {
     return extents_;
   }
-  
+
   const list<IPoint> &points() const {
     if (!points_) {
       points_ = new list<IPoint>;
@@ -133,31 +133,31 @@ public:
     }
     return *points_;
   }
-  
+
   const list<IPoint> &getDelta(int neighbours) const {
     Deltas::iterator i = deltas_.find(neighbours);
     if (i == deltas_.end()) {
       list<IPoint> &delta = deltas_[neighbours];
       makeNeighbourhoodDelta(r_, extents_, back_inserter(delta), points(), neighbours);
-      return delta;              
+      return delta;
     } else {
       return i->second;
     }
   }
-  
+
   const list<IPoint> &getHorizontalDelta() const {
     return getDelta(1 << Neighbourhood::W);
   }
-  
+
   const list<IPoint> &getDiagonalDelta() const {
     return getDelta(1 << Neighbourhood::NW);
   }
-  
+
   const list<IPoint> &getDeltaForDirection(int dir) const {
     if (dir < 0 || DIRECTIONS <= dir) return noPoints_;
     return getDelta(1 << dir);
   }
-  
+
   template<typename I, typename J> static void makeOffsets(I i, IPoint p, J j, const J &jEnd) {
     *i++ = p;
     while (j != jEnd) {
@@ -165,12 +165,12 @@ public:
       *i++ = p;
     }
   }
-  
+
   void ensureDirectionsAndOffsets() const {
     if (!directionsCw_) {
       list<int> directionsCw;
       list<int> directionsCcw;
-      
+
       // quadrant NE
       int x = r_, e = 0, y;
       for (y = 1; y <= r_; y++) {
@@ -182,7 +182,7 @@ public:
             directionsCw.push_back(W);
             directionsCcw.push_back(W);
             x--;
-          }          
+          }
           D(cerr << "NW ");
           directionsCw.push_back(NW);
           directionsCcw.push_back(SW);
@@ -194,7 +194,7 @@ public:
         }
         D(cerr << endl);
       }
-      
+
       // top
       y--;
       D(cerr << "y=" << y << ", x=" << x << ", -e=" << -e << " => ");
@@ -205,7 +205,7 @@ public:
         x--;
       }
       D(cerr << endl);
-      
+
       // Quadrant NW
       for (y--; y >= 0; y--) {
         e = getExtent(r_, extents_, y);
@@ -220,7 +220,7 @@ public:
             directionsCw.push_back(W);
             directionsCcw.push_back(W);
             x--;
-          }          
+          }
         } else {
           D(cerr << "S ");
           directionsCw.push_back(S);
@@ -228,7 +228,7 @@ public:
         }
         D(cerr << endl);
       }
-      
+
       // quadrant SW
       for (; y >= -r_; y--) {
         e = getExtent(r_, extents_, y);
@@ -239,7 +239,7 @@ public:
             directionsCw.push_back(E);
             directionsCcw.push_back(E);
             x++;
-          }          
+          }
           D(cerr << "SE ");
           directionsCw.push_back(SE);
           directionsCcw.push_back(NE);
@@ -251,7 +251,7 @@ public:
         }
         D(cerr << endl);
       }
-      
+
       // bottom
       y++;
       D(cerr << "y=" << y << ", x=" << x << ", e=" << e << " => ");
@@ -262,7 +262,7 @@ public:
         x++;
       }
       D(cerr << endl);
-      
+
       // Quadrant SE
       for (y++; y <= 0; y++) {
         e = getExtent(r_, extents_, y);
@@ -285,30 +285,30 @@ public:
         }
         D(cerr << endl);
       }
-      
+
       offsetsCw_ = new vector<IPoint>(directionsCw.size() + 1);
       makeOffsets(offsetsCw_->begin(), IPoint(r_, 0), directionsCw.begin(), directionsCw.end());
-      
+
       offsetsCcw_ = new vector<IPoint>(directionsCw.size() + 1);
       makeOffsets(offsetsCcw_->begin(), IPoint(r_, 0), directionsCcw.begin(), directionsCcw.end());
-      
+
 #if DEBUG
       cerr << "CW Directions: " << directionsCw << endl;
       cerr << "CW Offsets: " << *offsetsCw_ << endl;
       cerr << "CCW Directions: " << directionsCcw << endl;
       cerr << "CCW Offsets: " << *offsetsCcw_ << endl << flush;
 #endif
-      
+
       directionsCw_ = new vector<int>();
       directionsCw_->reserve(directionsCw.size() * 2);
       copy(directionsCw.begin(), directionsCw.end(), back_inserter(*directionsCw_));
       copy(directionsCw.begin(), directionsCw.end(), back_inserter(*directionsCw_));
-      
+
       directionsCcw_ = new vector<int>();
       directionsCcw_->reserve(directionsCw.size() * 2);
       copy(directionsCcw.begin(), directionsCcw.end(), back_inserter(*directionsCcw_));
       copy(directionsCcw.begin(), directionsCcw.end(), back_inserter(*directionsCcw_));
-      
+
 #if DEBUG
       cerr << "CW Directions: " << *directionsCw_ << endl;
       cerr << "CW Offsets: " << *offsetsCw_ << endl;
@@ -317,10 +317,10 @@ public:
 #endif
     }
   }
-  
+
   template<typename I, typename J> static void makeDirections(J j, const J &jEnd, I i) {
     if (j == jEnd) return;
-    
+
     IPoint p = *j++;
     while (j != jEnd) {
       IPoint q = *j++;
@@ -328,15 +328,15 @@ public:
       p = q;
     }
   }
-  
+
   template<typename Result, typename Source> void findOffsets(Source source, const Source &sourceEnd, Result result) {
     if (source == sourceEnd) return;
-    
+
     vector<int> directions;
     makeDirections(source, sourceEnd, back_inserter(directions));
-    
+
     ensureDirectionsAndOffsets();
-    
+
     for (int i = 0; i <= offsetsCw_->size(); i++) {
       bool match = true;
       for (int j = 0; match && j < directions.size(); j++) {
@@ -345,7 +345,7 @@ public:
       if (match) {
         *result++ = *source - (*offsetsCw_)[i];
       }
-      
+
       match = true;
       for (int j = 0; match && j < directions.size(); j++) {
         match = ((*directionsCcw_)[i + j] == directions[j]);
@@ -355,7 +355,7 @@ public:
       }
     }
   }
-  
+
   template<typename Source, typename Result, typename Check> void filterOffsets(Source source, const Source &sourceEnd, Check &check, Result result) {
     for (; source != sourceEnd; ++source) {
       IPoint p = *source;
@@ -368,7 +368,7 @@ public:
       }
     }
   }
-  
+
   template<typename Result, typename Check> bool addFiltered(const IPoint &p, Check &check, Result &result) {
     bool allOk = true;
     for (list<IPoint>::const_iterator q = points().begin(); allOk && q != points().end(); ++q) {
@@ -380,7 +380,7 @@ public:
     }
     return false;
   }
-  
+
   template<typename Dir, typename Result, typename Check> int _findFilteredOffsets(const vector<int> *directions, const vector<IPoint> *offsets, const IPoint &p, const Dir &dirStart, const Dir &dirEnd, Check &check, Result result) {
     int added = 0;
     for (int i = 0; i < offsets->size(); i++) {
@@ -395,22 +395,22 @@ public:
     }
     return added;
   }
-  
+
   template<typename Dir, typename Result, typename Check> int _findFilteredOffsets(const IPoint &p, const Dir &dirStart, const Dir &dirEnd, Check &check, Result result) {
     return _findFilteredOffsets(directionsCw_, offsetsCw_, p, dirStart, dirEnd, check, result)
         + _findFilteredOffsets(directionsCcw_, offsetsCcw_, p, dirStart, dirEnd, check, result);
   }
-  
+
   template<typename Source, typename Result, typename Check> int findFilteredOffsets(Source source, const Source &sourceEnd, Check &check, Result result) {
     if (source == sourceEnd) return 0;
-    
+
     vector<int> directions;
     makeDirections(source, sourceEnd, back_inserter(directions));
-    
+
     ensureDirectionsAndOffsets();
-    
+
     int added = _findFilteredOffsets(*source, directions.begin(), directions.end(), check, result);
-    
+
     if (added == 0 && directions.size() > 0) {
       vector<int>::const_iterator dirEnd = directions.end();
       for (Source s = source; s != sourceEnd; ++s) {
@@ -419,13 +419,13 @@ public:
     }
     return added;
   }
-  
+
   template<typename Set> void setAt(const IPoint &p, Set s) const {
     for (list<IPoint>::const_iterator i = points().begin(); i != points().end(); ++i) {
       s(p + *i);
     }
   }
-  
+
   template<typename I, typename Set> void setAll(I i, const I &iEnd, Set s) const {
     for (; i != iEnd; ++i) {
       setAt(*i, s);

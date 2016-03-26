@@ -26,42 +26,42 @@ public:
   PlotterPathExtractor() : PathExtractor(), dither_(true) { }
 
   BitmapRef outline(Chains &outlineChains, BitmapRef remaining, int penRadius, Circle &penCircle, Image<int> marks) {
-    
+
     if (steps()) {
       (*out_) << "    . drawing initial remainder" << endl;
       remaining->writePng(stepper_->makeName("remaining_before.png"));
     }
-    
+
     (*out_) << "  - Insetting by " << penRadius << endl;
     BitmapRef inset(remaining->inset(penRadius));
-    
+
     if (steps()) {
       (*out_) << "    . drawing inset" << endl;
       inset->writePng(stepper_->makeName("inset.png"));
     }
-    
+
     (*out_) << "  - removing thin parts of inset" << endl;
     BitmapRef thinInsetReference = inset->clone();
     inset->clearThinConnected();
     inset = inset->reconstruct(thinInsetReference);
-    
+
     if (steps()) {
       (*out_) << "    . drawing inset minus thin parts" << endl;
       inset->writePng(stepper_->makeName("inset_without_thin.png"));
     }
-    
+
     (*out_) << "  - Scanning inset boundaries" << endl;
     marks.clear();
     vector<Boundary> boundaries;
     inset->scanBoundaries(boundaries, marks, false);
-    
+
     (*out_) << "  - Outsetting again to generate coverage" << endl;
     BitmapRef covered(inset->outset(penRadius));
     if (steps()) {
       (*out_) << "    . drawing outset" << endl;
       covered->writePng(stepper_->makeName("covered.png"));
     }
-    
+
     (*out_) << "  - Merging outline chains" << endl;
     // merge the outline chains
     for (vector<Boundary>::iterator b = boundaries.begin();
@@ -69,7 +69,7 @@ public:
          ++b) {
       outlineChains.moveChains(*b);
     }
-    
+
     return covered;
   }
 
@@ -204,8 +204,7 @@ public:
       for (Boundary::iterator c = b->begin(); c != b->end(); ++c) {
         Chain &chain = *c;
         set<IPoint> &current = circleCentersByChain[&chain];
-        penCircle.findFilteredOffsets(c->begin(), c->end(), alreadyCovered->get(),
-                                      inserter(current, current.begin()));
+        penCircle.findFilteredOffsets(c->begin(), c->end(), alreadyCovered->get(inserter(current, current.begin(, ))));
         copy(current.begin(), current.end(),
              inserter(adjacentCircleCenters, adjacentCircleCenters.begin()));
       }

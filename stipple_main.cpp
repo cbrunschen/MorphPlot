@@ -117,12 +117,12 @@ inline static void addIfDifferent(const IPoint &a, const IPoint &b, NBS &result)
 template<typename NBS>
 void getNeighbours_workerFunction(void *v) {
   GetNeighboursParams<NBS> *params = static_cast<GetNeighboursParams<NBS> *>(v);
- 
+
   const IPoint *qx, *qy, *qxy;
 
   if (params->y0 == 0) {
     // This is the top chunk; it has to deal with the top row, and thus also the top pixel in the left column, differently.
-    
+
     // top row
     qx = params->regions->data();
     for (int x = 1; x < params->w; x++) {
@@ -138,7 +138,7 @@ void getNeighbours_workerFunction(void *v) {
       addIfDifferent(*p, *qy, params->neighboursBySite);
       qy = p;
     }
-    
+
     // the rest of the image
     for (int y = 1; y < params->y1; y++) {
       qxy = &params->regions->data()[(y-1) * params->w];
@@ -146,12 +146,12 @@ void getNeighbours_workerFunction(void *v) {
       qx = qxy + params->w;
       for (int x = 1; x < params->w; x++) {
         const IPoint *p = qx + 1;
-        
+
         addIfDifferent(*p, *qx, params->neighboursBySite);
         addIfDifferent(*p, *qy, params->neighboursBySite);
         addIfDifferent(*p, *qxy, params->neighboursBySite);
         addIfDifferent(*qx, *qy, params->neighboursBySite);
-        
+
         qx = p;
         ++qxy;
         ++qy;
@@ -165,7 +165,7 @@ void getNeighbours_workerFunction(void *v) {
       addIfDifferent(*p, *qy, params->neighboursBySite);
       qy = p;
     }
-    
+
     // the rest of the image, including the top row
     for (int y = params->y0; y < params->y1; y++) {
       qxy = &params->regions->data()[(y-1) * params->w];
@@ -173,12 +173,12 @@ void getNeighbours_workerFunction(void *v) {
       qx = qxy + params->w;
       for (int x = 1; x < params->w; x++) {
         const IPoint *p = qx + 1;
-        
+
         addIfDifferent(*p, *qx, params->neighboursBySite);
         addIfDifferent(*p, *qy, params->neighboursBySite);
         addIfDifferent(*p, *qxy, params->neighboursBySite);
         addIfDifferent(*qx, *qy, params->neighboursBySite);
-        
+
         qx = p;
         ++qxy;
         ++qy;
@@ -191,9 +191,9 @@ template<typename NBS>
 void getNeighbours_single(const Image<IPoint> &vd, NBS &neighboursBySite) {
   int w = vd.width();
   int h = vd.height();
-  
+
   const IPoint *qx, *qy, *qxy;
-  
+
   // left column
   qy = vd.data();
   for (int y = 1; y < h; y++) {
@@ -201,7 +201,7 @@ void getNeighbours_single(const Image<IPoint> &vd, NBS &neighboursBySite) {
     addIfDifferent(*p, *qy, neighboursBySite);
     qy = p;
   }
-  
+
   // top row
   qx = vd.data();
   for (int x = 1; x < w; x++) {
@@ -209,7 +209,7 @@ void getNeighbours_single(const Image<IPoint> &vd, NBS &neighboursBySite) {
     addIfDifferent(*p, *qx, neighboursBySite);
     qx = p;
   }
-  
+
   // the rest of the image
   for (int y = 1; y < h; y++) {
     qxy = &vd.data()[(y-1) * w];
@@ -217,12 +217,12 @@ void getNeighbours_single(const Image<IPoint> &vd, NBS &neighboursBySite) {
     qx = qxy + w;
     for (int x = 1; x < w; x++) {
       const IPoint *p = qx + 1;
-      
+
       addIfDifferent(*p, *qx, neighboursBySite);
       addIfDifferent(*p, *qy, neighboursBySite);
       addIfDifferent(*p, *qxy, neighboursBySite);
       addIfDifferent(*qx, *qy, neighboursBySite);
-      
+
       qx = p;
       ++qxy;
       ++qy;
@@ -233,13 +233,13 @@ void getNeighbours_single(const Image<IPoint> &vd, NBS &neighboursBySite) {
 template<typename NBS>
 void getNeighbours(const Image<IPoint> &vd, NBS &neighboursBySite, Workers &workers) {
   int threads = workers.n();
-  
+
   if (threads == 1) {
     getNeighbours_single(vd, neighboursBySite);
   } else {
     int w = vd.width();
     int h = vd.height();
-    
+
     GetNeighboursParams<NBS> *params = new GetNeighboursParams<NBS>[threads];
     int top = 0;
     for (int i = 0; i < threads; i++) {
@@ -250,15 +250,15 @@ void getNeighbours(const Image<IPoint> &vd, NBS &neighboursBySite, Workers &work
       params[i].regions = &vd;
       top = bottom;
     }
-    
+
     workers.perform(getNeighbours_workerFunction<NBS>, params);
-    
+
     for (int i = 0; i < threads; i++) {
       for (auto j = params[i].neighboursBySite.begin(); j != params[i].neighboursBySite.end(); j++) {
         neighboursBySite[j->first].insert(j->second.begin(), j->second.end());
       }
     }
-    
+
     delete [] params;
   }
 }
@@ -319,8 +319,8 @@ void calculateCentroid_workerFunction(void *v) {
   CentroidCalculationParams<WRBS> *params = static_cast<CentroidCalculationParams<WRBS> *>(v);
   for (int y = params->y0; y < params->y1; y++) {
     for (int x = 0; x < params->w; x++) {
-      const IPoint &p = params->regions->at(y, x);
-      int weight = WEIGHT_MAX - params->weights->at((int) floor(y / params->yScale), (int) floor(x / params->xScale));
+      const IPoint &p = params->regions->at(x, y);
+      int weight = WEIGHT_MAX - params->weights->at((int, (int) floor(y / params->yScale)) floor(x / params->xScale));
       params->weightedRegionsBySite[p].add(x - p.x(), y - p.y(), weight);
     }
   }
@@ -330,14 +330,14 @@ template<typename WRBS>
 inline void calculateCentroids_single(const Image<IPoint> &regions, const Image<uint8_t> &weights, WRBS &weightedRegionsBySite) {
   int w = regions.width();
   double xScale = (double)w / (double)weights.width();
-  
+
   int h = regions.height();
   double yScale = (double)h / (double)weights.height();
 
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
-      const IPoint &p = regions.at(y, x);
-      int weight = WEIGHT_MAX - weights.at((int) floor(y / yScale), (int) floor(x / xScale));
+      const IPoint &p = regions.at(x, y);
+      int weight = WEIGHT_MAX - weights.at((int, (int) floor(y / yScale)) floor(x / xScale));
       weightedRegionsBySite[p].add(x - p.x(), y - p.y(), weight);
     }
   }
@@ -346,13 +346,13 @@ inline void calculateCentroids_single(const Image<IPoint> &regions, const Image<
 template<typename WRBS>
 void calculateCentroids(const Image<IPoint> &regions, const Image<uint8_t> &weights, WRBS &weightedRegionsBySite, Workers &workers) {
   int threads = workers.n();
-  
+
   if (threads == 1) {
     calculateCentroids_single(regions, weights, weightedRegionsBySite);
   } else {
     int w = regions.width();
     double xScale = (double)w / (double)weights.width();
-    
+
     int h = regions.height();
     double yScale = (double)h / (double)weights.height();
 
@@ -369,16 +369,16 @@ void calculateCentroids(const Image<IPoint> &regions, const Image<uint8_t> &weig
       calcParams[i].weights = &weights;
       top = bottom;
     }
-    
+
     workers.perform(calculateCentroid_workerFunction<WRBS>, calcParams);
-    
+
     for (int i = 0; i < threads; i++) {
       WRBS &wrbs = calcParams[i].weightedRegionsBySite;
       for (auto j = wrbs.begin(); j != wrbs.end(); j++) {
         weightedRegionsBySite[j->first].add(j->second);
       }
     }
-   
+
     delete [] calcParams;
   }
 }
@@ -452,7 +452,7 @@ void twoOpt(V &v) {
         }
       }
     }
-    
+
     if (bestImprovement > 0.0) {
       reverse(v, aMin+1, bMin - aMin);
       cerr << "2-opt iteration " << i << ": improvement by " << bestImprovement << " at " << aMin << "," << bMin << endl << flush;
@@ -481,11 +481,11 @@ void randomTwoOpt(V &v) {
     }
     int sa = a+1;
     int sb = b+1;
-    
+
     double dBefore = d(v[a], v[sa]) + d(v[b], v[sb]);
     double dAfter = d(v[a], v[b]) + d(v[sb], v[sa]);
     double improvement = dBefore - dAfter;
-    
+
     if (improvement > 0.0) {
       unreportedImprovement += improvement;
       ++unreportedSwaps;
@@ -494,7 +494,7 @@ void randomTwoOpt(V &v) {
     } else {
       ++unimproved;
     }
-    
+
     if (i % 1000000 == 0) {
       cerr << "2-opt iteration " << i << ": improvement by " << unreportedImprovement << " in " << unreportedSwaps << " swaps" << endl << flush;
       unreportedImprovement = 0;
@@ -530,7 +530,7 @@ void continuousTwoOpt(V &v) {
       cerr << "], length " << total << endl << flush;
     }
 #endif
-    
+
     for (int a = 0; a < n - 2; a++) {
       int sa = a + 1;
       for (int b = a + 2; b < n; b++) {
@@ -546,7 +546,7 @@ void continuousTwoOpt(V &v) {
         }
       }
     }
-    
+
     if (totalImprovement > 0.0) {
       cerr << "continuous 2-opt iteration " << i << ": improvement by " << totalImprovement << " in " << swaps << " swaps" << endl << flush;
     } else {
@@ -563,7 +563,7 @@ void threeOpt(V &v, N &neighbours) {
   for (int i = 0;; i++) {
     int aMin = -1, bMin = -1, cMin = -1;
     double bestImprovement = -numeric_limits<double>::infinity();
-    
+
     {
       cerr << "3-opt, tour=[  ";
       double total = 0.0;
@@ -578,7 +578,7 @@ void threeOpt(V &v, N &neighbours) {
       }
       cerr << "], length " << total << endl << flush;
     }
-    
+
     for (int a = 0; a < n-3; a++) {
       int sa = a+1;
       auto &na = neighbours[v[a]];
@@ -603,11 +603,11 @@ void threeOpt(V &v, N &neighbours) {
           double dAB = d(v[a], v[sb]);
           double dCA = d(v[c], v[sa]);
           double dBC = d(v[b], v[sc]);
-          
+
           double dBefore = dAA + dBB + dCC;
           double dAfter = dAB + dCA + dBC;
           double improvement = dBefore - dAfter;
-          
+
 //          cerr << "* (" << a << "," << b << "," << c << "): " << dBefore << " -> " << dAfter << endl << flush;
           if (improvement > bestImprovement) {
             aMin = a;
@@ -621,7 +621,7 @@ void threeOpt(V &v, N &neighbours) {
         }
       }
     }
-    
+
     if (bestImprovement > 0.0) {
       cerr << "3-opt iteration " << i << ": improvement by " << bestImprovement << " at " << aMin << "," << bMin << "," << cMin << endl << flush;
       rotateLeft(v, aMin+1, cMin - aMin, bMin - aMin);
@@ -657,13 +657,13 @@ void randomThreeOpt(V &v, N &neighbours) {
       cerr << "], length " << total << endl << flush;
     }
 #endif
-    
+
     uniform_int_distribution<int> dist(0, n-6);
-    
+
     int x = dist(rng);
     int y = dist(rng);
     int z = dist(rng);
-    
+
     if (y < x) {
       swap(x, y);
     }
@@ -673,11 +673,11 @@ void randomThreeOpt(V &v, N &neighbours) {
     if (y < x) {
       swap(x, y);
     }
-    
+
     int a = x, sa = a+1;
     int b = y + 2, sb = b + 1;
     int c = z + 4, sc = c + 1;
-    
+
     double dAA = d(v[a], v[sa]);
     double dBB = d(v[b], v[sb]);
     double dCC = d(v[c], v[sc]);
@@ -688,7 +688,7 @@ void randomThreeOpt(V &v, N &neighbours) {
     double dBefore = dAA + dBB + dCC;
     double dAfter = dAB + dCA + dBC;
     double improvement = dBefore - dAfter;
-    
+
     if (improvement > 0.0) {
       unreportedImprovement += improvement;
       ++unreportedSwaps;
@@ -697,7 +697,7 @@ void randomThreeOpt(V &v, N &neighbours) {
     } else {
       ++unimproved;
     }
-    
+
     if (i % 1000000 == 0) {
       cerr << "3-opt iteration " << i << ": improvement by " << unreportedImprovement << " in " << unreportedSwaps << " swaps" << endl << flush;
       unreportedImprovement = 0;
@@ -718,12 +718,12 @@ void addRandomStipples(T &stipples, int nStipples, const I &weights, double scal
   uniform_int_distribution<int> randX(0, w-1);
   uniform_int_distribution<int> randY(0, h-1);
   uniform_int_distribution<int> randWeight(0, WEIGHT_MAX);
-  
+
   while (stipples.size() < nStipples) {
     int x = randX(rng);
     int y = randY(rng);
     int weight = randWeight(rng);
-    if (weight >= weights.at(y / scale, x / scale)) {
+    if (weight >= weights.at(x / scale, y / scale)) {
       stipples.insert(IPoint(x, y));
     }
   }
@@ -757,7 +757,7 @@ void fillScaledStipples(ostream &out, WRBS &weightedRegionsBySite, double rMin =
 template<typename WRBS>
 void strokeScaledStipples(ostream &out, WRBS &weightedRegionsBySite, double lineWidth = 1.0) {
   out << lineWidth << " setlinewidth" << endl;
-  
+
   for (auto i = weightedRegionsBySite.begin(); i != weightedRegionsBySite.end(); ++i) {
     const IPoint &p = i->first;
     WeightedRegion &c = i->second;
@@ -780,7 +780,7 @@ void strokeScaledStipples(ostream &out, WRBS &weightedRegionsBySite, double line
 template<typename V>
 void strokeTour(ostream &out, V &tour, double lineWidth = 1.0) {
   out << lineWidth << " setlinewidth" << endl;
-  
+
   for (auto i = tour.begin(); i != tour.end(); i++) {
     out << i->x() << " " << i->y();
     out << (i == tour.begin() ? " moveto" : " lineto") << endl;
@@ -794,13 +794,13 @@ void nearestNeighbourTour(V &tour, N &neighboursBySite) {
   unordered_set<IPoint> remaining;
   auto siteIterator = neighboursBySite.begin();
   IPoint p = (siteIterator++)->first;
-  
+
   for (; siteIterator != neighboursBySite.end(); ++siteIterator) {
     remaining.insert(siteIterator->first);
   }
-  
+
   tour.push_back(p);
-  
+
   while (remaining.size() > 0) {
     IPoint q;
     double distance = numeric_limits<double>::infinity();
@@ -863,13 +863,13 @@ static void tryCL() {
 
 int main(int argc, char **argv) {
   tryCL();
-  
+
   double scale = 1.0;
   int nStipples = 1000;
   double rMin = 0.0;
   int minWeight = 0;
   int threads = 8;
-  
+
   bool steps = false;
   string stepPrefix = "/tmp/steps";
   Progress::Stepper *stepper = nullptr;
@@ -904,9 +904,9 @@ int main(int argc, char **argv) {
       exit(1);
     }
   }
-  
+
   string inputFile;
-  
+
   if (argn == argc-1) {
     inputFile = argv[argn];
   } else if (argn == argc) {
@@ -917,33 +917,33 @@ int main(int argc, char **argv) {
     cerr << endl << flush;
     exit(1);
   }
-  
+
   FILE *f;
   if ("-" == inputFile) {
     cerr << "* Reading image from standard input" << endl << flush;
     f = stdin;
   } else {
     cerr << "* Reading image '" << inputFile << "'" << endl << flush;
-    
+
     f = fopen(inputFile.c_str(), "r");
     if (f == NULL) {
       cerr << "unable to open input file '" << inputFile << "'!" << endl << flush;
       exit(1);
     }
   }
-  
+
   WeightMapRef weights = WeightMap::readPng(f);
-  
+
   unordered_set<IPoint> stipples;
   addRandomStipples(stipples, nStipples, *weights, scale);
-  
+
   unordered_map<IPoint, uint8_t> regionGreys;
   VoronoiRef voronoi;
   unordered_map<IPoint, WeightedRegion> weightedRegionsBySite;
   BitmapRef sites = Bitmap::make(weights->width() * scale, weights->height() * scale, true);
 
   Workers workers(threads);
-  
+
   int i = 0;
   double t0 = now();
   for (;;) {
@@ -952,7 +952,7 @@ int main(int argc, char **argv) {
       const IPoint &p = *i;
       sites->at(p) = true;
     }
-    
+
     if (steps) {
       sites->writePng(stepper->makeName("sites.png"));
     }
@@ -965,24 +965,24 @@ int main(int argc, char **argv) {
       for (unordered_set<IPoint>::iterator i = stipples.begin(); i != stipples.end(); ++i) {
         regionGreys[*i] = 5 + (j++ * 250 / nStipples);
       }
-      
+
       shared_ptr< GreyImage<uint8_t> > regions = GreyImage<uint8_t>::make(sites->width(), sites->height(), true);
       for (int y = 0; y < regions->height(); y++) {
         for (int x = 0; x < regions->width(); x++) {
-          regions->at(y, x) = regionGreys[voronoi->at(y, x)];
+          regions->at(x, y) = regionGreys[voronoi->at(x, y)];
         }
       }
       regions->writePng(stepper->makeName("regions.png"));
     }
-    
+
     weightedRegionsBySite.clear();
     calculateCentroids(*voronoi, *weights, weightedRegionsBySite, workers);
-    
+
     int same = 0;
     int differ = 0;
 
     stipples.clear();
-    
+
     for (unordered_map<IPoint, WeightedRegion>::iterator i = weightedRegionsBySite.begin();
          i != weightedRegionsBySite.end(); ++i) {
       const IPoint &p = i->first;
@@ -1005,7 +1005,7 @@ int main(int argc, char **argv) {
       cerr << "-- remove " << (nStipples - stipples.size()) << " empty voronoi regions, adding replacements." << endl << flush;
       addRandomStipples(stipples, nStipples, *weights, scale);
     }
-    
+
     cerr << "after " << i++ << " iterations: " << same << " same, " << differ << " differ" << endl << flush;
     if (differ == 0) {
       break;
@@ -1018,7 +1018,7 @@ int main(int argc, char **argv) {
 
   getNeighbours(*voronoi, neighboursBySite, workers);
   vector<IPoint> tour;
-  
+
   // start with a nearest-neighbour tour
   nearestNeighbourTour(tour, neighboursBySite);
   // now improve it using 2-opt
@@ -1032,9 +1032,9 @@ int main(int argc, char **argv) {
   preamble(cout, sites->width(), sites->height());
   fillScaledStipples(cout, weightedRegionsBySite);
   postamble(cout);
-  
+
   // strokeScaledStipples(cout, weightedRegionsBySite);
-  
+
   preamble(cout, sites->width(), sites->height());
   strokeTour(cout, tour);
   cout << "gsave 0 1 0 setrgbcolor " << tour.front().x() << " " << tour.front().y() << " translate -5 -5 10 10 rectfill grestore" << endl << flush;

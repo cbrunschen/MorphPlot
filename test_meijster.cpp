@@ -52,7 +52,7 @@ public:
 	void print(ostream &out) const {
     for (int y = 0; y < g_->height(); y++) {
       for (int x = 0; x < g_->width(); x++) {
-    	  out << setw(3) << right << g_->at(y, x) << " ";
+    	  out << setw(3) << right << g_->at(x, y) << " ";
       }
       out << endl;
     }
@@ -66,7 +66,7 @@ public:
 	void print(ostream &out) const {
     for (int y = 0; y < g_->height(); y++) {
       for (int x = 0; x < g_->width(); x++) {
-    	  out << setw(3) << right << g_->at(y, x).x() << "," << setw(3) << left << g_->at(y, x).y() << " ";
+    	  out << setw(3) << right << g_->at(x, y).x() << "," << setw(3) << left << g_->at(x, y).y() << " ";
       }
       out << endl;
     }
@@ -80,7 +80,7 @@ public:
 	void print(ostream &out) const {
     for (int y = 0; y < g_->height(); y++) {
       for (int x = 0; x < g_->width(); x++) {
-    	  out << setw(3) << right << g_->at(y, x).x << "," << setw(3) << left << g_->at(y, x).y << " ";
+    	  out << setw(3) << right << g_->at(x, y).x << "," << setw(3) << left << g_->at(x, y).y << " ";
       }
       out << endl;
     }
@@ -104,27 +104,27 @@ inline ostream &operator<<(ostream &out, const PCI &pci) {
 int main(int argc, char **argv) {
 #if 0
   shared_ptr<Bitmap> bitmap = Bitmap::make(40, 40, true);
-  
+
   for (int y = 15; y < 26; y++) {
     for (int x = 0; x < 40; x++) {
-      bitmap->at(y, x) = true;
+      bitmap->at(x, y) = true;
     }
   }
 
   for (int y = 0; y < 40; y++) {
     for (int x = 15; x < 23; x++) {
-      bitmap->at(y, x) = true;
+      bitmap->at(x, y) = true;
     }
   }
-  
+
   cout << "bitmap: " << endl << *bitmap << endl << flush;
 
   shared_ptr< GreyImage<int> > bg = bitmap->distanceTransform(true);
-  cout << "Background:" << endl << PGI(bg) << endl << flush;  
+  cout << "Background:" << endl << PGI(bg) << endl << flush;
 
   shared_ptr< GreyImage<int> > fg = bitmap->distanceTransform(false);
-  cout << "Foreground:" << endl << PGI(fg) << endl << flush;  
-  
+  cout << "Foreground:" << endl << PGI(fg) << endl << flush;
+
   shared_ptr<Bitmap> inset = bitmap->inset(5);
   cout << "inset by 5:" << endl << inset << endl << flush;
 
@@ -133,13 +133,13 @@ int main(int argc, char **argv) {
     cout << "outset by " << r << ":" << endl << *outset << endl << flush;
     cout << "difference should be " << r << ":" << endl << *(*outset - *bitmap) << endl << flush;
   }
-  
+
   for (int y = 2; y < 38; y++) {
     for (int x = 2; x < 38; x++) {
-      bitmap->at(y, x) = true;
+      bitmap->at(x, y) = true;
     }
   }
-  
+
   for (int r = 0; r < 10; r++) {
     shared_ptr<Bitmap> inset = bitmap->inset(r);
     cout << "inset by " << r << ":" << endl << *inset << endl << flush;
@@ -157,36 +157,36 @@ int main(int argc, char **argv) {
 
   shared_ptr<Bitmap> large = Bitmap::make(W, H, true);
   Bitmap::Set set = large->set(true);
-  
+
   rng.seed(10017);
-  
+
 #if 0
   for (int a = 0; a < 10; a++) {
     int r = 0.05 * frand() * sqrt(W*W+H*H);
     if (r == 0) r = 1;
     Circle circle(r);
-  
+
     int extents[r];
     Circle::makeExtents(r, extents);
     const list<IPoint> &deltaX = circle.getHorizontalDelta();
     const list<IPoint> &deltaXY = circle.getDiagonalDelta();
     const list<IPoint> &initial = circle.points();
-    
+
     int x0 = (W-1) * frand();
     int x1 = (W-1) * frand();
     int y0 = (H-1) * frand();
     int y1 = (H-1) * frand();
-    
+
     line(x0, y0, x1, y1, set, initial, deltaX, deltaXY);
   }
-#else 
+#else
   for (int a = 0; a < (W * H / 100); a++) {
     int x = (W-1) * frand();
     int y = (H-1) * frand();
     set(y, x);
   }
 #endif
-  
+
   large->writePng("/tmp/large.png");
 
 #if 0
@@ -196,26 +196,26 @@ int main(int argc, char **argv) {
   double t1 = now();
   cerr << (t1 - t0) << endl << flush;
   insetOld = NULL;
-  
+
   cerr << "insetting new style ... " << flush;
   double t2 = now();
   shared_ptr<Bitmap> insetNew = large->inset(40);
   double t3 = now();
   cerr << (t3 - t2) << endl << flush;
   cerr << W << "x" << H << ": " << static_cast<int>((double)(W * H) / (t3 - t2)) << " pixels per second" << endl << flush;
-  
+
   for (int w = W/5; w <= W; w += 2*W/5) {
     for (int h = H/5; h <= H; h += 2*H/5) {
       shared_ptr<Bitmap> bm = scaleImageTo(large, w, h);
-      
+
       for (int threads = 1; threads <= 16; threads *= 2) {
         double t2 = now();
         shared_ptr<Bitmap> inset = bm->inset(40, threads);
         double t3 = now();
         cerr << "inset  " << w << "x" << h << ", " << threads << " threads: " << static_cast<int>((double)(w * h) / (t3 - t2)) << " pixels per second" << endl << flush;
-        
+
         inset.reset();
-        
+
         double t4 = now();
         shared_ptr<Bitmap> outset = bm->outset(40, threads);
         double t5 = now();
@@ -227,10 +227,10 @@ int main(int argc, char **argv) {
 
 #if 0
   shared_ptr< Image<IPoint> > ft = large->featureTransform(true, 8);
-  
+
   for (int y = 0; y < H; y++) {
     for (int x = 0; x < W; x++) {
-      cout << setw(2) << right << ft->at(y, x).x() << "," << setw(2) << left << ft->at(y, x).y() << " ";
+      cout << setw(2) << right << ft->at(x, y).x() << "," << setw(2) << left << ft->at(x, y).y() << " ";
     }
     cout << endl << flush;
   }
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
   Workers workers(8);
   OpenCLWorkers clWorkers(2);
   int N = 1;
-  
+
   shared_ptr< Image<cl_short2> > oclResult;
   shared_ptr< Image<IPoint> > cpuResult;
 
@@ -248,7 +248,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < N; i++) {
     cerr << i << ", " << flush;
     oclResult = large->clFeatureTransform<true>(clWorkers);
-  } while (0);
+  }
   double t1 = now();
   cerr << "OCL: " << (1000.0 * (t1 - t0)) << "ms" << endl << flush;
   cerr << PCI(oclResult) << endl << flush;
@@ -258,43 +258,44 @@ int main(int argc, char **argv) {
     cerr << i << ", " << flush;
     cpuResult = large->featureTransform(true, workers);
   }
+
   double t3 = now();
   cerr << "CPU: " << (1000.0 * (t3 - t2)) << "ms" << endl << flush;
   cerr << PPI(cpuResult) << endl << flush;
-  
+
   for (int y = 0; y < H; y++) {
     for (int x = 0; x < W; x++) {
-      if (oclResult->at(y, x).x != cpuResult->at(y, x).x() || oclResult->at(y, x).y != cpuResult->at(y, x).y()) {
-        int dxCpu = cpuResult->at(y, x).x() - x;
-        int dyCpu = cpuResult->at(y, x).y() - y;
+      if (oclResult->at(x, y).x != cpuResult->at(x, y).x() || oclResult->at(x, y).y != cpuResult->at(x, y).y()) {
+        int dxCpu = cpuResult->at(x, y).x() - x;
+        int dyCpu = cpuResult->at(x, y).y() - y;
         int dCpu = dxCpu*dxCpu + dyCpu*dyCpu;
-        int dxOcl = oclResult->at(y, x).x - x;
-        int dyOcl = oclResult->at(y, x).y - y;
+        int dxOcl = oclResult->at(x, y).x - x;
+        int dyOcl = oclResult->at(x, y).y - y;
         int dOcl = dxOcl*dxOcl + dyOcl*dyOcl;
-        cerr << "differ at (" << x << "," << y << "): want (" <<  cpuResult->at(y, x).x() << "," << cpuResult->at(y, x).y() << ") @ " << dCpu << ", have (" << oclResult->at(y, x).x << "," << oclResult->at(y, x).y << ") @ " << dOcl << " ~= " << ((int16_t)dOcl) << endl << flush;
+        cerr << "differ at (" << x << "," << y << "): want (" <<  cpuResult->at(x, y).x() << "," << cpuResult->at(x, y).y() << ") @ " << dCpu << ", have (" << oclResult->at(x, y).x << "," << oclResult->at(x, y).y << ") @ " << dOcl << " ~= " << ((int16_t)dOcl) << endl << flush;
       }
     }
   }
-  
-//  for (int y = 0; y < H; y++) {
-//    for (int x = 0; x < W; x++) {
-//      cerr << setw(3) << right << oclResult->at(y, x).x << "," << setw(3) << left << oclResult->at(y, x).y << " ";
-//    }
-//    cerr << endl;
-//    for (int x = 0; x < W; x++) {
-//      if (x == oclResult->at(y, x).x && y == oclResult->at(y, x).y) {
-//        cerr << "   *    ";
-//      } else {
-//        int dx = oclResult->at(y, x).x - cpuResult->at(y, x).x();
-//        int dy = oclResult->at(y, x).y - cpuResult->at(y, x).y();
-//        cerr << setw(3) << right << dx << "," << setw(3) << left << dy << " ";
-//      }
-//    }
-//    cerr << endl;
-//    for (int x = 0; x < W; x++) {
-//      cerr << setw(3) << right << cpuResult->at(y, x).x() << "," << setw(3) << left << cpuResult->at(y, x).y() << " ";
-//    }
-//    cerr << endl << endl;
-//  }
-//  cerr << endl << flush;
+
+  for (int y = 0; y < H; y++) {
+    for (int x = 0; x < W; x++) {
+      cerr << setw(3) << right << oclResult->at(x, y).x << "," << setw(3) << left << oclResult->at(x, y).y << " ";
+    }
+    cerr << endl;
+    for (int x = 0; x < W; x++) {
+      if (x == oclResult->at(x, y).x && y == oclResult->at(x, y).y) {
+        cerr << "   *    ";
+      } else {
+        int dx = oclResult->at(x, y).x - cpuResult->at(x, y).x();
+        int dy = oclResult->at(x, y).y - cpuResult->at(x, y).y();
+        cerr << setw(3) << right << dx << "," << setw(3) << left << dy << " ";
+      }
+    }
+    cerr << endl;
+    for (int x = 0; x < W; x++) {
+      cerr << setw(3) << right << cpuResult->at(x, y).x() << "," << setw(3) << left << cpuResult->at(x, y).y() << " ";
+    }
+    cerr << endl << endl;
+  }
+  cerr << endl << flush;
 }

@@ -52,10 +52,10 @@ TEST_CASE("boundary/square", "scan the boundary of a square")
   bitmap.clear();
   for (int y = 10; y < 30; y++) {
     for (int x = 10; x < 30; x++) {
-      bitmap.at(y, x) = true;
+      bitmap.at(x, y) = true;
     }
   }
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -70,7 +70,7 @@ TEST_CASE("boundary/horizontal line", "scan the boundary of a horizontal line")
   Bitmap bitmap(40, 40);
   bitmap.clear();
   bitmap.line(10, 10, 30, 10, true);
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -85,7 +85,7 @@ TEST_CASE("boundary/vertical lineboundary/", "scan the boundary of a vertical li
   Bitmap bitmap(40, 40);
   bitmap.clear();
   bitmap.line(10, 10, 10, 30, true);
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -100,7 +100,7 @@ TEST_CASE("boundary/diagonal line", "scan the boundary of a diagonal line")
   Bitmap bitmap(40, 40);
   bitmap.clear();
   bitmap.line(10, 10, 30, 30, true);
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -115,7 +115,7 @@ TEST_CASE("boundary/diagonal line, middle start", "scan the boundary of a diagon
   Bitmap bitmap(40, 40);
   bitmap.clear();
   bitmap.line(10, 10, 30, 30, true);
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -131,7 +131,7 @@ TEST_CASE("boundary/inverted V", "scan the boundary of an inverted V")
   bitmap.clear();
   bitmap.line(10, 20, 20, 10, true);
   bitmap.line(20, 10, 30, 20, true);
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -148,7 +148,7 @@ TEST_CASE("boundary/slanted F", "scan the boundary of a slanted F")
   bitmap.line(10, 20, 20, 10, true);
   bitmap.line(20, 10, 30, 20, true);
   bitmap.line(15, 15, 20, 20, true);
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   Boundary result;
@@ -187,7 +187,7 @@ TEST_CASE("boundary/two nested squares", "two boundaries, child and parent")
     bitmap.line(p,m, m,m, true);
   }
   cerr << bitmap << endl;
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   vector<Boundary> result;
@@ -211,7 +211,7 @@ TEST_CASE("boundary/D shape", "two boundaries, child and parent")
     bitmap.line(p,m, 10,m, true);
   }
   cerr << bitmap << endl;
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   vector<Boundary> result;
@@ -233,7 +233,7 @@ TEST_CASE("boundary/D shape/thin", "two boundaries, child and parent")
     bitmap.line(x,10, x,30, true);
   }
   cerr << bitmap << endl;
-  
+
   Image<int> marks(bitmap.width(), bitmap.height());
   marks.clear();
   vector<Boundary> result;

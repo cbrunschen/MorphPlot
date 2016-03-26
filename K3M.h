@@ -67,7 +67,7 @@ template<typename B> int k3m_iter(B &bitmap, set<IPoint> &candidates, set<IPoint
   return removed;
 }
 
-template<typename B> void k3m(B &bitmap) {  
+template<typename B> void k3m(B &bitmap) {
   // First, find the initial set of candidates;
   set<IPoint> candidates;
   for (int y = 0; y < bitmap.height(); y++) {
@@ -79,29 +79,29 @@ template<typename B> void k3m(B &bitmap) {
       }
     }
   }
-  
+
   cerr << " * found " << candidates.size() << " border pixels" << endl;
-  
+
 #if DEBUG_THIN
   char filename[1024];
   int iterations = 0;
   sprintf(filename, "/tmp/thin_%03d.png", iterations);
   bitmap.writePng(filename);
-#endif  
-  
-  // keep iterating until an iteration removes no points. Candidates for the next iteration 
-  // are un-removed candidates from the previous iteration plus neighbours of removed 
+#endif
+
+  // keep iterating until an iteration removes no points. Candidates for the next iteration
+  // are un-removed candidates from the previous iteration plus neighbours of removed
   while (true) {
     cerr << " * considering " << candidates.size() << " candidate pixels" << endl;
-    
+
     set<IPoint> nextCandidates;
     int removed = k3m_iter(bitmap, candidates, nextCandidates);
-    
+
 #if DEBUG_THIN
     sprintf(filename, "/tmp/thin_%03d.png", ++iterations);
     bitmap.writePng(filename);
-#endif  
-    
+#endif
+
     if (removed > 0) {
       nextCandidates.insert(candidates.begin(), candidates.end());
       candidates.clear();
@@ -119,7 +119,7 @@ template<typename B> void k3m(B &bitmap) {
       break;
     }
   }
-  
+
   int removed = 0;
   // now run the 1-pixel pass
   for (int y = 0; y < bitmap.height(); y++) {
@@ -131,7 +131,7 @@ template<typename B> void k3m(B &bitmap) {
         ++removed;
       }
     }
-  }  
+  }
   cerr << " * removed " << removed << " for single-pixel thinness" << endl;
 }
 

@@ -66,17 +66,17 @@ TEST_CASE("lines/radial", "each line should start at the center and go outwards.
       int c = r + offset;
       Bitmap bitmap(wh, wh);
       bitmap.clear();
-      
+
       verifyLine(c, c, c + pos, offset);
       verifyLine(c, c, wh - offset, c + pos);
       verifyLine(c, c, c - pos, wh - offset);
       verifyLine(c, c, offset, c - pos);
-      
+
       bitmap.line(c, c, c + pos, offset, true);
       bitmap.line(c, c, wh - offset, c + pos, true);
       bitmap.line(c, c, c - pos, wh - offset, true);
       bitmap.line(c, c, offset, c - pos, true);
-      
+
       cerr << bitmap << endl;
     }
   }
@@ -86,13 +86,13 @@ TEST_CASE("line/thick", "thick line")
 {
 #define R 7
   Circle circle(R);
-  
+
   int extents[R];
   Circle::makeExtents(R, extents);
   const list<IPoint> &deltaX = circle.getHorizontalDelta();
   const list<IPoint> &deltaXY = circle.getDiagonalDelta();
   const list<IPoint> &initial = circle.points();
-    
+
   int step = 5;
   int nSteps = 3;
   int r = step * nSteps;
@@ -104,12 +104,12 @@ TEST_CASE("line/thick", "thick line")
       Bitmap bitmap(wh, wh);
       bitmap.clear();
       Bitmap::Set set = bitmap.set(true);
-      
+
       line(c, c, c + pos, c + 2*r, set, initial, deltaX, deltaXY);
       line(c, c, c - 2*r, c + pos, set, initial, deltaX, deltaXY);
       line(c, c, c - pos, c - 2*r, set, initial, deltaX, deltaXY);
       line(c, c, c + 2*r, c - pos, set, initial, deltaX, deltaXY);
-      
+
       cerr << bitmap << endl;
     }
   }

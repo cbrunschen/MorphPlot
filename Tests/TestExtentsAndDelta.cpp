@@ -45,12 +45,12 @@ template<typename I> static void drawDelta(int r, int extents[], const I &begin,
       c[r-d][r-dd] = '.';
     }
   }
-  
+
   int o = r+1;
   for (I i = begin; i != end; ++i) {
     c[o + i->y()][o + i->x()] = '#';
   }
-  
+
   cerr << endl;
   for (int y = 2 * r + 1; y >= 0; --y) {
     for (int x = 0; x < 2 * r + 2; ++x) {
@@ -67,7 +67,7 @@ static list<IPoint> checkDelta(int r) {
   const list<IPoint> &points = circle.getDeltaForDirection(Neighbourhood::NW);
 
   drawDelta(r, extents, points.begin(), points.end());
-  
+
   // check that the result is symmetrixal around (x == y), i.e., that for each
   // IPoint(x, y), IPoint(y, x) is also in the set
   for (list<IPoint>::const_iterator i = points.begin(); i != points.end(); ++i) {

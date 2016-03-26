@@ -41,7 +41,7 @@ template <typename F> void line(int x0, int y0, int x1, int y1, F &f) {
     matrix = matrix.concat(IMatrix::flipXY());
     swap(dy, dx);
   }
-                         
+
   int error = dx / 2;
   int y = 0;
   for (int x = 0; x <= dx; x++) {
@@ -108,7 +108,7 @@ void line(int x0, int y0, int x1, int y1,
   line(x0, y0, x1, y1, f,
        circle.points(), circle.getHorizontalDelta(), circle.getDiagonalDelta());
 }
-  
+
 
 inline void rotate(double &nx, double &ny, const double &x, const double &y, const double &theta) {
   double cosTheta = cos(theta);

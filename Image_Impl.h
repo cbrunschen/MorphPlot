@@ -37,14 +37,14 @@ inline shared_ptr<Bitmap> Image<Pixel>::distribute(void (*func)(void *), Pixel v
   int n = workers.n();
   Range<Pixel> *ranges = new Range<Pixel>[n];
   for (int i = 0; i < n; i++) {
-    ranges[i].begin = this->iter_at(i * height_ / n);
-    ranges[i].end = this->iter_at((i + 1) * height_ / n);
-    ranges[i].dst = result->iter_at(i * height_ / n);
+    ranges[i].begin = this->row_iterator(i * height_ / n);
+    ranges[i].end = this->row_iterator((i + 1) * height_ / n);
+    ranges[i].dst = result->row_iterator(i * height_ / n);
     ranges[i].value = value;
   }
-  
+
   workers.perform(func, &ranges[0]);
-  
+
   delete [] ranges;
   return result;
 }
@@ -106,7 +106,7 @@ inline shared_ptr<Bitmap> Image<Pixel>::name(const Pixel &value, int threads) co
   } else {                                                                                     \
     return name(value);                                                                        \
   }                                                                                            \
-}                                                                                               
+}
 
 IMPLEMENT_OP(<, lt)
 IMPLEMENT_OP(<=, le)
@@ -151,8 +151,8 @@ inline Pixel Image<Pixel>::name(Workers &workers) const {                       
   if (n > 1) {                                                                                                \
     ReductionRange<Pixel> *ranges = new ReductionRange<Pixel>[n];                                             \
     for (int i = 0; i < n; i++) {                                                                             \
-      ranges[i].begin = this->iter_at(i * height_ / n);                                                       \
-      ranges[i].end = this->iter_at((i + 1) * height_ / n);                                                   \
+      ranges[i].begin = this->row_iterator(i * height_ / n);                                                       \
+      ranges[i].end = this->row_iterator((i + 1) * height_ / n);                                                   \
     }                                                                                                         \
                                                                                                               \
     workers.perform(Image<Pixel>::name, &ranges[0]);                                                          \
@@ -168,9 +168,9 @@ inline Pixel Image<Pixel>::name(Workers &workers) const {                       
   } else {                                                                                                    \
     return name();                                                                                            \
   }                                                                                                           \
-}                                                                                                              
-																											  
-IMPLEMENT_MINMAX(min, <)																					  
+}
+																											
+IMPLEMENT_MINMAX(min, <)																					
 IMPLEMENT_MINMAX(max, >)
 
 #undef IMPLEMENT_MINMAX

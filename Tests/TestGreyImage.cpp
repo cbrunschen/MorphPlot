@@ -47,22 +47,19 @@ static inline int randInt(int max) {
   return max * frand();
 }
 
-static inline double now() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (double)(tv.tv_sec % 86400) + ((double)tv.tv_usec / 1000000.0);
-}
-
 static inline void verifySame(const Bitmap &a, const Bitmap &b) {
   for (int r = 0; r < N; r++) {
     for (int c = 0; c < N; c++) {
-      if (a.at(r, c) != b.at(r, c)) {
+      if (a.at(c, r) != b.at(c, r)) {
         cout << "difference at (" << r << "," << c << ")" << endl << flush;
       }
     }
   }
 }
 
+#ifdef T
+#undef T
+#endif
 #define T(op) do {                                                                                       \
   double t0 = now();                                                                                     \
   shared_ptr<Bitmap> seq = image.op(cutoff);                                                             \
@@ -72,7 +69,8 @@ static inline void verifySame(const Bitmap &a, const Bitmap &b) {
   double t01 = t1 - t0;                                                                                  \
   double t12 = t2 - t1;                                                                                  \
   double speedup = t01 / t12;                                                                            \
-  cout << #op << " sequential: " << t01 << ", " << N << " parallel: " << t12 << ", speedup: " << speedup << endl << flush;       \
+  cout << #op << " sequential: " << t01 << ", " << N << " parallel: " << t12                             \
+       << ", speedup: " << speedup << endl << flush;                                                     \
   verifySame(*seq, *par);                                                                                \
 } while (0)
 
@@ -81,16 +79,16 @@ TEST_CASE("GreyImage/parallels", "Test serial vs parallel performance of greater
   int S = 2000;
   int max = 200;
   GreyImage<int> image(S, S);
-  
+
   for (GreyImage<int>::iterator i = image.begin(); i != image.end(); ++i) {
     *i = randInt(max);
   }
-  
+
   int cutoff = max / 2;
-  
+
   for (int N = 2; N <= 8; N *= 2) {
     Workers workers(N);
-    
+
     T(ge);
     T(le);
     T(gt);
@@ -99,3 +97,5 @@ TEST_CASE("GreyImage/parallels", "Test serial vs parallel performance of greater
     T(ne);
   }
 }
+
+#undef T

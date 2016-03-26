@@ -65,15 +65,15 @@ public:
   void addToApproximation(shared_ptr<Bitmap> covered) {
     for (int y = 0; y < covered->height(); y++) {
       for (int x = 0; x < covered->width(); x++)  {
-        if (covered->at(y, x)) {
-          RGBPixel<uint8_t> &p = approximation_.at(y, x);
+        if (covered->at(x, y)) {
+          RGBPixel<uint8_t> &p = approximation_.at(x, y);
           p.rFraction() -= cFraction;
           p.gFraction() -= mFraction;
           p.bFraction() -= yFraction;
-          // approximation_.at(y, x) = p;
+          // approximation_.at(x, y) = p;
         }
       }
-    }    
+    }
   }
   ColorImage<uint8_t> &approximation() { return approximation_; }
 };

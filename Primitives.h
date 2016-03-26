@@ -85,7 +85,7 @@ namespace Neighbourhood {
 
   // lists those neighbourhoods that are considered single-connected
   extern bool singleConnected[];
-  
+
   // lists those neighbourhoods that are thin-connected: one or two neighbours,
   // as might be found in a single-pixel-thin skeleton.
   extern bool thinConnected[];
@@ -123,7 +123,7 @@ public:
   const C d() const { return d_; }
   const C tx() const { return tx_; }
   const C ty() const { return ty_; }
-  
+
   bool operator==(const M &m) const {
     return a_ == m.a_
         && b_ == m.b_
@@ -135,19 +135,19 @@ public:
   bool operator!=(const M &m) const {
     return !operator==(m);
   }
-  
+
   void transform(C &outX, C &outY, const C &x, const C &y) const {
     outX = x * a_ + y * c_ + tx_;
     outY = x * b_ + y * d_ + ty_;
   }
 
   M concat(const M &m) const {
-    return IMatrix(m.a() * a() + m.b() * c(), m.a() * b() + m.b() * d(),
+    return M(m.a() * a() + m.b() * c(), m.a() * b() + m.b() * d(),
                   m.c() * a() + m.d() * c(), m.c() * b() + m.d() * d(),
                   m.tx() * a() + m.ty() * c() + tx(),
                   m.tx() * b() + m.ty() * d() + ty());
   }
-  
+
   template<typename D, typename N> bool operator==(const Matrix<D, N> &m) const {
     return a_ == m.a_
     && b_ == m.b_
@@ -159,12 +159,12 @@ public:
   template<typename D, typename N> bool operator!=(const Matrix<D, N> &m) const {
     return !operator==(m);
   }
-  
+
   template<typename D> void transform(D &outX, D &outY, const D &x, const D &y) const {
     outX = x * a_ + y * c_ + tx_;
     outY = x * b_ + y * d_ + ty_;
   }
-  
+
   template<typename D, typename N> M concat(const Matrix<D, M> &m) const {
     return IMatrix(m.a() * a() + m.b() * c(), m.a() * b() + m.b() * d(),
                   m.c() * a() + m.d() * c(), m.c() * b() + m.d() * d(),
@@ -179,9 +179,9 @@ public:
   static M flipX() { return M(-1, 0, 0, 1, 0, 0); }
   static M flipY() { return M(1, 0, 0, -1, 0, 0); }
   static M translate(int tx, int ty) { return M(1, 0, 0, 1, tx, ty); }
-  
+
   static M flipXY() { return M(0, 1, 1, 0, 0, 0); }
-  
+
   static M pageLeft(int width, int height) {
     return M(0, 1, -1, 0, height-1, 0);
   }
@@ -211,7 +211,8 @@ public:
   FMatrix(double a = 1, double b = 0, double c = 0, double d = 1, double tx = 0, double ty = 0) : Super(a, b, c, d, tx, ty) { }
 };
 
-inline ostream &operator<<(ostream &out, const IMatrix &m) {
+template<typename C, typename M>
+inline ostream &operator<<(ostream &out, const Matrix<C, M> &m) {
   out << "[ " << m.a() << " " << m.b() << " " << m.c() << " " << m.d() << " " << m.tx() << " " << m.ty() << " ]";
   return out;
 }
@@ -322,7 +323,7 @@ public:
   static int sign(C n) {
     return n == 0 ? 0 : n < 0 ? -1 : 1;
   }
-  
+
   template<typename D, typename Q> const double squareDistance(const Point<D, Q> &p) const {
     double dx = p.x_ - x_;
     double dy = p.y_ - y_;
@@ -366,7 +367,7 @@ public:
   template<typename D, typename Q> const double distance(const Point<D, Q> &p, const Point<D, Q> &q) const {
     return sqrt(squareDistance(p, q));
   }
-  
+
 };
 
 class IPoint : public Point<int, IPoint> {
@@ -410,7 +411,7 @@ public:
     y_ = y;
     return *this;
   }
-  
+
   IPoint transformed(const IMatrix &m) const {
     int x, y;
     m.transform(x, y, x_, y_);
@@ -422,9 +423,9 @@ class FPoint : public Point<double, FPoint> {
 public:
   typedef Point<double, FPoint> Super;
   friend struct std::hash<FPoint>;
-  
+
   FPoint(double x = 0, double y = 0) : Super(x, y) { }
-  
+
   FPoint &transform(const IMatrix &m) {
     double x, y;
     m.transform(x, y, x_, y_);
@@ -432,7 +433,7 @@ public:
     y_ = y;
     return *this;
   }
-  
+
   FPoint transformed(const IMatrix &m) const {
     double x, y;
     m.transform(x, y, x_, y_);
@@ -447,7 +448,13 @@ public:
   }
 };
 
-template<typename C, typename P> inline ostream &operator<<(ostream &out, const Point<C, P> &p) {
+template<typename C, typename P>
+inline ostream &operator<<(ostream &out, const Point<C, P> &p) {
+  out << "(" << p.x() << "," << p.y() << ")";
+  return out;
+}
+
+inline ostream &operator<<(ostream &out, const IPoint &p) {
   out << "(" << p.x() << "," << p.y() << ")";
   return out;
 }
@@ -580,7 +587,7 @@ public:
     Component<C>::unparse(s, y_);
     return s;
   }
-  
+
   PenColor &operator=(const PenColor<C> &other) {
     c_ = other.c_;
     m_ = other.m_;
@@ -603,27 +610,27 @@ public:
         m_ == other.m_ &&
         y_ == other.y_;
   }
-  
+
   bool operator<(const PenColor<C> &other) const {
     if (c_ < other.c_) return true;
     if (other.c_ < c_) return false;
-    
+
     if (m_ < other.m_) return true;
     if (other.m_ < m_) return false;
-    
+
     return y_ < other.y_;
   }
-  
+
   bool operator>(const PenColor<C> &other) const {
     if (c_ > other.c_) return true;
     if (other.c_ > c_) return false;
-    
+
     if (m_ > other.m_) return true;
     if (other.m_ > m_) return false;
-    
+
     return y_ > other.y_;
   }
-  
+
   template<typename D> bool operator=(const PenColor<D> &other) const {
     return cFraction() == other.cFraction() &&
         mFraction() == other.mFraction() &&
@@ -643,10 +650,10 @@ public:
   template<typename D> bool operator>(const PenColor<D> &other) const {
     if (cFraction() > other.cFraction()) return true;
     if (other.cFraction() > cFraction()) return false;
-    
+
     if (mFraction() > other.mFraction()) return true;
     if (other.mFraction() > mFraction()) return false;
-    
+
     return yFraction() > other.yFraction();
   }
 };
@@ -655,23 +662,23 @@ class PenSpec {
 protected:
   // radius
   int r_;
-  
+
   // radius of minimum feature that this pen will draw
   int rMin_;
 
   // the HPGL index of this pen
   int hpglIndex_;
-  
+
   // the angle (in piradians, counterclockwise from the X axis) when using this pen to hatch
   double hatchAngle_;
-  
+
   double hatchPhase_;
 public:
   PenSpec(int r = 5) : r_(r), rMin_(-1) { }
-  
+
   int &r() { return r_; }
   int const r() const { return r_; }
-  
+
   double &hatchAngle() { return hatchAngle_; }
   double const hatchAngle() const { return hatchAngle_; }
 
@@ -693,13 +700,13 @@ public:
   static PenSpec parse(const char * const s) {
     return parse(string(s));
   }
-  
+
   const bool operator<(const PenSpec &other) const {
     if (r_ < other.r_) return true;
     if (other.r_ < r_) return false;
     return rMin_ < other.rMin_;
   }
-  
+
   int &rMin() { return rMin_; }
   int const rMin() const { return rMin_; }
 
@@ -722,13 +729,13 @@ public:
   double cFraction() const { return Component<C>::fraction(color_.c()); }
   double mFraction() const { return Component<C>::fraction(color_.m()); }
   double yFraction() const { return Component<C>::fraction(color_.y()); }
-  
+
   virtual string unparse() const {
     stringstream ss;
     ss << color_.unparse() << "," << r_ << flush;
     return ss.str();
   }
-  
+
   static Pen parse(const string &s) {
     int r = 5;
     PenColor color = PenColor::parse(s);
@@ -742,19 +749,19 @@ public:
   static Pen parse(const char * const s) {
     return parse(string(s));
   }
-  
+
   const bool operator<(const Pen<C> &other) const {
     if (color_ < other.color_) return true;
     if (other.color_ < color_) return false;
     return PenSpec::operator<(other);
   }
-  
+
   int &rMin() { return rMin_; }
   int const rMin() const { return rMin_; }
-  
+
   int &hpglIndex() { return hpglIndex_; }
   int const hpglIndex() const { return hpglIndex_; }
-  
+
 };
 
 /*
@@ -808,7 +815,7 @@ template <typename T> inline ostream &operator<<(ostream &out, const set<T> &poi
 }
 
 namespace std {
-#if 0 
+#if 0
 }
 #endif
 
@@ -818,7 +825,7 @@ struct hash<Point<C, P>>
 {
   typedef Point<C, P>         argument_type;
   typedef std::size_t   result_type;
-  
+
   result_type operator()(const Point<C, P> &h) const {
     return continue_hash<int>::hash(h.x_, continue_hash<int>::hash(h.y_));
   }
@@ -829,7 +836,7 @@ struct hash<IPoint>
 {
   typedef IPoint         argument_type;
   typedef std::size_t   result_type;
-  
+
   result_type operator()(const IPoint &h) const {
     return continue_hash<int>::hash(h.x_, continue_hash<int>::hash(h.y_));
   }

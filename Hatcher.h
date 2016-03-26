@@ -34,10 +34,10 @@ template <typename F> void hatch(int width, int height, double angle, double per
   } else if (angle < 0.0) {
     angle += ceil(angle);
   }
-  
+
   // translate from pi-radians to radians
   double theta = angle * M_PI;
-  
+
   // get the bounding box of the rotated rectangle - extended by 1
   // in the x direction to handle rounding
   double llx, lly, lrx, lry, ulx, uly, urx, ury;
@@ -45,17 +45,17 @@ template <typename F> void hatch(int width, int height, double angle, double per
   rotate(lrx, lry, width-1, 0, theta);
   rotate(ulx, uly, 0, height-1, theta);
   rotate(urx, ury, width-1, height-1, theta);
-  
+
   // get the minimum and maximum extents of the bounding box
   double xmin = min(min(min(llx, lrx), urx), ulx) - 1;
   double xmax = max(max(max(llx, lrx), urx), ulx) + 1;
   double ymin = min(min(min(lly, lry), ury), uly);
   double ymax = max(max(max(lly, lry), ury), uly);
-  
+
   // calculate how far below zero we need to start in order to cover every part
   // of the rotated rectangle
   int n = floor((phase - ymin) / period);
-  
+
   for (double y = phase - n * period;
        y <= ymax;
        y += period) {
@@ -68,7 +68,7 @@ template <typename F> void hatch(int width, int height, double angle, double per
 
 template <typename Include> struct Hatcher {
   Include include_;
-  
+
   struct Extent : public Chain {
     int from_;
     int to_;
@@ -77,7 +77,7 @@ template <typename Include> struct Hatcher {
 
   typedef list<Extent> Row;
   typedef typename Row::iterator RowIterator;
-  
+
   typedef list<Row> Grid;
   typedef typename Grid::iterator GridIterator;
 
@@ -95,15 +95,15 @@ template <typename Include> struct Hatcher {
       return point().squareDistance(c.point());
     }
   };
-  
+
   Grid grid_;
   Row *row_;
   Extent *extent_;
   IPoint previous_;
   int along_;
-  
+
   Hatcher(Include include) : include_(include), previous_(numeric_limits<int>::min(), -numeric_limits<int>::min()) { }
-  
+
   void operator() (int x, int y) {
     IPoint p(x, y);
     if (!p.isNeighbour(previous_)) {
@@ -128,7 +128,7 @@ template <typename Include> struct Hatcher {
     }
     ++along_;
   }
-    
+
   bool start(GridIterator &r, RowIterator &e) {
     for (r = grid_.begin(); r != grid_.end(); r++) {
       e = r->begin();
@@ -138,7 +138,7 @@ template <typename Include> struct Hatcher {
     }
     return false;
   }
-  
+
   static double minDistance(IPoint &p, const Extent &e, bool &isFrom) {
     double dFrom = p.squareDistance(e.front());
     double dTo = p.squareDistance(e.back());
@@ -150,7 +150,7 @@ template <typename Include> struct Hatcher {
       return dTo;
     }
   }
-  
+
   double findNearestExtentInRow(Row &row, IPoint &p, /*out*/ RowIterator &eOut, bool &isFrom) {
     int dMin = std::numeric_limits<int>::max();
     for (RowIterator e = row.begin(); e != row.end(); ++e) {
@@ -169,7 +169,7 @@ template <typename Include> struct Hatcher {
     }
     return dMin;
   }
-  
+
   template<typename I> static void move(I &i, int delta) {
     while (delta > 0) {
       ++i;
@@ -202,7 +202,7 @@ template <typename Include> struct Hatcher {
     }
     return dMin;
   }
-  
+
   double findNearestExtent(GridIterator r, IPoint &p, double period, /*out*/ GridCursor &c) {
     bool isFrom;
     RowIterator e;
@@ -219,7 +219,7 @@ template <typename Include> struct Hatcher {
     d = findNearerExtent(r, -1, p, period, d, c);
     return d;
   }
-  
+
   void addToChains(Chains &chains, bool front, GridCursor &c) {
     Chain &chain = front ? chains.prependChain() : chains.addChain();
     chain.splice(chain.begin(), *c.extent);
@@ -229,7 +229,7 @@ template <typename Include> struct Hatcher {
     c.row->erase(c.extent);
     c.row = grid_.end();
   }
-    
+
   template <typename CanRetract> void retractGrid(CanRetract &canRetract) {
     for (GridIterator r = grid_.begin(); r != grid_.end(); ++r) {
       RowIterator e = r->begin();
@@ -247,7 +247,7 @@ template <typename Include> struct Hatcher {
             break;
           }
         }
-        
+
         // retract back
         typename Extent::reverse_iterator j = e->rbegin();
         while (j != e->rend()) {
@@ -275,7 +275,7 @@ template <typename Include> struct Hatcher {
       }
     }
   }
-  
+
   template<typename CanRetract> void getChains(Chains &chains, double period, CanRetract &canRetract) {
     retractGrid(canRetract);
     int remaining = 0;
@@ -313,7 +313,7 @@ template <typename Include> struct Hatcher {
           // find the nearest extent relative to the back
           dBack = findNearestExtent(rBack, pBack, period, cBack);
         }
-        
+
         if (dFront < dBack) {
           rFront = cFront.row;
           pFront = cFront.isFrom ? cFront.extent->back() : cFront.extent->front();
@@ -329,7 +329,7 @@ template <typename Include> struct Hatcher {
       }
     }
   }
-  
+
   int gridWidth() {
     int maxX = 0;
     for (GridIterator row = grid_.begin(); row != grid_.end(); ++row) {
@@ -341,11 +341,11 @@ template <typename Include> struct Hatcher {
     }
     return maxX + 1;
   }
-  
+
   int gridHeight() {
     return grid_.size();
   }
-  
+
   template<typename B> void printGrid(B &b, int period) {
     int y = 0;
     for (GridIterator row = grid_.begin(); row != grid_.end(); ++row) {
@@ -361,7 +361,7 @@ template <typename Include> struct Hatcher {
       y += period;
     }
   }
-  
+
   void verifyGrid() {
     for (GridIterator r = grid_.begin(); r != grid_.end(); ++r) {
       for (RowIterator e = r->begin(); e != r->end(); ++e) {

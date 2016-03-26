@@ -86,7 +86,7 @@ class OpenCLWorkers {
     return devices.front();
 #endif
   }
-  
+
   static cl::Device findDevice(int i) {
     if (i < 0) {
       return findBestDevice();
@@ -95,7 +95,7 @@ class OpenCLWorkers {
     cl::Platform::getDefault().getDevices(CL_DEVICE_TYPE_ALL, &devices);
     return devices[i];
   }
-  
+
   static string substitute(const string &in, const map<string, string> &substitutions) {
     ostringstream out;
     size_t pos = 0;
@@ -105,20 +105,20 @@ class OpenCLWorkers {
       if (end_pos == string::npos) {
         break;
       }
-      
+
       out.write(&* in.begin() + pos, subst_pos - pos);
-      
+
       subst_pos += strlen( "{{" );
       auto subst_it = substitutions.find(in.substr(subst_pos, end_pos - subst_pos));
       if (subst_it == substitutions.end()) throw runtime_error( "undefined substitution" );
-      
+
       out << subst_it->second;
       pos = end_pos + strlen( "}}" );
     }
     out << in.substr( pos, string::npos );
     return out.str();
   }
-  
+
   static string makeToSites(const string &name, const string &type, const string &comparison) {
     map<string, string> substitutions;
     substitutions["name"] = name;
@@ -126,7 +126,7 @@ class OpenCLWorkers {
     substitutions["comparison"] = comparison;
     return substitute(toSitesFormat, substitutions);
   }
-  
+
   static string makeKernels() {
     ostringstream out;
     out << kernels << endl;
@@ -134,14 +134,14 @@ class OpenCLWorkers {
     out << makeToSites("nonZerosToSites", "uchar", "!= 0");
     return out.str();
   }
-  
+
 public:
-  
+
   cl::Device device;
   cl::Context context;
   cl::Program program;
   cl::CommandQueue queue;
-  
+
   // kernels
   cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> nonZerosToSites;
   cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short> zerosToSites;
@@ -164,7 +164,7 @@ public:
   {
     cerr << "Device: " << DeviceInfo<string>(device, CL_DEVICE_NAME) << endl << flush;
   }
-  
+
   cl::NDRange fitNDRange(size_t x, size_t y, size_t z) {
     size_t maxOverall = DeviceInfo<size_t>(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
     vector<size_t> maxSizes = DeviceInfo< vector<size_t> >(device, CL_DEVICE_MAX_WORK_ITEM_SIZES);
@@ -173,7 +173,7 @@ public:
       else if (y > 1) y >>= 1;
       else x >>= 1;
     }
-    
+
     while (z > maxSizes[2]) {
       z >>= 1;
       y <<= 1;
@@ -186,7 +186,7 @@ public:
     while (x > maxSizes[0]) {
       x >>= 1;
     }
-    
+
     return cl::NDRange(x, y, z);
   }
 
@@ -200,12 +200,12 @@ public:
         x >>= 1;
       }
     }
-    
+
     while (y > maxSizes[1]) {
       y >>= 1;
       x <<= 1;
     }
-    
+
     while (x > maxSizes[0]) {
       x >>= 1;
     }
@@ -219,11 +219,11 @@ public:
     while (x > maxOverall) {
       x >>= 1;
     }
-    
+
     while (x > maxSizes[0]) {
       x >>= 1;
     }
-    
+
     return cl::NDRange(x);
   }
 };

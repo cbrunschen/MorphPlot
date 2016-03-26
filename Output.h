@@ -27,7 +27,7 @@ protected:
 public:
   Output() { }
   virtual ~Output() { }
-  
+
   virtual void open() { }
   virtual void beginPage(int width, int height) {
     width_ = width;
@@ -44,7 +44,7 @@ public:
   }
   virtual void endPage() { }
   virtual void close() { }
-  virtual ostream &describe(ostream &out) const { return out << "<abstract output>"; } 
+  virtual ostream &describe(ostream &out) const { return out << "<abstract output>"; }
 };
 
 template <typename Pen>
@@ -64,7 +64,7 @@ public:
   FileStreamOutput(const char *filename) : Base(), filename_(filename), out_(NULL) { }
   FileStreamOutput(const string &filename) : Base(), filename_(filename), out_(NULL) { }
   virtual ~FileStreamOutput() { if (out_) { close(); } }
-  
+
   virtual void open() {
     if (out_ == NULL) {
       if (filename_.length() > 0) {
@@ -89,8 +89,8 @@ public:
       out_ = NULL;
     }
   }
-  virtual ostream &describe(ostream &out) const { 
-    return out << "<abstract output to '" << filename_ << "'>"; 
+  virtual ostream &describe(ostream &out) const {
+    return out << "<abstract output to '" << filename_ << "'>";
   }
 };
 
@@ -104,7 +104,7 @@ public:
   PostScriptOutput(const char *filename) : Base(filename) { }
   PostScriptOutput(const string &filename) : Base(filename) { }
   virtual ~PostScriptOutput() { }
-  
+
   virtual void beginPage(int width, int height) {
     Base::beginPage(width, height);
     *out_ << "%!PS-Adobe-3.0" << endl;
@@ -129,7 +129,7 @@ public:
     *out_ << r << " " << g << " " << b << " setrgbcolor ";
     *out_ << w << " setlinewidth" << endl;
   }
-  
+
   virtual void outputChain(const Chain &chain) {
     Chain::const_iterator k = chain.begin();
     *out_ << k->x() << " " << k->y() << " moveto ";
@@ -143,14 +143,14 @@ public:
       *out_ << "stroke" << endl;
     }
   }
-  
+
   virtual void endPage() {
     *out_ << "showpage" << endl;
     Base::endPage();
   }
 
-  virtual ostream &describe(ostream &out) const { 
-    return out << "PostScript to '" << filename_ << "'"; 
+  virtual ostream &describe(ostream &out) const {
+    return out << "PostScript to '" << filename_ << "'";
   }
 };
 
@@ -159,7 +159,7 @@ template<typename Pen> class SvgOutput : public FileStreamOutput<Pen> {
 protected:
   using Base::out_;
   using Base::filename_;
-  
+
   string color_;
   double w_;
   int height_;
@@ -170,13 +170,13 @@ public:
   SvgOutput(const char *filename) : Base(filename) { }
   SvgOutput(const string &filename) : Base(filename) { }
   virtual ~SvgOutput() { }
-  
+
   virtual void open() {
     Base::open();
     *out_ << "<?xml version=\"1.0\" standalone=\"yes\"?>" << endl;
     *out_ << "<svg xmlns=\"http://www.w3.org/2000/svg\">" << endl;
   }
-  
+
   virtual void beginPage(int width, int height) {
     Base::beginPage(width, height);
     height_ = height;
@@ -185,7 +185,7 @@ public:
     *out_ << width << " " << height << "\">" << endl;
     *out_ << "<g transform=\"translate(0, " << height_ << ") scale(1, -1)\">" << endl;
   }
-  
+
   virtual void setPen(const Pen &pen) {
     double r = 1.0 - pen.cFraction();
     double g = 1.0 - pen.mFraction();
@@ -203,7 +203,7 @@ public:
     }
     startGroup_ = true;
   }
-  
+
   virtual void outputChain(const Chain &chain) {
     if (startGroup_) {
       *out_ << "<g stroke-width=\"" << w_ << "\" stroke-linejoin=\"round\" stroke-linecap=\"round\" fill=\"none\" stroke=\"";
@@ -228,7 +228,7 @@ public:
       *out_ << "\" />" << endl;
     }
   }
-  
+
   virtual void endPage() {
     if (endGroup_) {
       *out_ << "</g>" << endl;
@@ -236,12 +236,12 @@ public:
     *out_ << "</g>" << endl << "</svg>" << endl;
     Base::endPage();
   }
-  
+
   virtual void close() {
     *out_ << "</svg>" << endl;
     Base::close();
   }
-  
+
   virtual ostream &describe(ostream &out) const {
     return out << "SVG to '" << filename_ << "'";
   }
@@ -293,13 +293,13 @@ public:
     betweenPages_ = true;
     *out_ << "PU;SP0;PG;" << endl;
   }
-  
+
   virtual void close() {
     Base::close();
   }
 
-  virtual ostream &describe(ostream &out) const { 
-    return out << "<abstract HPGL to '" << filename_ << "'>"; 
+  virtual ostream &describe(ostream &out) const {
+    return out << "<abstract HPGL to '" << filename_ << "'>";
   }
 };
 
@@ -331,8 +331,8 @@ public:
     *out_ << ";" << endl;
   }
 
-  virtual ostream &describe(ostream &out) const { 
-    return out << "HPGL (absolute coordinates) to '" << filename_ << "'"; 
+  virtual ostream &describe(ostream &out) const {
+    return out << "HPGL (absolute coordinates) to '" << filename_ << "'";
   }
 };
 
@@ -350,7 +350,7 @@ public:
 
   virtual void outputChain(const Chain &chain) {
     Base::outputChain(chain);
-    
+
     Chain::const_iterator k = chain.begin();
     IPoint p = *k;
     if (haveCurrentPoint_) {
@@ -376,14 +376,14 @@ public:
     currentPoint_ = p;
     haveCurrentPoint_ = true;
   }
-  
+
   virtual void endPage() {
     Base::endPage();
     haveCurrentPoint_ = false;
-  }  
+  }
 
-  virtual ostream &describe(ostream &out) const { 
-    return out << "HPGL (relative coordinates) to '" << filename_ << "'"; 
+  virtual ostream &describe(ostream &out) const {
+    return out << "HPGL (relative coordinates) to '" << filename_ << "'";
   }
 };
 
@@ -399,10 +399,10 @@ public:
   HPGLEncodedOutput(ostream &out) : Base(out) { }
   HPGLEncodedOutput(const char *filename) : Base(filename) { }
   HPGLEncodedOutput(const string &filename) : Base(filename) { }
-  
+
   virtual void outputChain(const Chain &chain) {
     Base::outputChain(chain);
-    
+
     Chain::const_iterator k = chain.begin();
     // first, an absolute move to the beginning of the start of the chain
     IPoint p = *k;
@@ -434,10 +434,10 @@ public:
   virtual void endPage() {
     Base::endPage();
     haveCurrentPoint_ = false;
-  }  
-  
-  virtual ostream &describe(ostream &out) const { 
-    return out << "HPGL (using Polyline Encoded) to '" << filename_ << "'"; 
+  }
+
+  virtual ostream &describe(ostream &out) const {
+    return out << "HPGL (using Polyline Encoded) to '" << filename_ << "'";
   }
 };
 
@@ -455,7 +455,7 @@ template<typename Tool> class RML1Output : public FileStreamOutput<Tool> {
   int vMoveZ_;
   int vCutXY_;
   int vCutZ_;
-  
+
   int zUp_;
   int zDown_;
 
@@ -471,7 +471,7 @@ public:
   RML1Output(ostream &out) : Base(out) { init(); }
   RML1Output(const char *filename) : Base(filename) { init(); }
   RML1Output(const string &filename) : Base(filename) { init(); }
-  
+
   virtual void setPen(const Tool &tool) {
     zUp_ = tool.zUp();
     zDown_ = tool.zDown();
@@ -484,7 +484,7 @@ public:
     y_ = 0;
     z_ = 2420;
   }
-  
+
   void setZUp(int zUp) {
     zUp_ = zUp;
   }
@@ -508,7 +508,7 @@ public:
     y_ = y;
     z_ = z;
   }
-  
+
   void moveTo(int x, int y, int z) {
     // If we're trying to move below zero, let's move up to be safe.
     if (z < 0) z = zUp_;
@@ -549,11 +549,11 @@ public:
     }
     _moveTo(x, y, z);
   }
-  
+
   virtual void outputChain(const Chain &chain) {
     Chain::const_iterator k = chain.begin();
     IPoint p = *k;
-    
+
     moveTo(p.x(), p.y(), zUp_);
 
     cutTo(p.x(), p.y(), zDown_);
@@ -569,7 +569,7 @@ public:
     (*out_) << "!VZ15.0;!ZM0;!MC0;^IN;\n";
     Base::close();
   }
-  
+
   virtual ostream &describe(ostream &out) const {
     return out << "<RML1 to '" << filename_ << "'>";
   }
@@ -585,7 +585,7 @@ public:
   PostScript3DOutput(const char *filename) : Base(filename) { }
   PostScript3DOutput(const string &filename) : Base(filename) { }
   virtual ~PostScript3DOutput() { }
-  
+
   virtual void setPen(const Tool &tool) {
     double w = tool.r() * 2.0;
     *out_ << 1 - (0.1 + 0.9 * tool.zLevel()) << " setgray ";

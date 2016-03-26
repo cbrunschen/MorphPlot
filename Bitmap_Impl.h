@@ -64,7 +64,7 @@ inline istream &Bitmap::readData(istream &in) {
       in.read((char *)&b, 1);
       uint8_t mask = 0x80;
       for (xx = x; xx < x+8 && xx < width_; xx++) {
-        at(y, xx) = ((b & mask) != 0);
+        at(xx, y) = ((b & mask) != 0);
         mask >>= 1;
       }
     }
@@ -79,7 +79,7 @@ inline ostream &Bitmap::writeData(ostream &out) {
       uint8_t b = 0;
       uint8_t mask = 0x80;
       for (xx = x; xx < x+8 && xx < width_; xx++) {
-        if (at(y, xx)) {
+        if (at(xx, y)) {
           b |= mask;
         }
         mask >>= 1;
@@ -161,14 +161,14 @@ inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
   int infinity = width_ + height_ + 1;
   infinity *= infinity;
   int stride = width_;
-  
+
   for (int x = x0; x < x1; x++) {
     // scan 1:
     bool *src = &data_[x];
     bool *srcEnd = src + height_ * stride;
     int *p = &g[x];
     int distance, difference;
-    
+
     // - start with the primitive value
     if (*src == background) {
       distance = *p = 0;
@@ -180,7 +180,7 @@ inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
       distance = *p = 1;
       difference = 3;
     }
-    
+
     // - calculate the next one from the previous one(s)
     for (p += stride, src += stride; src < srcEnd; p += stride, src += stride) {
       if (*src == background) {
@@ -203,7 +203,7 @@ inline void Bitmap::distanceTransformPass1(int x0, int x1, int *g) const {
         }
       }
     }
-    
+
     if (!background) {
       // scan backwards from the far edge
       int rDistance = 1;
@@ -222,16 +222,16 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
   int dominantColumn[width_ + 2];
   int dominanceStarts[width_ + 2];
   int *gs, *gr;
-  
+
   if (!background) {
     gs = new int[width_ + 2];
     gr = &gs[1];
     gr[-1] = gr[width_] = background ? width_ + height_ + 1 : 0;
   }
-  
+
   int u0 = background ? 1 : 0;
   int u1 = background ? width_ : width_ + 1;
-  
+
   for (int y = y0; y < y1; y++) {
     int *dst = &result[y * width_];
     if (background) {
@@ -243,13 +243,13 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
     int q = 0;
     dominanceStarts[0] = 0;
     dominantColumn[0] = background ? 0 : -1;
-    
+
     // scan 3
     for (int u = u0; u < u1; u++) {
       while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceStarts[q], gr) > distanceFromColumn(u, dominanceStarts[q], gr)) {
         q--;
       }
-      
+
       if (q < 0) {
         q = 0;
         dominantColumn[0] = u;
@@ -262,7 +262,7 @@ inline void Bitmap::distanceTransformPass2(int *g, int y0, int y1, int *result) 
         }
       }
     }
-    
+
     // scan 4
     for (int u = width_ - 1; u >= 0; u--) {
       dst[u] = distanceFromColumn(dominantColumn[q], u, gr);
@@ -296,9 +296,9 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, W
   shared_ptr< GreyImage<int> > result = GreyImage<int>::make(width_, height_, false);
   distance_transform_params *dt_params = new distance_transform_params[threads];
   Workers::Barrier barrier;
-  
+
   workers.initBarrier(&barrier);
-  
+
   for (int i = 0; i < threads; i++) {
     dt_params[i].bitmap = this;
     dt_params[i].x0 = ((width_ * i) / threads);
@@ -315,9 +315,9 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, W
   } else {
     workers.perform<distance_transform_params>(distance_transform_thread_foreground, &dt_params[0]);
   }
-  
+
   workers.destroyBarrier(&barrier);
-  
+
   return result;
 }
 
@@ -344,7 +344,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
   int infinity = width_ + height_ + 1;
   infinity *= infinity;
   int stride = width_;
-  
+
   for (int x = x0; x < x1; x++) {
     // scan 1:
     bool *src = &data_[x];
@@ -353,7 +353,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
     int *yp = &ys[x];
     int y, ny;
     int distance, difference;
-    
+
     // - start with the primitive value
     if (*src == background) {
       distance = *p = 0;
@@ -368,7 +368,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
       difference = 3;
       *yp = ny = -1;
     }
-    
+
     // - calculate the next one from the previous one(s)
     for (y = 1, p += stride, src += stride, yp += stride; src < srcEnd; ++y, p += stride, src += stride, yp += stride) {
       if (*src == background) {
@@ -394,7 +394,7 @@ inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const
         *yp = ny;
       }
     }
-    
+
     if (!background) {
       // scan backwards from the far edge
       int rDistance = 1;
@@ -415,16 +415,16 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, IPoin
   int dominanceStarts[width_ + 2];
   int dominantY[width_ + 2];
   int *gs, *gr;
-  
+
   if (!background) {
     gs = new int[width_ + 2];
     gr = &gs[1];
     gr[-1] = gr[width_] = background ? width_ + height_ + 1 : 0;
   }
-  
+
   int u0 = background ? 1 : 0;
   int u1 = background ? width_ : width_ + 1;
-  
+
   for (int y = y0; y < y1; y++) {
     int *yr = &ys[y * width_];
     IPoint *dst = &result[y * width_];
@@ -438,13 +438,13 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, IPoin
     dominanceStarts[0] = 0;
     dominantColumn[0] = background ? 0 : -1;
     dominantY[0] = background ? *yr : 0;
-    
+
     // scan 3
     for (int u = u0; u < u1; u++) {
       while (q >= 0 && distanceFromColumn(dominantColumn[q], dominanceStarts[q], gr) > distanceFromColumn(u, dominanceStarts[q], gr)) {
         q--;
       }
-      
+
       if (q < 0) {
         q = 0;
         dominantColumn[0] = u;
@@ -459,11 +459,11 @@ inline void Bitmap::featureTransformPass2(int *g, int *ys, int y0, int y1, IPoin
         }
       }
     }
-    
+
     // scan 4
     for (int u = width_ - 1; u >= 0; u--) {
       dst[u] = IPoint(dominantColumn[q], dominantY[q]);
-      
+
       if (u == dominanceStarts[q]) {
         q--;
       }
@@ -496,9 +496,9 @@ inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, Wor
   shared_ptr< Image<IPoint> > result = Image<IPoint>::make(width_, height_, false);
   feature_transform_params *ft_params = new feature_transform_params[threads];
   Workers::Barrier barrier;
-  
+
   workers.initBarrier(&barrier);
-  
+
   for (int i = 0; i < threads; i++) {
     ft_params[i].bitmap = this;
     ft_params[i].x0 = ((width_ * i) / threads);
@@ -510,15 +510,15 @@ inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, Wor
     ft_params[i].result = result->data();
     ft_params[i].barrier = &barrier;
   }
-  
+
   if (background) {
     workers.perform<feature_transform_params>(feature_transform_thread_background, &ft_params[0]);
   } else {
     workers.perform<feature_transform_params>(feature_transform_thread_foreground, &ft_params[0]);
   }
-  
+
   workers.destroyBarrier(&barrier);
-  
+
   return result;
 }
 
@@ -555,30 +555,30 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
   const int *extents = c.extents();
   int sufficient = s*s;
   int needed = c.area();
-  
+
   int columnCounts[width_];
   memset(columnCounts, 0, sizeof(columnCounts));
-  
+
   // sum the column counts of pixels in the rows early rows
   for (int y = 0; y < twoR; y++) {
     for (int x = 0; x < width_; x++) {
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-      if (at(y, x)) {
+      if (at(x, y)) {
         columnCounts[x]++;
       }
       D(cerr << columnCounts[x] << endl);
     }
   }
-  
+
   shared_ptr<Bitmap> result = make(width_, height_, true);
   int cy = r;
   for (int y = twoR; y < height_; y++) {
     int areaCount = 0;
-    
+
     for (int x = 0; x < twoR; x++) {
       // just update the column & area counts
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-      if (at(y, x)) {
+      if (at(x, y)) {
         columnCounts[x]++;
       }
       D(cerr << columnCounts[x] << endl);
@@ -586,20 +586,20 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
       areaCount += columnCounts[x];
       D(cerr << areaCount << endl);
     }
-    
+
     int cx = r;
     // for the rest of the row we have enough coverage
     for (int x = twoR; x < width_; x++) {
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
       // update the column & area counts
-      if (at(y, x)) {
+      if (at(x, y)) {
         columnCounts[x]++;
       }
       D(cerr << columnCounts[x] << endl);
       D(cerr << "area:" << areaCount << " -> ");
       areaCount += columnCounts[x];
       D(cerr << areaCount << endl);
-      
+
 #if DEBUG
       cerr << "(" << y << "," << x << ")/(" << cy << "," << cx << "):" << areaCount << endl;
       for (int t = s-1; t >= 0; t--) {
@@ -616,11 +616,11 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
       if (areaCount >= sufficient) {
         // we have enough set pixels to say 'yes'
         D(cerr << "completely covered!" << endl);
-        result->at(cy, cx) = true;
+        result->at(cx, cy) = true;
       } else if (areaCount < needed) {
         // we have enough unset pixels to say 'no'
         D(cerr << "not enough set pixels!" << endl);
-        result->at(cy, cx) = false;
+        result->at(cx, cy) = false;
       } else {
         D(cerr << "have to check:" << endl);
         // start by checking the extreme points
@@ -641,7 +641,7 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
           D(cerr << "- cross,d=" << d << ":" << covered << endl);
         }
         D(cerr << "- cross:" << covered << endl);
-        
+
         // check the rest of the circle
         for (int d = 1; covered && d <= r; d++) {
           int extent = extents[d-1];
@@ -654,26 +654,26 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
             D(cerr << "- circle,d=" << d << ",dd=" << dd << ":" << covered << endl);
           }
         }
-        
+
         D(cerr << "- overall:" << covered << endl);
-        result->at(cy, cx) = covered;
+        result->at(cx, cy) = covered;
       }
-      
+
       D(cerr << "area:" << areaCount << " -> ");
       areaCount -= columnCounts[x-twoR];
       D(cerr << areaCount << endl);
       D(cerr << "col[" << x-twoR << "]:" << columnCounts[x-twoR] << " -> ");
-      if (at(y-twoR, x-twoR)) {
+      if (at(x-twoR, y-twoR)) {
         columnCounts[x-twoR]--;
       }
       D(cerr << columnCounts[x-twoR] << endl);
-      
+
       cx++;
     }
     // update the column counts for the remaining columns
     for (int x = width_ - twoR; x < width_; x++) {
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-      if (at(y-twoR, x)) {
+      if (at(x, y-twoR)) {
         columnCounts[x]--;
       }
       D(cerr << columnCounts[x] << endl);
@@ -697,10 +697,10 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
   int circle = c.area();
   const int *extents = c.extents();
   int outside = s*s - circle;
-  
+
   int columnCounts[width_];
   memset(columnCounts, 0, sizeof(columnCounts));
-  
+
   // sum the column counts of pixels in the early rows
   for (int y = 0; y < r; y++) {
     for (int x = 0; x < width_; x++) {
@@ -711,13 +711,13 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
       D(cerr << columnCounts[x] << endl);
     }
   }
-  
+
   shared_ptr<Bitmap> result = make(width_, height_);
   for (int y = r; y < height_+r; y++) {
     D(cerr << "*** Row " << y << endl);
     int cy = y - r;
     int areaCount = 0;
-    
+
     for (int x = 0; x < r; x++) {
       // just update the column & area counts
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
@@ -729,14 +729,14 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
       areaCount += columnCounts[x];
       D(cerr << areaCount << endl);
     }
-    
+
     // for the rest of the row we have enough coverage
     for (int x = r; x < width_+r; x++) {
       int cx = x - r;
-      
+
       if (y < height_ && x < width_) {
         D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-        if (at(y, x)) {
+        if (at(x, y)) {
           columnCounts[x]++;
         }
         D(cerr << columnCounts[x] << endl);
@@ -750,7 +750,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
       } else {
         D(cerr << "# (" << y << "," << x << ") outside, areaCount unchanged" << endl);
       }
-      
+
 #if DEBUG
       cerr << "(" << y << "," << x << ")/(" << cy << "," << cx << "):" << areaCount << endl;
       for (int t = s-1; t >= 0; t--) {
@@ -764,15 +764,15 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
         cerr << endl;
       }
 #endif
-      
+
       if (areaCount == 0) {
         // we have enough un-set pixels to say 'no'
         D(cerr << "completely uncovered!" << endl);
-        result->at(cy, cx) = false;
+        result->at(cx, cy) = false;
       } else if (areaCount > outside) {
         // we have enough set pixels to say 'yes'
         D(cerr << "enough set pixels!" << endl);
-        result->at(cy, cx) = true;
+        result->at(cx, cy) = true;
       } else {
         D(cerr << "have to check:" << endl);
         // start by checking the extreme points
@@ -793,7 +793,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
           D(cerr << "- cross,d=" << d << ":" << covered << endl);
         }
         D(cerr << "- cross:" << covered << endl);
-        
+
         // check the rest of the circle
         for (int d = 1; !covered && d <= r; d++) {
           int extent = extents[d-1];
@@ -806,18 +806,18 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
             D(cerr << "- circle,d=" << d << ",dd=" << dd << ":" << covered << endl);
           }
         }
-        
+
         D(cerr << "- overall:" << covered << endl);
-        result->at(cy, cx) = covered;
+        result->at(cx, cy) = covered;
       }
-      
+
       if (x - twoR >= 0) {
         D(cerr << "area:" << areaCount << " -> ");
         areaCount -= columnCounts[x-twoR];
         D(cerr << areaCount << endl);
         if (y - twoR >= 0) {
           D(cerr << "col[" << x-twoR << "]:" << columnCounts[x-twoR] << " -> ");
-          if (at(y-twoR, x-twoR)) {
+          if (at(x-twoR, y-twoR)) {
             columnCounts[x-twoR]--;
           }
           D(cerr << columnCounts[x-twoR] << endl);
@@ -828,7 +828,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
       // update the column counts for the remaining columns
       for (int x = width_ - r; x < width_; x++) {
         D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-        if (at(y - twoR, x)) {
+        if (at(x, y - twoR)) {
           columnCounts[x]--;
         }
         D(cerr << columnCounts[x] << endl);
@@ -906,12 +906,12 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
   int dx = rx ? -1 : 1;
   int x1 = rx ? -1 : width_;
   int corner = corners[(ry ? 2 : 0) + (rx ? 1 : 0)];
-  
+
   for (int y = y0; y != y1; y += dy) {
     for (int x = x0; x != x1; x += dx) {
       IPoint p(x, y);
       D(cerr << "(" << y << "," << x << "): ");
-      if (at(y, x)) {
+      if (at(x, y)) {
 #if DEBUG
         cerr << endl;
         for (int dy = -1; dy <= 1; dy++) {
@@ -920,11 +920,11 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
           }
           cerr << " - ";
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << flags.get(y + dy, x + dx);
+            cerr << flags.get(x + dx, y + dy);
           }
           cerr << " -> ";
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << (get(y + dy, x + dx) && !flags.get(y + dy, x + dx));
+            cerr << (get(y + dy, x + dx) && !flags.get(x + dx, y + dy));
           }
           cerr << endl;
         }
@@ -936,10 +936,10 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
           D(cerr << "corner, skipping" << endl);
           continue;
         }
-        
+
         int flagNeighbours = flags.neighbours(p);
         int currentNeighbours = prevNeighbours & ~flagNeighbours;
-        
+
 #if DEBUG
         for (int i = 0; i < 8; i++) {
           cerr << (((prevNeighbours & (1 << i)) != 0) ? '*' : '.');
@@ -953,19 +953,19 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
           cerr << (((currentNeighbours & (1 << i)) != 0) ? '*' : '.');
         }
 #endif
-        
+
         int pn = neighbourCounts[prevNeighbours];
         int cn = neighbourCounts[currentNeighbours];
         int trans = transitions[currentNeighbours];
-        
+
         D(cerr << ", pn=" << pn << ", cn=" << cn << ", trans=" << trans << " : ");
         if (pn < 8 && 1 < cn && cn < 6) {
           if (trans == 1) {
-            flags.at(y, x) = true;
+            flags.at(x, y) = true;
             count++;
             D(cerr << "trans == 1 -> remove");
           } else if (smoothingPatterns[currentNeighbours]) {
-            flags.at(y, x) = true;
+            flags.at(x, y) = true;
             count++;
             D(cerr << "smoothingPattern = 1 -> remove");
           } else {
@@ -990,7 +990,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
       D(cerr << "(" << y << "," << x << "): ");
-      if (at(y, x)) {
+      if (at(x, y)) {
 #if DEBUG
         cerr << endl;
         for (int dy = -1; dy <= 1; dy++) {
@@ -999,11 +999,11 @@ inline int Bitmap::thinOld(Bitmap &flags) {
           }
           cerr << " - ";
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << flags.get(y + dy, x + dx);
+            cerr << flags.get(x + dx, y + dy);
           }
           cerr << " -> ";
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << (get(y + dy, x + dx) && !flags.get(y + dy, x + dx));
+            cerr << (get(y + dy, x + dx) && !flags.get(x + dx, y + dy));
           }
           cerr << endl;
         }
@@ -1016,9 +1016,9 @@ inline int Bitmap::thinOld(Bitmap &flags) {
         uint8_t maxConsecutiveWhite = 0;
         for (int r = 0; r < 8; r++) {
           bool imagePixel = get(y + yOffsets[r], x + xOffsets[r]);
-          bool flagPixel = flags.get(y + yOffsets[r], x + xOffsets[r]);
+          bool flagPixel = flags.get(x + xOffsets[r], y + yOffsets[r]);
           neighbours <<= 1;
-          
+
           if (imagePixel) {
             if (consecutiveWhite > maxConsecutiveWhite) {
               maxConsecutiveWhite = consecutiveWhite;
@@ -1032,13 +1032,13 @@ inline int Bitmap::thinOld(Bitmap &flags) {
           } else {
             consecutiveWhite++;
           }
-          
+
           int nextR = (r+1) % 8;
           bool nextImagePixel = get(y + yOffsets[nextR], x + xOffsets[nextR]);
           if (imagePixel && !nextImagePixel) {
             pTrans++;
           }
-          bool nextFlagPixel = flags.get(y + yOffsets[nextR], x + xOffsets[nextR]);
+          bool nextFlagPixel = flags.get(x + xOffsets[nextR], y + yOffsets[nextR]);
           if ((imagePixel && !flagPixel) && !(nextImagePixel && !nextFlagPixel)) {
             trans++;
           }
@@ -1056,7 +1056,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
         if (consecutiveWhite > maxConsecutiveWhite) {
           maxConsecutiveWhite = consecutiveWhite;
         }
-        
+
 #if DEBUG
         cerr << "neighbours = ";
         for (uint8_t mask = 0x80; mask != 0; mask >>= 1) {
@@ -1066,11 +1066,11 @@ inline int Bitmap::thinOld(Bitmap &flags) {
 #endif
         if (pn < 8 && 1 < cn && cn < 6) {
           if (pTrans == 1 && maxConsecutiveWhite > 4) {
-            flags.at(y, x) = true;
+            flags.at(x, y) = true;
             count++;
             D(cerr << "remove");
           } else if (trans == 1 || oldThinningPatterns[neighbours]) {
-            flags.at(y, x) = true;
+            flags.at(x, y) = true;
             count++;
             D(cerr << "remove");
 #if DEBUG
@@ -1122,7 +1122,7 @@ inline void Bitmap::prune() {
   list<IPoint> pruned;
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      if (at(y, x)) {
+      if (at(x, y)) {
         int neighbours = 0;
         for (int dir = 0; dir < DIRECTIONS && neighbours < 2; dir++) {
           if (get(y + yOffsets[dir], x + xOffsets[dir])) {
@@ -1163,21 +1163,21 @@ struct Bitmap::IsMarkedForReconstruction {
   IsMarkedForReconstruction(const Bitmap &result, const Bitmap &reference)
   : result_(result), reference_(reference) { }
   bool operator()(int y, int x) {
-    return result_.get(y, x) || !reference_.get(y, x);
+    return result_.get(x, y) || !reference_.get(x, y);
   }
 };
 
 inline shared_ptr<Bitmap> Bitmap::reconstruct(const Bitmap &reference) {
   shared_ptr<Bitmap> result = make(width_, height_, true);
-  
+
   Set setResult = result->set(true);
   IsMarkedForReconstruction isMarked(*result, reference);
-  
+
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      if (at(y, x) && !result->at(y, x)) {
+      if (at(x, y) && !result->at(x, y)) {
         D(cerr << "*** flood-filling from " << IPoint(x, y) << endl);
-        Filling::fill8(y, x, height_, width_, isMarked, setResult);
+        Filling::fill8(x, y, width_, height_, isMarked, setResult);
       }
     }
   }
@@ -1194,7 +1194,7 @@ inline shared_ptr<Bitmap> Bitmap::operator+(const Bitmap &other) const {
   shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
-      result->at(y, x) = get(y, x) || other.get(y, x);
+      result->at(x, y) = get(y, x) || other.get(y, x);
     }
   }
   return result;
@@ -1203,7 +1203,7 @@ inline shared_ptr<Bitmap> Bitmap::operator+(const Bitmap &other) const {
 inline Bitmap &Bitmap::operator+=(const Bitmap &other) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      at(y, x) = at(y, x) || other.get(y, x);
+      at(x, y) = at(x, y) || other.get(y, y);
     }
   }
   return *this;
@@ -1215,7 +1215,7 @@ inline shared_ptr<Bitmap> Bitmap::operator-(const Bitmap &other) const {
   shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      result->at(y, x) = get(y, x) && !other.get(y, x);
+      result->at(x, y) = get(y, x) && !other.get(x, y);
     }
   }
   return result;
@@ -1224,7 +1224,7 @@ inline shared_ptr<Bitmap> Bitmap::operator-(const Bitmap &other) const {
 inline Bitmap &Bitmap::operator-=(const Bitmap &other) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      at(y, x) = at(y, x) && !other.get(y, x);
+      at(x, y) = at(y, x) && !other.get(x, y);
     }
   }
   return *this;
@@ -1256,7 +1256,7 @@ inline Direction Bitmap::nextDirCCW(const IPoint &p, Direction dir) {
 inline void Bitmap::scanBoundary(Image<int> &marks, int mark, Boundary &boundary, const IPoint &start, Direction from, bool connect) {
   Direction preDir = nextDirCCW(start, from);
   IPoint preStart(start.neighbour(preDir));
-  
+
   // we arrived here from |from|, outside; so that's a good starting direction, as well
   // as a good direction for the initial 'preceding' point, since we know that will
   // never accidentally match any other useful preceding point.
@@ -1268,13 +1268,13 @@ inline void Bitmap::scanBoundary(Image<int> &marks, int mark, Boundary &boundary
     if (marks.get(current) == 0) {
       // we're starting at an unmarked pixel
       Chain &chain = boundary.addChain();
-      
+
       // if our preceding pixel is part of the same boundary, add it, to make sure
       // everything is connected
       if (connect && marks.at(preceding) == mark) {
         chain.addPoint(preceding);
       }
-      
+
       // collect all the unmarked boundary pixels until we encounter the end, or an
       // already-marked boundary pixel
       while (!(current == start && preceding == preStart)) {
@@ -1293,7 +1293,7 @@ inline void Bitmap::scanBoundary(Image<int> &marks, int mark, Boundary &boundary
         }
       }
     }
-    
+
     // skip past any already-marked boundary pixels
     while (!(current == start && preceding == preStart) && marks.at(current) != 0) {
       dir = nextDirCW(current, opposite(dir));
@@ -1353,9 +1353,9 @@ inline void Bitmap::scanBoundaries(vector<Boundary> &result, Image<int> &marks, 
 inline vector<Boundary> Bitmap::scanBoundaries(bool connect) {
   vector<Boundary> result;
   Image<int> marks(width(), height());
-  
+
   scanBoundaries(result, marks, connect);
-  
+
   return result;
 }
 
@@ -1403,7 +1403,7 @@ inline void Bitmap::retract(const Bitmap &reference, const Circle &circle) {
       }
     }
   }
-  
+
   int didRetract = 0;
   int iterations = 0;
   do {
@@ -1454,15 +1454,15 @@ inline shared_ptr<Bitmap> Bitmap::adjacent(const Bitmap &other) {
   shared_ptr<Bitmap> result = make(width_, height_);
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      result->at(y, x) = at(y, x) &&
-      !(get(y, x-1) &&
-        get(y, x+1) &&
-        get(y-1, x) &&
-        get(y+1, x)) &&
-      (other.get(y, x-1) ||
-       other.get(y, x+1) ||
-       other.get(y-1, x) ||
-       other.get(y+1, x));
+      result->at(x, y) = at(x, y) &&
+      !(get(x-1, y) &&
+        get(x+1, y) &&
+        get(x, y-1) &&
+        get(x, y+1)) &&
+      (other.get(x-1, y) ||
+       other.get(x+1, y) ||
+       other.get(x, y-1) ||
+       other.get(x, y+1));
     }
   }
   return result;
@@ -1477,7 +1477,7 @@ ostream &operator<<(ostream &out, const Bitmap &i) {
   int y, x;
   for (y = 0; y < i.height(); y++) {
     for (x = 0; x < i.width(); x++) {
-      out << (i.at(y,x) ? '#' : '.');
+      out << (i.at(x, y) ? '#' : '.');
     }
     out << endl;
   }
@@ -1503,17 +1503,17 @@ inline static void printShort2(ostream &out, cl::CommandQueue &queue, cl::Buffer
 template<bool background>
 inline shared_ptr< GreyImage<cl_uint> > Bitmap::clDistanceTransform(OpenCLWorkers &workers) const {
   cl_int err;
-  
+
 #define DX (128)
 #define DY (128)
   int ww = DX * ((width_ + (DX-1)) / DX);
   int hh = DY * ((height_ + (DY-1)) / DY);
-  
+
   auto toSites = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, background ? "nonZerosToSites" : "zerosToSites");
   auto featureTransformPass1 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, background ? "featureTransformPass1" : "featureTransformPass1_edges");
   auto featureTransformPass2 = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, background ? "featureTransformPass2" : "featureTransformPass2_edges");
   auto featuresToDistance = cl::make_kernel<cl::Buffer&, cl::Buffer&, cl_short, cl_short>(workers.program, "featuresToDistance");
-  
+
   cl::CommandQueue queue(workers.context, workers.device);
   cl::Event event;
 
@@ -1537,7 +1537,7 @@ inline shared_ptr< GreyImage<cl_uint> > Bitmap::clDistanceTransform(OpenCLWorker
   shared_ptr< GreyImage<cl_uint> > result = GreyImage<cl_uint>::make(width_, height_, false);
   vector<cl::Event> events({ event });
   queue.enqueueReadBuffer(a, true, 0, width_ * height_ * sizeof(cl_int), result->data(), &events);
-  
+
 #undef DX
 #undef DY
 
@@ -1559,13 +1559,13 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
   double t[32];
   string s[32];
   int ti = 0;
-  
+
   T(start);
-  
+
   cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2), NULL, &err);
-  
+
   T(buffer a);
-  
+
   cl::Buffer input(workers.context, CL_MEM_READ_ONLY, width_ * height_);
 
   T(buffer input);
@@ -1589,7 +1589,7 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
   cerr << "sites:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
 
   cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
-  
+
   T(buffer b);
 
   // a -> b
@@ -1600,7 +1600,7 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
 
   // a -> b -> a
   workers.featureTransformPass2(cl::EnqueueArgs(workers.queue, cl::NDRange(hh), cl::NDRange(DY)), b, a, width_, height_).wait();
-  
+
   T(pass 2);
   cerr << "stack:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
   cerr << "pass2:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
@@ -1610,9 +1610,9 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
   T(alloc result);
 
   workers.queue.enqueueReadBuffer(b, true, 0, width_ * height_ * sizeof(cl_short2), result->data());
-  
+
   T(read result);
-  
+
   for (int tj = 1; tj < ti; tj++) {
     double dt = t[tj] - t[tj-1];
     cerr << tj << " " << s[tj] << ": " << 1000.0*dt << "ms" << endl << flush;
@@ -1628,30 +1628,30 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform(OpenCLWorkers &
 template<bool background>
 inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform_transposed(OpenCLWorkers &workers) const {
   cl_int err;
-  
+
 #define DX (128)
 #define DY (128)
   int ww = DX * ((width_ + (DX-1)) / DX);
   int hh = DY * ((height_ + (DY-1)) / DY);
-  
+
   double t[32];
   string s[32];
   int ti = 0;
-  
+
   T(start);
-  
+
   cl::Buffer a(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2), NULL, &err);
-  
+
   T(buffer a);
-  
+
   cl::Buffer input(workers.context, CL_MEM_READ_ONLY, width_ * height_);
-  
+
   T(buffer input);
-  
+
   workers.queue.enqueueWriteBuffer(input, true, 0, width_ * height_, data_);
-  
+
   T(wrote to input);
-  
+
   // input -> a
   cl::NDRange totalRange(ww, hh);
   cl::NDRange groupRange = workers.fitNDRange(DX, DY);
@@ -1662,44 +1662,44 @@ inline shared_ptr< Image<cl_short2> > Bitmap::clFeatureTransform_transposed(Open
   } else {
     workers.zerosToSites(cl::EnqueueArgs(workers.queue, totalRange, groupRange), input, a, width_, height_).wait();
   }
-  
+
   T(converted to sites);
   //  cerr << "sites:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
-  
+
   cl::Buffer b(workers.context, CL_MEM_READ_WRITE, width_ * height_ * sizeof(cl_short2));
-  
+
   T(buffer b);
-  
+
   // a -> b
   workers.featureTransformPass1(cl::EnqueueArgs(workers.queue, cl::NDRange(ww), cl::NDRange(DX)), a, b, width_, height_).wait();
-  
+
   T(pass 1);
   //  cerr << "pass1:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
-  
+
   // a -> b -> a
   workers.featureTransformPass2(cl::EnqueueArgs(workers.queue, cl::NDRange(hh), cl::NDRange(DY)), b, a, width_, height_).wait();
-  
+
   T(pass 2);
   //  cerr << "stack:" << endl; printShort2(cerr, workers.queue, a, width_, height_);
   //  cerr << "pass2:" << endl; printShort2(cerr, workers.queue, b, width_, height_);
-  
+
   shared_ptr< Image<cl_short2> > result = Image<cl_short2>::make(width_, height_, false);
-  
+
   T(alloc result);
-  
+
   workers.queue.enqueueReadBuffer(b, true, 0, width_ * height_ * sizeof(cl_short2), result->data());
-  
+
   T(read result);
-  
+
   for (int tj = 1; tj < ti; tj++) {
     double dt = t[tj] - t[tj-1];
     cerr << tj << " " << s[tj] << ": " << 1000.0*dt << "ms" << endl << flush;
   }
   cerr << "total: " << 1000.0*(t[ti-1] - t[0]) << "ms" << endl << flush;
-  
+
 #undef DX
 #undef DY
-  
+
   return result;
 }
 

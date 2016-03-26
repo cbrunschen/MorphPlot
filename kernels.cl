@@ -14,14 +14,14 @@ void transpose(global short2 *in, global short2 *out, int w, int h, local short2
   short y = get_global_id(1);
   short lx = get_local_id(0);
   short ly = get_local_id(1);
-  
+
   if ((x < w) && (y < h)) {
     unsigned int src = y * w + x;
     temp[ly * (BLOCK_DIM+1) + lx] = in[src];
   }
-  
+
   barrier(CLK_LOCAL_MEM_FENCE);
-  
+
   // write the transposed matrix tile to global memory, transposing X and Y as well!
   x = get_group_id(1) * BLOCK_DIM + lx;
   y = get_group_id(0) * BLOCK_DIM + ly;
@@ -36,12 +36,12 @@ kernel void featureTransformPass1(global short2 *sites, global short2 *transform
   if (x >= w) {
     return;
   }
-  
+
   short stride = w;
-  
+
   // - start with the primitive value
   short2 last = MARKER;
-  
+
   // scan 1:
   int y = 0;
   global short2 *src = sites + x;
@@ -54,7 +54,7 @@ kernel void featureTransformPass1(global short2 *sites, global short2 *transform
       *p = last;
     }
   }
-  
+
   y = h - 1;
   p = transform + x + y * stride;
   last = *p;
@@ -72,12 +72,12 @@ kernel void featureTransformPass1_edges(global short2 *sites, global short2 *tra
   if (x >= w) {
     return;
   }
-  
+
   short stride = w;
-  
+
   // - start with the primitive value
   short2 last = (short2)( x, -1 );
-  
+
   // scan 1:
   int y = 0;
   global short2 *src = sites + x;
@@ -90,7 +90,7 @@ kernel void featureTransformPass1_edges(global short2 *sites, global short2 *tra
       *p = last;
     }
   }
-  
+
   y = h - 1;
   p = transform + x + y * stride;
   last = (short2)( x, h );
@@ -131,7 +131,7 @@ kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short
   global short2 *stack = stacks + (y * w);
   global short2 *dst = g + (y * w);
   global short2 *gr = g + (y * w);
-  
+
   // scan 3
   short u;
   for (u = 0; u < w && gr[u].x < 0; u++);
@@ -141,7 +141,7 @@ kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short
     }
     printf("row %d: nothing!\n", y);
   }
-  
+
   short q = 0;
   short stackTopStart = 0;
   stack[0] = gr[u].y;
@@ -159,7 +159,7 @@ kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short
         stackTopStart = 0;
       }
     }
-    
+
     if (q < 0) {
       q = 0;
       stack[0] = gr[u];
@@ -173,7 +173,7 @@ kernel void featureTransformPass2(global short2 *g, global short2 *stacks, short
       }
     }
   }
-  
+
   // scan 4
   for (int u = w - 1; u >= 0; u--) {
     if (u < stackTopStart) {
@@ -204,14 +204,14 @@ kernel void featureTransformPass2_vertical(global short2 *g, global short2 *stac
   global short2 *stack = stacks + (x * h);
   global short2 *dst = g + x;
   global short2 *gr = g + x;
-  
+
   // scan 3
   short u;
   for (u = 0; u < w && gr[u*w].x < 0; u++);
   if (u >= h) {
     return;
   }
-  
+
   short q = 0;
   short stackTopStart = 0;
   stack[0] = gr[u*w].y;
@@ -229,7 +229,7 @@ kernel void featureTransformPass2_vertical(global short2 *g, global short2 *stac
         stackTopStart = 0;
       }
     }
-    
+
     if (q < 0) {
       q = 0;
       stack[0] = gr[u*w];
@@ -243,7 +243,7 @@ kernel void featureTransformPass2_vertical(global short2 *g, global short2 *stac
       }
     }
   }
-  
+
   // scan 4
   for (int u = h - 1; u >= 0; u--) {
     if (u < stackTopStart) {

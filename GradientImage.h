@@ -26,12 +26,12 @@ struct XY {
 public:
   double x_;
   double y_;
-  
+
   XY(double x = 0.0, double y = 0.0) : x_(x), y_(y) { }
   double &x() { return x_; }
   const double x() const { return x_; }
   void setX(double x) { x_ = x; }
-  
+
   double &y() { return y_; }
   const double y() const { return y_; }
   void setY(double y) { y_ = y; }

@@ -37,15 +37,15 @@ protected:
 
 public:
   PathExtractor() : stepper_(NULL), approximator_(NULL), out_(NULL) {}
-  
+
   void setStepper(Stepper *stepper) { stepper_ = stepper; }
   Stepper *stepper() { return stepper_; }
   bool steps() { return stepper_ != NULL; }
-  
+
   void setApproximator(Approximator *approximator) { approximator_ = approximator; }
   Approximator *approximator() { return approximator_; }
   bool approximate() { return approximator_ != NULL; }
-  
+
   void setOut(ostream *out) { out_ = out; }
   ostream *out() { return out_; }
 };
@@ -56,10 +56,10 @@ class CanRetractWhenDeltaIsSetInReference {
 public:
   CanRetractWhenDeltaIsSetInReference(const Bitmap &thinInsetReference, const Circle &circle)
   : reference_(thinInsetReference), circle_(circle) { }
-  
+
   bool operator()(const IPoint &p, int neighbours) const {
     const list<IPoint> &delta = circle_.getDelta(neighbours);
-    
+
     bool result = true;
     for (list<IPoint>::const_iterator i = delta.begin();
          result && i != delta.end();

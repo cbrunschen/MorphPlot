@@ -257,8 +257,8 @@ int main(int argc, char * const argv[]) {
       cerr << "    . adding to approximation" << endl;
       for (int y = 0; y < covered.height(); y++) {
         for (int x = 0; x < covered.width(); x++)  {
-          if (ditheredBitmap.at(y, x)) {
-            RGBPixel &p = approx.at(y, x);
+          if (ditheredBitmap.at(x, y)) {
+            RGBPixel &p = approx.at(x, y);
             p.r() = Component<C>::make(Component<C>::fraction(p.r()) - Component<C>::fraction(current->c()));
             p.g() = Component<C>::make(Component<C>::fraction(p.g()) - Component<C>::fraction(current->m()));
             p.b() = Component<C>::make(Component<C>::fraction(p.b()) - Component<C>::fraction(current->y()));

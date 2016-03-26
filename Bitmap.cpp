@@ -850,29 +850,29 @@ shared_ptr<Bitmap> readPng(FILE *fp) {
   if (!greyImage) {
     return result;
   }
-  
+
   result = Bitmap::make(greyImage->width(), greyImage->height());
   result->copyRes(*greyImage);
-  
+
   for (int y = 0; y < greyImage->height(); y++) {
     for (int x = 0; x < greyImage->width(); x++) {
-      result->at(y, x) = greyImage->get(y, x) > 0x7f;
+      result->at(x, y) = greyImage->get(x, y) > 0x7f;
     }
   }
-  
+
   return result;
 }
 
 bool writePng(const Bitmap &image, FILE *fp) {
   png_structp png_ptr;
   png_infop info_ptr;
-  
+
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (png_ptr == NULL) {
     fclose(fp);
     return false;
   }
-  
+
   /* Allocate/initialize the image information data.  REQUIRED */
   info_ptr = png_create_info_struct(png_ptr);
   if (info_ptr == NULL) {
@@ -880,7 +880,7 @@ bool writePng(const Bitmap &image, FILE *fp) {
     png_destroy_write_struct(&png_ptr,  NULL);
     return false;
   }
-  
+
   /* Set error handling.  REQUIRED if you aren't supplying your own
    * error handling functions in the png_create_write_struct() call.
    */
@@ -891,54 +891,54 @@ bool writePng(const Bitmap &image, FILE *fp) {
     png_destroy_write_struct(&png_ptr, &info_ptr);
     return false;
   }
-  
+
   /* Set up the output control if you are using standard C streams */
   png_init_io(png_ptr, fp);
-  
+
   png_set_IHDR(png_ptr, info_ptr, image.width(), image.height(),
                1, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
                PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-  
+
   /* Optional gamma chunk is strongly suggested if you have any guess
    * as to the correct gamma of the image.
    */
   png_set_gAMA(png_ptr, info_ptr, 1.0);
-  
+
   png_set_pHYs(png_ptr, info_ptr, image.xRes(), image.yRes(), image.resUnit());
-  
+
   /* Write the file header information.  REQUIRED */
   png_write_info(png_ptr, info_ptr);
 
   int width_bytes = (image.width() + 7) >> 3;
   png_bytep row = new png_byte[width_bytes];
-  
+
   for (int y = 0; y < image.height(); y++) {
     for (int x = 0; x < image.width(); x += 8) {
       uint8_t b = 0;
       uint8_t mask = 0x80;
       for (int xx = x; xx < x+8 && xx < image.width(); xx++) {
-        if (image.get(y, xx)) {
+        if (image.get(xx, y)) {
           b |= mask;
         }
         mask >>= 1;
       }
       row[x >> 3] = ~b;
     }
-    
+
     png_write_rows(png_ptr, &row, 1);
   }
 
   delete [] row;
-  
+
   /* It is REQUIRED to call this to finish writing the rest of the file */
   png_write_end(png_ptr, info_ptr);
 
   /* Clean up after the write, and free any memory allocated */
   png_destroy_write_struct(&png_ptr, &info_ptr);
-  
+
   /* Close the file */
   fclose(fp);
-  
+
   return true;
 }
 

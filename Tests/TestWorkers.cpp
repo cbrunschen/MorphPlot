@@ -32,11 +32,11 @@ TEST_CASE("workers/run", "Check that the workers actually do work")
     params[i].src = i;
     params[i].dst = -1;
   }
-  
+
   Workers workers(N);
 
   workers.perform(copyValue, params);
-  
+
   for (int i = 0; i < N; i++) {
     REQUIRE(params[i].src == i);
     REQUIRE(params[i].dst == i);
