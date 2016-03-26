@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
   for (int a = 0; a < (W * H / 100); a++) {
     int x = (W-1) * frand();
     int y = (H-1) * frand();
-    set(y, x);
+    set(x, y);
   }
 #endif
 

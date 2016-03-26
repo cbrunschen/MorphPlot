@@ -199,7 +199,7 @@ public:
     D(cerr << "pen has c=" << (int)pen.c() << ",m=" << (int)pen.m() << "y=" << (int)pen.y() << ": ");
     for (int y = 0; y < height_; y++) {
       for (int x = 0; x < width_; x++) {
-        RGBPixel &p = at(y, x);
+        RGBPixel &p = at(x, y);
         uint8_t cy = Component<C>::inverse(p.r());
         uint8_t ma = Component<C>::inverse(p.g());
         uint8_t ye = Component<C>::inverse(p.b());
@@ -223,7 +223,7 @@ public:
     D(cerr << "pen has c=" << (int)pen.c() << ",m=" << (int)pen.m() << "y=" << (int)pen.y() << ": ");
     for (int y = 0; y < height_; y++) {
       for (int x = 0; x < width_; x++) {
-        RGBPixel &p = at(y, x);
+        RGBPixel &p = at(x, y);
         uint8_t cy = Component<C>::inverse(p.r());
         uint8_t ma = Component<C>::inverse(p.g());
         uint8_t ye = Component<C>::inverse(p.b());
@@ -286,7 +286,7 @@ template <typename D> ostream &operator<<(ostream &out, const RGBPixel<D> &p) {
 }
 
 template <typename C> ostream &operator<<(ostream &out, const ColorImage<C> &i) {
-  int y, x;
+  int x, y;
   ios_base::fmtflags flags(out.flags());
   out << hex;
   for (y = 0; y < i.height(); y++) {

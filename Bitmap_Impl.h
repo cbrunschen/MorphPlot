@@ -608,7 +608,7 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
       cerr << endl;
       for (int tdy = -r; tdy <= r; tdy++) {
         for (int tdx = -r; tdx <= r; tdx++) {
-          cerr << (at(cy+tdy, cx+tdx) ? '#' : '.');
+          cerr << (at(cx+tdx, cy+tdy) ? '#' : '.');
         }
         cerr << endl;
       }
@@ -625,19 +625,19 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
         D(cerr << "have to check:" << endl);
         // start by checking the extreme points
         bool covered =
-        at(cy,   cx  ) &&
-        at(cy-r, cx  ) &&
-        at(cy+r, cx  ) &&
-        at(cy,   cx-r) &&
-        at(cy,   cx+r);
+        at(cx  , cy  ) &&
+        at(cx  , cy-r) &&
+        at(cx  , cy+r) &&
+        at(cx-r, cy  ) &&
+        at(cx+r, cy  );
         D(cerr << "- extremes:" << covered << endl);
         // check the rest of the 'cross'
         for (int d = 1; covered && d <= r; d++) {
           covered = covered &&
-          at(cy+d, cx  ) &&
-          at(cy-d, cx  ) &&
-          at(cy,   cx+d) &&
-          at(cy,   cx-d);
+          at(cx  , cy+d) &&
+          at(cx  , cy-d) &&
+          at(cx+d, cy  ) &&
+          at(cx-d, cy  );
           D(cerr << "- cross,d=" << d << ":" << covered << endl);
         }
         D(cerr << "- cross:" << covered << endl);
@@ -647,10 +647,10 @@ inline shared_ptr<Bitmap> Bitmap::inset_old(const Circle &c) const {
           int extent = extents[d-1];
           for (int dd = 1; dd <= extent; dd++) {
             covered = covered &&
-            at(cy+d, cx+dd) &&
-            at(cy-d, cx+dd) &&
-            at(cy+d, cx-dd) &&
-            at(cy-d, cx-dd);
+            at(cx+dd, cy+d) &&
+            at(cx+dd, cy-d) &&
+            at(cx-dd, cy+d) &&
+            at(cx-dd, cy-d);
             D(cerr << "- circle,d=" << d << ",dd=" << dd << ":" << covered << endl);
           }
         }
@@ -705,7 +705,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
   for (int y = 0; y < r; y++) {
     for (int x = 0; x < width_; x++) {
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-      if (get(y, x)) {
+      if (get(x, y)) {
         columnCounts[x]++;
       }
       D(cerr << columnCounts[x] << endl);
@@ -721,7 +721,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
     for (int x = 0; x < r; x++) {
       // just update the column & area counts
       D(cerr << "col[" << x << "]:" << columnCounts[x] << " -> ");
-      if (get(y, x)) {
+      if (get(x, y)) {
         columnCounts[x]++;
       }
       D(cerr << columnCounts[x] << endl);
@@ -759,7 +759,7 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
       cerr << endl;
       for (int tdy = -r; tdy <= r; tdy++) {
         for (int tdx = -r; tdx <= r; tdx++) {
-          cerr << (get(cy+tdy, cx+tdx) ? '#' : '.') << "  ";
+          cerr << (get(cx+tdx, cy+tdy) ? '#' : '.') << "  ";
         }
         cerr << endl;
       }
@@ -777,19 +777,19 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
         D(cerr << "have to check:" << endl);
         // start by checking the extreme points
         bool covered =
-        get(cy,   cx  ) ||
-        get(cy-r, cx  ) ||
-        get(cy+r, cx  ) ||
-        get(cy,   cx-r) ||
-        get(cy,   cx+r);
+        get(cx  , cy  ) ||
+        get(cx  , cy-r) ||
+        get(cx  , cy+r) ||
+        get(cx-r, cy  ) ||
+        get(cx+r, cy  );
         D(cerr << "- extremes:" << covered << endl);
         // check the rest of the 'cross'
         for (int d = 1; !covered && d <= r; d++) {
           covered = covered ||
-          get(cy+d, cx  ) ||
-          get(cy-d, cx  ) ||
-          get(cy,   cx+d) ||
-          get(cy,   cx-d);
+          get(cx  , cy+d) ||
+          get(cx  , cy-d) ||
+          get(cx+d, cy  ) ||
+          get(cx-d, cy  );
           D(cerr << "- cross,d=" << d << ":" << covered << endl);
         }
         D(cerr << "- cross:" << covered << endl);
@@ -799,10 +799,10 @@ inline shared_ptr<Bitmap> Bitmap::outset_old(const Circle &c) const {
           int extent = extents[d-1];
           for (int dd = 1; !covered && dd <= extent; dd++) {
             covered = covered ||
-            get(cy+d, cx+dd) ||
-            get(cy-d, cx+dd) ||
-            get(cy+d, cx-dd) ||
-            get(cy-d, cx-dd);
+            get(cx+dd, cy+d) ||
+            get(cx+dd, cy-d) ||
+            get(cx-dd, cy+d) ||
+            get(cx-dd, cy-d);
             D(cerr << "- circle,d=" << d << ",dd=" << dd << ":" << covered << endl);
           }
         }
@@ -916,7 +916,7 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
         cerr << endl;
         for (int dy = -1; dy <= 1; dy++) {
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << get(y + dy, x + dx);
+            cerr << get(x + dx, y + dy);
           }
           cerr << " - ";
           for (int dx = -1; dx <= 1; dx++) {
@@ -924,7 +924,7 @@ inline int Bitmap::thin(Bitmap &flags, bool ry, bool rx) {
           }
           cerr << " -> ";
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << (get(y + dy, x + dx) && !flags.get(x + dx, y + dy));
+            cerr << (get(x + dx, y + dy) && !flags.get(x + dx, y + dy));
           }
           cerr << endl;
         }
@@ -995,7 +995,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
         cerr << endl;
         for (int dy = -1; dy <= 1; dy++) {
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << get(y + dy, x + dx);
+            cerr << get(x + dx, y + dy);
           }
           cerr << " - ";
           for (int dx = -1; dx <= 1; dx++) {
@@ -1003,7 +1003,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
           }
           cerr << " -> ";
           for (int dx = -1; dx <= 1; dx++) {
-            cerr << (get(y + dy, x + dx) && !flags.get(x + dx, y + dy));
+            cerr << (get(x + dx, y + dy) && !flags.get(x + dx, y + dy));
           }
           cerr << endl;
         }
@@ -1015,7 +1015,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
         uint8_t consecutiveWhite = 0;
         uint8_t maxConsecutiveWhite = 0;
         for (int r = 0; r < 8; r++) {
-          bool imagePixel = get(y + yOffsets[r], x + xOffsets[r]);
+          bool imagePixel = get(x + xOffsets[r], y + yOffsets[r]);
           bool flagPixel = flags.get(x + xOffsets[r], y + yOffsets[r]);
           neighbours <<= 1;
 
@@ -1034,7 +1034,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
           }
 
           int nextR = (r+1) % 8;
-          bool nextImagePixel = get(y + yOffsets[nextR], x + xOffsets[nextR]);
+          bool nextImagePixel = get(x + xOffsets[nextR], y + yOffsets[nextR]);
           if (imagePixel && !nextImagePixel) {
             pTrans++;
           }
@@ -1044,7 +1044,7 @@ inline int Bitmap::thinOld(Bitmap &flags) {
           }
         }
         for (int r = 0; r < 5; r++) {
-          if (get(y + yOffsets[r], x + xOffsets[r])) {
+          if (get(x + xOffsets[r], y + yOffsets[r])) {
             if (consecutiveWhite > maxConsecutiveWhite) {
               maxConsecutiveWhite = consecutiveWhite;
             }
@@ -1125,7 +1125,7 @@ inline void Bitmap::prune() {
       if (at(x, y)) {
         int neighbours = 0;
         for (int dir = 0; dir < DIRECTIONS && neighbours < 2; dir++) {
-          if (get(y + yOffsets[dir], x + xOffsets[dir])) {
+          if (get(x + xOffsets[dir], y + yOffsets[dir])) {
             neighbours++;
           }
         }
@@ -1194,7 +1194,7 @@ inline shared_ptr<Bitmap> Bitmap::operator+(const Bitmap &other) const {
   shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
-      result->at(x, y) = get(y, x) || other.get(y, x);
+      result->at(x, y) = get(x, y) || other.get(x, y);
     }
   }
   return result;
@@ -1203,7 +1203,7 @@ inline shared_ptr<Bitmap> Bitmap::operator+(const Bitmap &other) const {
 inline Bitmap &Bitmap::operator+=(const Bitmap &other) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      at(x, y) = at(x, y) || other.get(y, y);
+      at(x, y) = at(x, y) || other.get(x, y);
     }
   }
   return *this;
@@ -1215,7 +1215,7 @@ inline shared_ptr<Bitmap> Bitmap::operator-(const Bitmap &other) const {
   shared_ptr<Bitmap> result = make(w, h, false);
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      result->at(x, y) = get(y, x) && !other.get(x, y);
+      result->at(x, y) = get(x, y) && !other.get(x, y);
     }
   }
   return result;
@@ -1224,7 +1224,7 @@ inline shared_ptr<Bitmap> Bitmap::operator-(const Bitmap &other) const {
 inline Bitmap &Bitmap::operator-=(const Bitmap &other) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
-      at(x, y) = at(y, x) && !other.get(x, y);
+      at(x, y) = at(x, y) && !other.get(x, y);
     }
   }
   return *this;
@@ -1455,14 +1455,14 @@ inline shared_ptr<Bitmap> Bitmap::adjacent(const Bitmap &other) {
   for (int y = 0; y < height_; y++) {
     for (int x = 0; x < width_; x++) {
       result->at(x, y) = at(x, y) &&
-      !(get(x-1, y) &&
-        get(x+1, y) &&
-        get(x, y-1) &&
-        get(x, y+1)) &&
-      (other.get(x-1, y) ||
-       other.get(x+1, y) ||
-       other.get(x, y-1) ||
-       other.get(x, y+1));
+      !(get(x-1, y  ) &&
+        get(x+1, y  ) &&
+        get(x  , y-1) &&
+        get(x  , y+1)) &&
+      (other.get(x-1, y  ) ||
+       other.get(x+1, y  ) ||
+       other.get(x  , y-1) ||
+       other.get(x  , y+1));
     }
   }
   return result;

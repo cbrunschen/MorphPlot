@@ -204,7 +204,8 @@ public:
       for (Boundary::iterator c = b->begin(); c != b->end(); ++c) {
         Chain &chain = *c;
         set<IPoint> &current = circleCentersByChain[&chain];
-        penCircle.findFilteredOffsets(c->begin(), c->end(), alreadyCovered->get(inserter(current, current.begin(, ))));
+        penCircle.findFilteredOffsets(c->begin(), c->end(), alreadyCovered->get(),
+                                      inserter(current, current.begin()));
         copy(current.begin(), current.end(),
              inserter(adjacentCircleCenters, adjacentCircleCenters.begin()));
       }

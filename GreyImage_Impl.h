@@ -241,7 +241,7 @@ inline uint16_t GreyImage<uint16_t>::defaultBackground() {
 
 template <typename C>
 inline ostream &operator<<(ostream &out, const GreyImage<C> &i) {
-  int y, x;
+  int x, y;
   ios_base::fmtflags flags(out.flags());
   out << hex;
   for (y = 0; y < i.height(); y++) {

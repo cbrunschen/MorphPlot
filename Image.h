@@ -244,17 +244,17 @@ public:
     const Pixel &value_;
     Set(Image &image, const Pixel &value) : image_(image), value_(value) { }
     void operator()(const IPoint &p) const { image_.set(p, value_); }
-    void operator()(const int x, const int y) const { return image_.set(y, x, value_); }
+    void operator()(const int x, const int y) const { return image_.set(x, y, value_); }
   };
+
+  At at() {
+    return At(*this);
+  }
 
   const Get get() const {
     return Get(*this);
   }
-
-  const At at() const {
-    return At(*this);
-  }
-
+  
   const Set set(const Pixel &value) {
     return Set(*this, value);
   }
@@ -279,7 +279,7 @@ public:
     const Pixel &value_;
     SetYX(Image &image, const Pixel &value) : image_(image), value_(value) { }
     void operator()(const IPoint &p) const { image_.set(p, value_); }
-    void operator()(const int y, const int x) const { return image_.set(y, x, value_); }
+    void operator()(const int y, const int x) const { return image_.set(x, y, value_); }
   };
 
   const GetYX getYX() const {
@@ -317,18 +317,18 @@ public:
         int x = c->x();
         int y = c->y();
         for (int dx = 0; dx <= r; ++dx) {
-          set(y, x + dx, value);
-          set(y, x - dx, value);
-          set(y + dx, x, value);
-          set(y - dx, x, value);
+          set(x + dx, y, value);
+          set(x - dx, y, value);
+          set(x, y + dx, value);
+          set(x, y - dx, value);
         }
         for (int dy = 1; dy <= r; ++dy) {
           int e = extents[dy - 1];
           for (int dx = 1; dx <= e; ++dx) {
-            set(y + dy, x + dx, value);
-            set(y + dy, x - dx, value);
-            set(y - dy, x + dx, value);
-            set(y - dy, x - dx, value);
+            set(x + dx, y + dy, value);
+            set(x - dx, y + dy, value);
+            set(x + dx, y - dy, value);
+            set(x - dx, y - dy, value);
           }
         }
       }
@@ -497,7 +497,7 @@ shared_ptr<Bitmap> operator op(Workers::Job<Pixel> &job) const;
 };
 
 template <typename P> ostream &operator<<(ostream &out, const Image<P> &i) {
-  int y, x;
+  int x, y;
   ios_base::fmtflags flags(out.flags());
   out << hex;
   for (y = 0; y < i.height(); y++) {

@@ -27,9 +27,9 @@ inline int Circle::makeExtents(int r, int extents[], double adjust) {
 #if DEBUG
   int s = 2*r + 1;
   Bitmap element(s, s);
-#define SETELEMENT(y, x) do {\
+#define SETELEMENT(x, y) do {\
 cerr << "setting(" << (y) << "," << (x) << ")" << endl;\
-element.at((x, (y))) = true;\
+element.at(((x), (y))) = true;\
 } while(0)
   SETELEMENT(r, r);
   for (int ddd = 1; ddd <= r; ddd++) {

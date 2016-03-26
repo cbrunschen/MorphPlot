@@ -153,7 +153,6 @@ int main(int argc, char * const argv[]) {
   typedef RGBPixel<C> RGBPixel;
   typedef GreyImage<C> GreyImage;
   typedef shared_ptr<GreyImage> GreyImageRef;
-  typedef shared_ptr<Bitmap> BitmapRef;
   typedef PenColor<C> PenColor;
   typedef Pen<C> Pen;
   typedef Carousel<C> Carousel;
