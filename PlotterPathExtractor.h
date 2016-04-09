@@ -33,7 +33,7 @@ public:
     }
 
     (*out_) << "  - Insetting by " << penRadius << endl;
-    BitmapRef inset(remaining->inset(penRadius));
+    BitmapRef inset(remaining->inset(penRadius, workers_));
 
     if (steps()) {
       (*out_) << "    . drawing inset" << endl;
@@ -56,7 +56,7 @@ public:
     inset->scanBoundaries(boundaries, marks, false);
 
     (*out_) << "  - Outsetting again to generate coverage" << endl;
-    BitmapRef covered(inset->outset(penRadius));
+    BitmapRef covered(inset->outset(penRadius, workers_));
     if (steps()) {
       (*out_) << "    . drawing outset" << endl;
       covered->writePng(stepper_->makeName("covered.png"));
@@ -81,7 +81,7 @@ public:
     }
 
     (*out_) << "  - Insetting by " << penRadius << endl;
-    BitmapRef inset(remaining->inset(penRadius));
+    BitmapRef inset(remaining->inset(penRadius, workers_));
 
     if (steps()) {
       (*out_) << "    . drawing inset" << endl;
@@ -104,7 +104,7 @@ public:
     inset->scanBoundaries(boundaries, marks, false);
 
     (*out_) << "  - Outsetting again to generate coverage" << endl;
-    BitmapRef covered(inset->outset(penRadius));
+    BitmapRef covered(inset->outset(penRadius, workers_));
     if (steps()) {
       (*out_) << "    . drawing outset" << endl;
       covered->writePng(stepper_->makeName("covered.png"));
@@ -368,7 +368,7 @@ public:
       BitmapRef workspace = remaining->clone();
 
       if (i != cBegin) {
-        *workspace -= *(covered->inset(penRadius));
+        *workspace -= *(covered->inset(penRadius, workers_));
       }
 
       if (steps()) {

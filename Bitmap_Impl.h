@@ -339,6 +339,22 @@ inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, i
   }
 }
 
+inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, shared_ptr<Workers> workers) const {
+  if (workers) {
+    return distanceTransform(background, *workers);
+  } else {
+    return distanceTransform(background, 1);
+  }
+}
+
+inline shared_ptr< GreyImage<int> > Bitmap::distanceTransform(bool background, Workers *workers) const {
+  if (workers) {
+    return distanceTransform(background, *workers);
+  } else {
+    return distanceTransform(background, 1);
+  }
+}
+
 template<bool background>
 inline void Bitmap::featureTransformPass1(int x0, int x1, int *g, int *ys) const {
   int infinity = width_ + height_ + 1;
@@ -538,6 +554,22 @@ inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, int
       featureTransformPass2<false>(g->data(), ys->data(), 0, height_, result->data());
     }
     return result;
+  }
+}
+
+inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, Workers *workers) const {
+  if (workers) {
+    return featureTransform(background, *workers);
+  } else {
+    return featureTransform(background, 1);
+  }
+}
+
+inline shared_ptr< Image<IPoint> > Bitmap::featureTransform(bool background, shared_ptr<Workers> workers) const {
+  if (workers) {
+    return featureTransform(background, *workers);
+  } else {
+    return featureTransform(background, 1);
   }
 }
 
@@ -870,6 +902,70 @@ inline shared_ptr<Bitmap> Bitmap::open(int r, Workers &workers) const {
   return inset(r, workers)->outset(r, workers);
 }
 
+inline shared_ptr<Bitmap> Bitmap::inset(int r, Workers *workers) const {
+  if (workers) {
+    return inset(r, *workers);
+  } else {
+    return inset(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::outset(int r, Workers *workers) const {
+  if (workers) {
+    return outset(r, *workers);
+  } else {
+    return outset(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::close(int r, Workers *workers) const {
+  if (workers) {
+    return close(r, *workers);
+  } else {
+    return close(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::open(int r, Workers *workers) const {
+  if (workers) {
+    return open(r, *workers);
+  } else {
+    return open(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::inset(int r, shared_ptr<Workers> workers) const {
+  if (workers) {
+    return inset(r, *workers);
+  } else {
+    return inset(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::outset(int r, shared_ptr<Workers> workers) const {
+  if (workers) {
+    return outset(r, *workers);
+  } else {
+    return outset(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::close(int r, shared_ptr<Workers> workers) const {
+  if (workers) {
+    return close(r, *workers);
+  } else {
+    return close(r);
+  }
+}
+
+inline shared_ptr<Bitmap> Bitmap::open(int r, shared_ptr<Workers> workers) const {
+  if (workers) {
+    return open(r, *workers);
+  } else {
+    return open(r);
+  }
+}
+
 inline shared_ptr<Bitmap> Bitmap::close_old(const Circle &c) const {
   return outset_old(c)->inset_old(c);
 }
@@ -1162,7 +1258,7 @@ struct Bitmap::IsMarkedForReconstruction {
   const Bitmap &reference_;
   IsMarkedForReconstruction(const Bitmap &result, const Bitmap &reference)
   : result_(result), reference_(reference) { }
-  bool operator()(int y, int x) {
+  bool operator()(int x, int y) {
     return result_.get(x, y) || !reference_.get(x, y);
   }
 };

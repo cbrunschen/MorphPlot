@@ -57,7 +57,7 @@ template <typename T> inline void writeToFile(const char * filename, const T &t)
 
 template<typename C> inline double density(const C &comp, const C &pen) {
   double result = pen == 0 ? 2.0 : (double)comp / (double)pen;
-  D(cerr << "density(" << (int)comp << "," << (int)pen << ") = " << result << endl << flush);
+  // D(cerr << "density(" << (int)comp << "," << (int)pen << ") = " << result << endl << flush);
   return result;
 }
 

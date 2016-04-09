@@ -76,6 +76,7 @@ void *Workers::worker_thread(void *params) {
 
     void (*func)(void *) = worker->func;
     void *func_params = worker->func_params;
+
     pthread_mutex_unlock(&worker->lock);
 
     func(func_params);

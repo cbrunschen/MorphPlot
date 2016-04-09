@@ -34,9 +34,10 @@ protected:
   Stepper *stepper_;
   Approximator *approximator_;
   ostream *out_;
+  shared_ptr<Workers> workers_;
 
 public:
-  PathExtractor() : stepper_(NULL), approximator_(NULL), out_(NULL) {}
+  PathExtractor() : stepper_(NULL), approximator_(NULL), out_(NULL), workers_(NULL) {}
 
   void setStepper(Stepper *stepper) { stepper_ = stepper; }
   Stepper *stepper() { return stepper_; }
@@ -48,6 +49,11 @@ public:
 
   void setOut(ostream *out) { out_ = out; }
   ostream *out() { return out_; }
+
+  void setThreads(int n) { workers_ = shared_ptr<Workers>::make_shared(n); }
+  void setWorkers(shared_ptr<Workers> &workers) { workers_ = workers; }
+  shared_ptr<Workers> getWorkers() { return workers_; }
+  int getThreads() { if (workers_) { return workers_->n(); } else { return 1; } }
 };
 
 class CanRetractWhenDeltaIsSetInReference {

@@ -121,6 +121,70 @@ static bool checkArg(int argc, const char * const * const argv, int &argn, const
   }
 }
 
+template<typename H>
+static shared_ptr<GreyImage<uint16_t> > makeShape(int r, const H &h) {
+  int wh = 2 * r + 1;
+  shared_ptr<GreyImage<uint16_t> > shape = GreyImage<uint16_t>::make(wh, wh, false);
+  for (int y = 0; y < wh; y++) {
+    int dy = r - y;
+    for (int x = 0; x < wh; x++) {
+      int dx = r - x;
+      double d = sqrt(dx*dx + dy*dy);
+      shape->set(x, y, h(d));
+    }
+  }
+  return shape;
+}
+
+struct FlatHeight {
+  int r_;
+  FlatHeight(int r) : r_(r) { }
+  const uint16_t operator()(double d) const {
+    return d <= r_ ? 0 : numeric_limits<uint16_t>::max();
+  }
+};
+
+struct ConeHeight {
+  int r0_;
+  int r1_;
+  double incline_;
+  ConeHeight(int r0, int r1, double angle) : r0_(r0), r1_(r1), incline_(atan(angle / 2)) { }
+  const uint16_t operator()(double d) const {
+    if (d <= r0_) {
+      return 0;
+    } else if (r1_ < d) {
+      return numeric_limits<uint16_t>::max();
+    } else {
+      return (d - r0_) * incline_;
+    }
+  }
+};
+
+struct HemisphereHeight {
+  int r_;
+  int r2_;
+  HemisphereHeight(int r) : r_(r), r2_(r * r) { }
+  const uint16_t operator()(double d) const {
+    if (d > r_) {
+      return numeric_limits<uint16_t>::max();
+    } else {
+      return r_ - sqrt(r2_ - d * d);
+    }
+  }
+};
+
+static shared_ptr<GreyImage<uint16_t> > makeFlatShape(int r) {
+  return makeShape<FlatHeight>(r, FlatHeight(r));
+}
+
+static shared_ptr<GreyImage<uint16_t> > makeConeShape(int r0, int r1, double angle) {
+  return makeShape<ConeHeight>(r1, ConeHeight(r0, r1, angle));
+}
+
+static shared_ptr<GreyImage<uint16_t> > makeHemisphereShape(int r) {
+  return makeShape<HemisphereHeight>(r, HemisphereHeight(r));
+}
+
 class Tool {
 public:
   typedef uint16_t H;
@@ -128,16 +192,22 @@ public:
   typedef shared_ptr<HeightMap> HeightMapRef;
 
 private:
+  // The shape of the tool, as a height map, for purposes of fitting the tool shape insite the height map
   HeightMapRef shape_;
+  // the "radius" of the tool for offsetting and for drawing the path
+  int r_;
   int zUp_;
   int zDown_;
   int zBottom_;
 public:
-  Tool(HeightMapRef shape) : shape_(shape), zUp_(40), zDown_(0), zBottom_(-256) {}
+  Tool(int r) : shape_(NULL), r_(r), zUp_(40), zDown_(0), zBottom_(-256) {}
+  Tool(int r, HeightMapRef shape) : shape_(shape), r_(r), zUp_(40), zDown_(0), zBottom_(-256) {}
 
-  HeightMapRef shape() { return shape_; }
   const HeightMapRef shape() const { return shape_; }
   void setShape(HeightMapRef shape) { shape_ = shape; }
+
+  void setR(int r) { r_ = r; }
+  const int r() const { return r_; }
 
   const int hpglIndex() const { return 1; }
   const double zLevel() const { return (double)(zDown_) / (double)(zBottom_); }
@@ -326,9 +396,15 @@ int main(int argc, char * const argv[]) {
   }
 
   HeightMapRef heightMap = HeightMap::readPngHeightmap(f);
-
+  
   cerr << "running with " << threads << " threads" << endl << flush;
   Workers workers(threads);
+  
+  HeightMapRef toolShape = makeConeShape(4, 40, M_PI / 6.0);
+  
+  BitmapRef gt = heightMap->gt(16, workers);
+  
+  shared_ptr<Image<uint16_t> > fit = heightMap->fit(toolShape, workers);
 
   if (scale != 1.0) {
     heightMap = scaleImage(heightMap, scale);

@@ -320,7 +320,7 @@ void calculateCentroid_workerFunction(void *v) {
   for (int y = params->y0; y < params->y1; y++) {
     for (int x = 0; x < params->w; x++) {
       const IPoint &p = params->regions->at(x, y);
-      int weight = WEIGHT_MAX - params->weights->at((int, (int) floor(y / params->yScale)) floor(x / params->xScale));
+      int weight = WEIGHT_MAX - params->weights->at((int) floor(x / params->xScale), (int) floor(y / params->yScale));
       params->weightedRegionsBySite[p].add(x - p.x(), y - p.y(), weight);
     }
   }
@@ -337,7 +337,7 @@ inline void calculateCentroids_single(const Image<IPoint> &regions, const Image<
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
       const IPoint &p = regions.at(x, y);
-      int weight = WEIGHT_MAX - weights.at((int, (int) floor(y / yScale)) floor(x / xScale));
+      int weight = WEIGHT_MAX - weights.at((int) floor(x / xScale), (int) floor(y / yScale));
       weightedRegionsBySite[p].add(x - p.x(), y - p.y(), weight);
     }
   }
@@ -859,7 +859,6 @@ static void tryCL() {
   cl::Program program(context, kernels, true, &err);
   cerr << "err = " << err << endl << flush;
 }
-
 
 int main(int argc, char **argv) {
   tryCL();
