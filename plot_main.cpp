@@ -165,6 +165,7 @@ int main(int argc, char * const argv[]) {
   int offsetX = 0, offsetY = 0;
   double scale = 1.0;
   bool dither = true;
+  int threads = 1;
 
   for (; argn < argc && argv[argn][0] == '-' && strlen(argv[argn]) > 1; argn++) {
     string arg(argv[argn]);
@@ -320,7 +321,7 @@ int main(int argc, char * const argv[]) {
     } else if (0 == arg.find("-scale")) {
       string scaleString;
       if (6 == arg.find("=")) {
-        scaleString = arg.substr(8);
+        scaleString = arg.substr(7);
       } else {
         ++argn;
         if (!(argn < argc)) {
@@ -330,6 +331,19 @@ int main(int argc, char * const argv[]) {
         scaleString = argv[argn];
       }
       scale = getDouble(scaleString);
+    } else if (0 == arg.find("-threads")) {
+      string threadsArg;
+      if (8 == arg.find("=")) {
+        threadsArg = arg.substr(9);
+      } else {
+        ++argn;
+        if (!(argn < argc)) {
+          cerr << "missing argument to '-threads'" << endl << flush;
+          exit(1);
+        }
+        threadsArg = argv[argn];
+      }
+      threads = getInt(threadsArg);
     } else {
       cerr << "Unrecognized argument '" << arg << "'" << endl << flush;
       exit(1);
@@ -338,7 +352,7 @@ int main(int argc, char * const argv[]) {
 
   string inputFile;
 
-  if (argn == argc-1) {
+  if (argn == argc - 1) {
     inputFile = argv[argn];
   } else if (argn == argc) {
     // default: is
@@ -348,7 +362,6 @@ int main(int argc, char * const argv[]) {
     cerr << endl << flush;
     exit(1);
   }
-
 
   // If there's no specified carousel, use a default one.
   if (carousel.size() == 0) {
@@ -414,8 +427,10 @@ int main(int argc, char * const argv[]) {
   double theta = 0.1;
 
   PlotterPathExtractor extractor;
+  shared_ptr<Workers> workers = make_shared<Workers>(threads);
   extractor.setOut(&cerr);
   extractor.setDither(dither);
+  extractor.setWorkers(workers);
   Stepper *stepper;
   if (steps) {
     extractor.setStepper(stepper = new Stepper(stepPrefix));

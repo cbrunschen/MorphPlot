@@ -57,7 +57,7 @@ public:
   };
 
   Image(const int width = 0, const int height = 0, const bool doClear = true)
-  : width_(width), height_(height), xRes_(0), yRes_(0), resUnit_(0), data_(new Pixel[width * height]) {
+      : width_(width), height_(height), xRes_(0), yRes_(0), resUnit_(0), data_(new Pixel[width * height]) {
     if (doClear) {
       clear();
     }
@@ -66,8 +66,10 @@ public:
     delete data_;
   }
 
-  Image(const Image &other) : width_(other.width_), height_(other.height_),
-  data_(new Pixel[other.width_ * other.height_])
+  Image(const Image &other)
+      : width_(other.width_), height_(other.height_),
+      xRes_(other.xRes_), yRes_(other.yRes_), resUnit_(other.resUnit_),
+      data_(new Pixel[other.width_ * other.height_])
   {
     bcopy(other.data_, data_, width_ * height_ * sizeof(Pixel));
   }
@@ -213,7 +215,7 @@ public:
     return &data_[row * width_];
   }
 
-  void set(int y, int x, const Pixel &value) {
+  void set(int x, int y, const Pixel &value) {
     if (0 <= x && x < width_ && 0 <= y && y < height_) {
       at(x, y) = value;
     }
@@ -453,38 +455,41 @@ public:
     return !(*this == other);
   }
 
-#define DECLARE_OP(op, name)                                             \
-shared_ptr<Bitmap> name(const Pixel &value) const;			                 \
-shared_ptr<Bitmap> name(const Pixel &value, int threads) const;		       \
-shared_ptr<Bitmap> name(const Pixel &value, Workers &workers) const;     \
-shared_ptr<Bitmap> operator op(const Pixel &value) const;			           \
-shared_ptr<Bitmap> operator op(Workers::Job<Pixel> &job) const;
-
-  DECLARE_OP(>, gt);
-  DECLARE_OP(>=, ge);
-  DECLARE_OP(<, lt);
-  DECLARE_OP(<=, le);
-  DECLARE_OP(==, eq);
-  DECLARE_OP(!=, ne);
-
-#undef DECLARE_OP
-
   shared_ptr<Bitmap> distribute(void (*func)(void *), Pixel value, Workers &workers) const;
 
-  Pixel min() const;
-  Pixel min(Workers &workers) const;
+#define DECLARE_OP(op, name)                                               \
+  static void name(void *); /* takes a Range<Bitmap::iterator> */          \
+  shared_ptr<Bitmap> name(const Pixel &value) const;			                 \
+  shared_ptr<Bitmap> name(const Pixel &value, int threads) const;		       \
+  shared_ptr<Bitmap> name(const Pixel &value, Workers &workers) const;     \
+  shared_ptr<Bitmap> operator op(const Pixel &value) const;			           \
+  shared_ptr<Bitmap> operator op(Workers::Job<Pixel> &job) const;
 
-  Pixel max() const;
-  Pixel max(Workers &workers) const;
+  DECLARE_OP(>, gt)
+  DECLARE_OP(>=, ge)
+  DECLARE_OP(<, lt)
+  DECLARE_OP(<=, le)
+  DECLARE_OP(==, eq)
+  DECLARE_OP(!=, ne)
+#undef DECLARE_OP
 
-  static void ge(void *); // takes a Range<Bitmap::iterator>
-  static void gt(void *); // takes a Range<Bitmap::iterator>
-  static void le(void *); // takes a Range<Bitmap::iterator>
-  static void lt(void *); // takes a Range<Bitmap::iterator>
-  static void eq(void *); // takes a Range<Bitmap::iterator>
-  static void ne(void *); // takes a Range<Bitmap::iterator>
-  static void min(void *);  // takes a ReductionRange
-  static void max(void *);  // takes a ReductionRange
+#define DECLARE_MINMAX(name)                                                \
+  static void name(void *);  /* takes a ReductionRange */                   \
+  Pixel name() const;                                                       \
+  Pixel name(Workers &workers) const;                                       \
+
+  DECLARE_MINMAX(min)
+  DECLARE_MINMAX(max)
+#undef DECLARE_MINMAX
+
+#define DECLARE_CONVOLUTION(name)                                                         \
+  static void name(void *);  /* takes a ConvolutionRange<Pixel> */                        \
+  shared_ptr<Image<Pixel> > name(shared_ptr<Image<Pixel> > ref) const;                    \
+  shared_ptr<Image<Pixel> > name(shared_ptr<Image<Pixel> > ref, Workers &workers) const;  \
+
+  DECLARE_CONVOLUTION(fit)
+  DECLARE_CONVOLUTION(affected)
+#undef DECLARE_CONVOLUTION
 
   template<typename F, typename R> shared_ptr< Image<R> > apply(F &f) {
     shared_ptr< Image<R> > result = Image<R>::make(width(), height(), false);

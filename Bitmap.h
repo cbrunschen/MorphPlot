@@ -94,6 +94,8 @@ public:
 
   shared_ptr< GreyImage<int> > distanceTransform(bool background = true, int threads = 1) const;
   shared_ptr< GreyImage<int> > distanceTransform(bool background, Workers &workers) const;
+  shared_ptr< GreyImage<int> > distanceTransform(bool background, shared_ptr<Workers> workers) const;
+  shared_ptr< GreyImage<int> > distanceTransform(bool background, Workers *workers) const;
 
   template<bool background> void featureTransformPass1(int x0, int x1, int *g, int *ys) const;
   template<bool background> void featureTransformPass2(int *g, int *ys, int y0, int y1, IPoint *result) const;
@@ -101,6 +103,8 @@ public:
 
   shared_ptr< Image<IPoint> > featureTransform(bool background = true, int threads = 1) const;
   shared_ptr< Image<IPoint> > featureTransform(bool background, Workers &workers) const;
+  shared_ptr< Image<IPoint> > featureTransform(bool background, shared_ptr<Workers> workers) const;
+  shared_ptr< Image<IPoint> > featureTransform(bool background, Workers *workers) const;
 
   template<bool background> shared_ptr< GreyImage<cl_uint> > clDistanceTransform(OpenCLWorkers &workers) const;
   template<bool background> shared_ptr< Image<cl_short2> > clFeatureTransform(OpenCLWorkers &workers) const;
@@ -121,6 +125,22 @@ public:
   BitmapRef close(int r, Workers &workers) const;
 
   BitmapRef open(int r, Workers &workers) const;
+
+  BitmapRef inset(int r, shared_ptr<Workers> workers) const;
+  
+  BitmapRef outset(int r, shared_ptr<Workers> workers) const;
+  
+  BitmapRef close(int r, shared_ptr<Workers> workers) const;
+  
+  BitmapRef open(int r, shared_ptr<Workers> workers) const;
+
+  BitmapRef inset(int r, Workers *workers) const;
+  
+  BitmapRef outset(int r, Workers *workers) const;
+  
+  BitmapRef close(int r, Workers *workers) const;
+  
+  BitmapRef open(int r, Workers *workers) const;
 
   BitmapRef inset_old(int r) const;
 

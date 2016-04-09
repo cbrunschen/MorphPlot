@@ -1,4 +1,4 @@
-# Makefile for the 'plot' program and its supporting 'morph' library
+# Makefile for the 'plot', 'mill' and 'stipple' programs and their supporting 'morph' library
 
 LIB_OBJECTS=Bitmap.o Primitives.o Circle.o K3M.o PathExtractor.o \
     ColorImage.o Workers.o OpenCLWorkers.o
@@ -63,7 +63,7 @@ export LDFLAGS
 export INCDIRS
 export LIBDIRS
 
-all : mill plot
+all : mill plot stipple
 
 %.o : %.cpp $(LIB_HEADERS)
 	$(CXX) $(CFLAGS) $(CXXFLAGS) -c -I. $(INCDIRS) $<

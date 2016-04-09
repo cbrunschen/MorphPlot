@@ -174,7 +174,7 @@ public:
           typename Pens::reference pen = *pi;
           typename Targets::reference target = *ti;
           double d = min(min(min(2.0, density(cy, pen.c())), density(ma, pen.m())), density(ye, pen.y()));
-          D(cerr << "density=" << d << " => ");
+          // D(cerr << "density=" << d << " => ");
           if (0.0 < d && d <= 1.0) {
             *target = Component<C>::make(d);
             cy -= Component<C>::make(d, pen.c());
@@ -205,7 +205,7 @@ public:
         uint8_t ye = Component<C>::inverse(p.b());
         D(cerr << "pixel has c=" << (int)cy << ",m=" << (int)ma << ",y=" << (int)ye << ": ");
         double d = min(min(min(2.0, density(cy, pen.c())), density(ma, pen.m())), density(ye, pen.y()));
-        D(cerr << "density=" << d <<endl);
+        // D(cerr << "density=" << d <<endl);
         if (0.0 < d && d <= 1.0) {
           result->at(x, y) = Component<C>::make(d);
         } else {
@@ -229,7 +229,7 @@ public:
         uint8_t ye = Component<C>::inverse(p.b());
         D(cerr << "pixel has c=" << (int)cy << ",m=" << (int)ma << ",y=" << (int)ye << ": ");
         double d = min(min(min(2.0, density(cy, pen.c())), density(ma, pen.m())), density(ye, pen.y()));
-        D(cerr << "density=" << d <<endl);
+        // D(cerr << "density=" << d <<endl);
         if (0.0 < d && d <= 1.0) {
           result->at(x, y) = Component<C>::make(d);
           cy -= Component<C>::make(d, pen.c());
